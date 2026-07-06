@@ -10,7 +10,7 @@ export default function Home() {
               <path d="M12 2C8 2 4 8 4 12c0 2 1.5 4 3 5 1.5 1 4 2 5 4 1-2 3.5-3 5-4 1.5-1 3-3 3-5 0-4-4-10-8-10zm0 18c-1.5-2-4-3-5.5-4-1.5-1-2.5-2.5-2.5-4 0-3 3-8 8-8s8 5 8 8c0 1.5-1 3-2.5 4C16 17 13.5 18 12 20z"></path>
               <circle cx="12" cy="11" fill="#1B2B4B" r="2"></circle>
             </svg>
-            <span className="text-xl font-bold tracking-tight text-navy-900">Yojana Sentinel</span>
+            <span className="text-xl font-bold tracking-tight text-navy-900">Yojana Saarthi</span>
           </a>
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-8 font-medium text-gray-600">
@@ -44,7 +44,7 @@ export default function Home() {
                   <span className="text-navy-900 block">to Benefits</span>
                 </h1>
                 <p className="text-lg text-gray-600 mb-8 leading-relaxed">
-                  Navigate the complexity of government schemes with confidence. Yojana Sentinel, advanced eligibility reasoning—ensuring you never miss out on what you deserve.
+                  Navigate the complexity of government schemes with confidence. Yojana Saarthi, advanced eligibility reasoning—ensuring you never miss out on what you deserve.
                 </p>
                 <div className="flex flex-wrap gap-4">
                   <a className="inline-flex items-center justify-center px-8 py-3.5 text-base font-semibold text-white bg-orange-500 rounded-lg hover:bg-orange-600 transition-colors shadow-lg shadow-orange-500/30 group" href="#">
@@ -151,7 +151,7 @@ export default function Home() {
                 <h3 className="text-orange-500 font-bold uppercase tracking-wider text-sm mb-3">Value Prop</h3>
                 <h2 className="text-4xl font-bold text-navy-900 mb-6 leading-tight">Clarity.<br/>Accuracy.<br/>Personalization.</h2>
                 <p className="text-gray-600 mb-6 leading-relaxed">
-                  Yojana Sentinel cuts through the noise with AI-driven reasoning and personalized matching tailored specifically for you.
+                  Yojana Saarthi cuts through the noise with AI-driven reasoning and personalized matching tailored specifically for you.
                 </p>
                 <a className="inline-flex items-center text-navy-900 font-semibold hover:text-orange-500 transition-colors group" href="#">
                   See how it works
@@ -241,7 +241,7 @@ export default function Home() {
                 <svg className="w-6 h-6 text-orange-500" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 2C8 2 4 8 4 12c0 2 1.5 4 3 5 1.5 1 4 2 5 4 1-2 3.5-3 5-4 1.5-1 3-3 3-5 0-4-4-10-8-10zm0 18c-1.5-2-4-3-5.5-4-1.5-1-2.5-2.5-2.5-4 0-3 3-8 8-8s8 5 8 8c0 1.5-1 3-2.5 4C16 17 13.5 18 12 20z"></path>
                 </svg>
-                <span className="text-xl font-bold tracking-tight">Yojana Sentinel</span>
+                <span className="text-xl font-bold tracking-tight">Yojana Saarthi</span>
               </a>
               <p className="text-gray-400 text-sm leading-relaxed">
                 An official native eligibility initiative empowering citizens to access the benefits they deserve.
@@ -273,7 +273,7 @@ export default function Home() {
               <ul className="space-y-3 text-sm text-gray-400">
                 <li className="flex items-center gap-2">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path></svg>
-                  info@yojanasentinel.gov.in
+                  info@yojanaSaarthi.gov.in
                 </li>
                 <li className="flex items-center gap-2">
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path></svg>
@@ -283,7 +283,7 @@ export default function Home() {
             </div>
           </div>
           <div className="border-t border-white/10 pt-8 text-center text-sm text-gray-500">
-            © 2034 Yojana Sentinel. All rights reserved.
+            © 2034 Yojana Saarthi. All rights reserved.
           </div>
         </div>
       </footer>

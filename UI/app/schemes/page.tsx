@@ -4,7 +4,7 @@ export default function Schemes() {
   return (
     <>
       <Head>
-        <title>Yojana Sentinel - Schemes Directory</title>
+        <title>Yojana Saarthi - Schemes Directory</title>
       </Head>
       {/* BEGIN: Header */}
       <header className="bg-white shadow-sm sticky top-0 z-50">
@@ -14,7 +14,7 @@ export default function Schemes() {
             <svg className="w-8 h-8 text-orange" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"></path>
             </svg>
-            <span className="text-xl font-bold text-navy">Yojana Sentinel</span>
+            <span className="text-xl font-bold text-navy">Yojana Saarthi</span>
           </a>
           {/* Desktop Nav */}
           <nav className="hidden md:flex items-center gap-8 font-medium text-slate-600">
@@ -314,7 +314,7 @@ export default function Schemes() {
                 <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"></path>
                 </svg>
-                <span className="text-xl font-bold text-white">Yojana Sentinel</span>
+                <span className="text-xl font-bold text-white">Yojana Saarthi</span>
               </a>
               <p className="text-sm leading-relaxed">
                 Empowering citizens to discover and access the benefits they deserve.
@@ -346,7 +346,7 @@ export default function Schemes() {
               <div>
                 <h4 className="text-white font-semibold mb-4">Contact Info</h4>
                 <ul className="space-y-2 text-sm">
-                  <li className="flex items-center gap-2"><i className="fa-regular fa-envelope"></i> info@yojanasentinel.gov.in</li>
+                  <li className="flex items-center gap-2"><i className="fa-regular fa-envelope"></i> info@yojanaSaarthi.gov.in</li>
                   <li className="flex items-center gap-2"><i className="fa-solid fa-phone"></i> +91 1800-123-4567</li>
                 </ul>
                 <div className="flex gap-4 mt-4">
@@ -369,7 +369,7 @@ export default function Schemes() {
             </div>
           </div>
           <div className="pt-8 border-t border-slate-800 text-xs flex flex-col md:flex-row justify-between items-center gap-4">
-            <p>© 2024 Yojana Sentinel. All rights reserved.</p>
+            <p>© 2024 Yojana Saarthi. All rights reserved.</p>
             <div className="flex gap-4">
               <a className="hover:text-white transition-colors" href="#">Privacy Policy</a>
               <span className="text-slate-600">|</span>
