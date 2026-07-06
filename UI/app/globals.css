@@ -17,6 +17,7 @@
   
   --color-orange: #F5842B;
   --color-orange-50: #fff6ef;
+  --color-orange-100: #FDE7D6;
   --color-orange-500: #F5842B;
   --color-orange-600: #e07119;
   
@@ -33,4 +34,37 @@ body {
   background-image: radial-gradient(circle, #cbd5e1 2px, transparent 2px);
   background-size: 12px 12px;
   background-position: center center;
+}
+
+.hero-bg {
+  background-image: url('data:image/svg+xml;utf8,<svg width="400" height="300" viewBox="0 0 400 300" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M400 0C400 0 350 50 300 150C250 250 150 200 100 250C50 300 0 300 0 300V0H400Z" fill="%23F5842B" fill-opacity="0.1"/><path d="M400 50C400 50 380 150 300 200C220 250 180 180 120 220C60 260 0 200 0 200V0H400V50Z" fill="%23101B3A"/></svg>');
+  background-position: top right;
+  background-repeat: no-repeat;
+  background-size: contain;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.range-slider {
+  -webkit-appearance: none;
+  width: 100%;
+  height: 4px;
+  background: #E2E8F0;
+  border-radius: 2px;
+  outline: none;
+}
+.range-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #101B3A;
+  cursor: pointer;
 }
