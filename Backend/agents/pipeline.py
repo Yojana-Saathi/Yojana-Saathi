@@ -51,6 +51,7 @@ async def run_intake_pipeline(
     request_id: str,
     schemes: tuple[Scheme, ...],
     llm: GeminiClient | None = None,
+    user_id: str | None = None,
 ) -> PipelineOutput:
     """Run the full deterministic pipeline and assemble the IntakeResponse."""
     # 1. Intake normalization + sanitization.
@@ -98,11 +99,12 @@ async def run_intake_pipeline(
                 benefit_value_estimate=scheme.benefit_value_estimate,
                 eligibility_match_score=round(ranked_scheme.result.score, 2),
                 priority_rank=ranked_scheme.priority_rank,
-                missing_documents=missing_documents_for_scheme(normalized, scheme),
+                missing_documents=missing_documents_for_scheme(normalized, scheme, user_id=user_id),
                 application_url=scheme.application_url,
                 drafted_application_text=None,  # populated only via /api/draft
             )
         )
+
 
     status = ProcessingStatus.PARTIAL_SUCCESS if degraded else ProcessingStatus.SUCCESS
     response = IntakeResponse(

@@ -82,11 +82,18 @@ class GenderRestriction(str, Enum):
     ANY = "any"
 
 
-# The exact 4 government-ID document keys, used by both gov_id_available (request)
+# The extensible government-ID document keys, used by both gov_id_available (request)
 # and required_documents / missing_documents (response). Order is canonical.
 GOV_ID_KEYS: tuple[str, ...] = (
     "aadhaar",
     "income_certificate",
     "caste_certificate",
     "ration_card",
+    "domicile_certificate",
+    "disability_certificate",
+    "land_record",
+    "bank_passbook",
+    "voter_id",
+    "education_marksheet",
 )
+
