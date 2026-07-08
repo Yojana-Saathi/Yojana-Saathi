@@ -11,6 +11,11 @@ export const metadata: Metadata = {
   title: "Yojana Saarthi – Find Every Scheme You Deserve",
   description: "AI-assisted eligibility engine that helps Indian citizens discover government welfare schemes they qualify for — with missing documents and application drafts.",
   keywords: ["government schemes", "welfare", "eligibility", "India", "scholarships", "PM-KISAN", "Ayushman Bharat"],
+  icons: {
+    icon: "/media/logo.png",
+    shortcut: "/media/logo.png",
+    apple: "/media/logo.png",
+  },
   openGraph: {
     title: "Yojana Saarthi",
     description: "Unlock your right to government benefits.",

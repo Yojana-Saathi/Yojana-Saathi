@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { supabase } from "./lib/supabaseClient";
 
 export default function Home() {
@@ -27,10 +28,7 @@ export default function Home() {
         <div className="container mx-auto px-6 lg:px-8 max-w-7xl flex items-center justify-between">
           {/* Logo */}
           <Link className="flex items-center gap-2 group" href="/">
-            <svg className="w-8 h-8 text-orange-500 group-hover:scale-105 transition-transform" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 2C8 2 4 8 4 12c0 2 1.5 4 3 5 1.5 1 4 2 5 4 1-2 3.5-3 5-4 1.5-1 3-3 3-5 0-4-4-10-8-10zm0 18c-1.5-2-4-3-5.5-4-1.5-1-2.5-2.5-2.5-4 0-3 3-8 8-8s8 5 8 8c0 1.5-1 3-2.5 4C16 17 13.5 18 12 20z"></path>
-              <circle cx="12" cy="11" fill="#1B2B4B" r="2"></circle>
-            </svg>
+            <Image src="/media/logo.png" alt="Yojana Saarthi Logo" width={36} height={36} className="group-hover:scale-105 transition-transform" />
             <span className="text-xl font-bold tracking-tight text-navy-900">Yojana Saarthi</span>
           </Link>
           {/* Desktop Nav */}
@@ -267,9 +265,7 @@ export default function Home() {
             {/* Brand Col */}
             <div className="md:col-span-1">
               <Link className="flex items-center gap-2 mb-4" href="/">
-                <svg className="w-6 h-6 text-orange-500" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2C8 2 4 8 4 12c0 2 1.5 4 3 5 1.5 1 4 2 5 4 1-2 3.5-3 5-4 1.5-1 3-3 3-5 0-4-4-10-8-10zm0 18c-1.5-2-4-3-5.5-4-1.5-1-2.5-2.5-2.5-4 0-3 3-8 8-8s8 5 8 8c0 1.5-1 3-2.5 4C16 17 13.5 18 12 20z"></path>
-                </svg>
+                <Image src="/media/logo.png" alt="Yojana Saarthi Logo" width={28} height={28} />
                 <span className="text-xl font-bold tracking-tight">Yojana Saarthi</span>
               </Link>
               <p className="text-gray-400 text-sm leading-relaxed">

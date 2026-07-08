@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 const navLinks = [
   { href: "/schemes", label: "Schemes" },
@@ -17,10 +18,7 @@ export default function Navbar() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl h-16 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 group flex-shrink-0">
-          <svg className="w-8 h-8 text-orange-500 group-hover:scale-105 transition-transform" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M12 2C8 2 4 8 4 12c0 2 1.5 4 3 5 1.5 1 4 2 5 4 1-2 3.5-3 5-4 1.5-1 3-3 3-5 0-4-4-10-8-10zm0 18c-1.5-2-4-3-5.5-4-1.5-1-2.5-2.5-2.5-4 0-3 3-8 8-8s8 5 8 8c0 1.5-1 3-2.5 4C16 17 13.5 18 12 20z" />
-            <circle cx="12" cy="11" fill="#1B2B4B" r="2" />
-          </svg>
+          <Image src="/media/logo.png" alt="Yojana Saarthi Logo" width={36} height={36} className="group-hover:scale-105 transition-transform" />
           <span className="text-lg font-bold tracking-tight text-navy-900 hidden sm:block">Yojana Saarthi</span>
         </Link>
 
