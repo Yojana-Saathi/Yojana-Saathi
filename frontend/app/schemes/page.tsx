@@ -1,7 +1,6 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 
 const categories = [
   { id: "all", label: "All Categories", icon: "⊞" },
@@ -92,7 +91,8 @@ export default function Schemes() {
       <header className="bg-white border-b border-slate-100 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <Image src="/media/logo.png" alt="Yojana Saarthi" width={32} height={32} unoptimized />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/media/logo.png" alt="Yojana Saarthi" width={32} height={32} />
             <span className="font-bold text-navy-900 text-lg">Yojana Saarthi</span>
           </Link>
           <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-600">
@@ -142,42 +142,78 @@ export default function Schemes() {
             </div>
           </div>
 
-          {/* Right Graphic */}
-          <div className="w-full lg:w-1/2 flex justify-center relative h-72 lg:h-96">
-            {/* SVG organic blob + dotted concentric circles */}
-            <svg className="absolute inset-0 w-full h-full" viewBox="0 0 520 400" fill="none" xmlns="http://www.w3.org/2000/svg">
-              {/* Organic peach blob */}
-              <path d="M430 55 C495 110 510 210 465 295 C420 375 305 408 200 388 C95 368 30 285 50 178 C70 72 160 15 265 8 C350 2 385 18 430 55Z" fill="#FFF0E6" />
-              {/* Dotted concentric circles from center ~(260,200) */}
-              <circle cx="260" cy="200" r="75" stroke="#D6C4B0" strokeWidth="1.5" strokeDasharray="5 7" fill="none" />
-              <circle cx="260" cy="200" r="130" stroke="#D6C4B0" strokeWidth="1.2" strokeDasharray="4 9" fill="none" />
-              <circle cx="260" cy="200" r="185" stroke="#D6C4B0" strokeWidth="1" strokeDasharray="3 11" fill="none" />
+          {/* Right Graphic — full SVG scene */}
+          <div className="w-full lg:w-1/2 relative h-80 lg:h-[420px] flex-shrink-0">
+            <svg viewBox="0 0 560 420" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+
+              {/* ── Organic wave blob background ── */}
+              <path d="M 540 10 C 560 60 565 140 540 210 C 515 285 460 340 390 375 C 320 408 230 415 170 390 C 110 365 90 310 120 260 C 150 210 215 195 240 150 C 265 105 240 50 285 25 C 330 0 400 -10 450 5 Z" fill="#FEF0E6"/>
+
+              {/* ── Wave decoration (bottom-right) ── */}
+              <path d="M 360 390 Q 390 375 420 390 Q 450 405 480 390 Q 510 375 540 390" stroke="#E8C9A8" strokeWidth="2.5" strokeLinecap="round" fill="none"/>
+              <path d="M 370 405 Q 400 390 430 405 Q 460 420 490 405" stroke="#E8C9A8" strokeWidth="2" strokeLinecap="round" fill="none"/>
+
+              {/* ── Dotted concentric arcs around search circle (center ~330,200) ── */}
+              <circle cx="330" cy="200" r="80"  stroke="#D9BFA8" strokeWidth="1.5" strokeDasharray="5 8" fill="none"/>
+              <circle cx="330" cy="200" r="138" stroke="#D9BFA8" strokeWidth="1.2" strokeDasharray="4 10" fill="none"/>
+              <circle cx="330" cy="200" r="196" stroke="#D9BFA8" strokeWidth="1"   strokeDasharray="3 12" fill="none"/>
+
+              {/* ── Central large search circle ── */}
+              <circle cx="330" cy="200" r="62" fill="#1B2B4B"/>
+              {/* Search icon */}
+              <circle cx="323" cy="192" r="20" stroke="white" strokeWidth="5" fill="none"/>
+              <line x1="338" y1="207" x2="352" y2="221" stroke="white" strokeWidth="5" strokeLinecap="round"/>
+
+              {/* ── Flat SVG category icons ── */}
+
+              {/* Education — orange graduation cap — top center */}
+              <g transform="translate(300, 60)">
+                <rect width="48" height="48" rx="12" fill="#FEF0E6"/>
+                <polygon points="24,10 40,19 24,28 8,19" fill="#F5842B"/>
+                <path d="M16 23 L16 33 Q24 38 32 33 L32 23" fill="#F5842B"/>
+                <rect x="38" y="18" width="3" height="10" rx="1.5" fill="#F5842B"/>
+              </g>
+
+              {/* Housing — blue house — top right */}
+              <g transform="translate(440, 80)">
+                <rect width="44" height="44" rx="11" fill="#EFF6FF"/>
+                <polygon points="22,8 38,20 38,36 6,36 6,20" fill="#3B82F6"/>
+                <polygon points="22,8 6,20 38,20" fill="#60A5FA"/>
+                <rect x="17" y="26" width="10" height="10" rx="2" fill="white"/>
+              </g>
+
+              {/* Business — purple briefcase — far right */}
+              <g transform="translate(490, 170)">
+                <rect width="44" height="44" rx="11" fill="#F5F3FF"/>
+                <rect x="9" y="18" width="26" height="18" rx="3" fill="#7C3AED"/>
+                <rect x="16" y="14" width="12" height="6" rx="2" fill="#7C3AED"/>
+                <line x1="9" y1="26" x2="35" y2="26" stroke="#C4B5FD" strokeWidth="2"/>
+                <line x1="22" y1="18" x2="22" y2="36" stroke="#C4B5FD" strokeWidth="2"/>
+              </g>
+
+              {/* Healthcare — red heart — left */}
+              <g transform="translate(148, 180)">
+                <rect width="44" height="44" rx="11" fill="#FFF1F2"/>
+                <path d="M22 34 C22 34 8 25 8 16 C8 11 12 8 16 8 C19 8 22 11 22 11 C22 11 25 8 28 8 C32 8 36 11 36 16 C36 25 22 34 22 34Z" fill="#F43F5E"/>
+              </g>
+
+              {/* Social Welfare — people — right */}
+              <g transform="translate(482, 270)">
+                <rect width="44" height="44" rx="11" fill="#FFFBEB"/>
+                <circle cx="15" cy="16" r="6" fill="#F59E0B"/>
+                <path d="M5 38 Q5 27 15 27 Q25 27 25 38" fill="#F59E0B"/>
+                <circle cx="29" cy="16" r="6" fill="#FBBF24"/>
+                <path d="M19 38 Q19 27 29 27 Q39 27 39 38" fill="#FBBF24"/>
+              </g>
+
+              {/* Agriculture — leaf — bottom */}
+              <g transform="translate(280, 330)">
+                <rect width="44" height="44" rx="11" fill="#F0FDF4"/>
+                <path d="M22 36 C22 36 22 22 22 18 C22 12 14 8 10 10 C8 18 12 28 22 36Z" fill="#22C55E"/>
+                <path d="M22 36 C22 36 22 22 22 18 C22 12 30 8 34 10 C36 18 32 28 22 36Z" fill="#16A34A"/>
+              </g>
+
             </svg>
-
-            {/* Central search circle */}
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-28 h-28 bg-navy-900 rounded-full flex items-center justify-center shadow-2xl z-10">
-              <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
-              </svg>
-            </div>
-
-            {/* Floating category icons - larger, positioned like reference */}
-            {[
-              { icon: "🎓", top: "4%",  left: "36%", bg: "bg-orange-100" },
-              { icon: "🏠", top: "8%",  right: "18%", bg: "bg-blue-100" },
-              { icon: "❤️", top: "52%", left: "4%",  bg: "bg-red-100" },
-              { icon: "💼", top: "10%", right: "4%",  bg: "bg-purple-100" },
-              { icon: "👥", top: "50%", right: "6%",  bg: "bg-yellow-100" },
-              { icon: "🌿", bottom: "8%", left: "30%", bg: "bg-green-100" },
-            ].map((item, i) => (
-              <div
-                key={i}
-                className={`absolute ${item.bg} w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shadow-md border border-white z-10`}
-                style={{ top: item.top, left: item.left, right: (item as {right?: string}).right, bottom: (item as {bottom?: string}).bottom }}
-              >
-                {item.icon}
-              </div>
-            ))}
           </div>
         </div>
       </section>

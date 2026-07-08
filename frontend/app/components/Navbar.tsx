@@ -1,7 +1,6 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 
 const navLinks = [
   { href: "/schemes", label: "Schemes" },
@@ -18,7 +17,8 @@ export default function Navbar() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 max-w-7xl h-16 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 group flex-shrink-0">
-          <Image src="/media/logo.png" alt="Yojana Saarthi Logo" width={36} height={36} unoptimized className="group-hover:scale-105 transition-transform" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/media/logo.png" alt="Yojana Saarthi Logo" width={36} height={36} className="group-hover:scale-105 transition-transform" />
           <span className="text-lg font-bold tracking-tight text-navy-900 hidden sm:block">Yojana Saarthi</span>
         </Link>
 
