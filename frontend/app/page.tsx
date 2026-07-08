@@ -1,4 +1,24 @@
+"use client";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { supabase } from "./lib/supabaseClient";
+
 export default function Home() {
+  const router = useRouter();
+  const [checking, setChecking] = useState(false);
+
+  async function handleCheckEligibility() {
+    setChecking(true);
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      router.push("/dashboard");
+    } else {
+      router.push("/login");
+    }
+    setChecking(false);
+  }
+
+
   return (
     <>
       {/* BEGIN: Header */}
@@ -20,9 +40,13 @@ export default function Home() {
             <a className="hover:text-orange-500 transition-colors" href="#">About</a>
           </nav>
           {/* CTA */}
-          <a className="hidden md:inline-flex items-center justify-center px-6 py-2.5 text-sm font-semibold text-white bg-orange-500 rounded-full hover:bg-orange-600 transition-colors shadow-md shadow-orange-500/20" href="#">
-            Check Eligibility
-          </a>
+          <button
+            onClick={handleCheckEligibility}
+            disabled={checking}
+            className="hidden md:inline-flex items-center justify-center px-6 py-2.5 text-sm font-semibold text-white bg-orange-500 rounded-full hover:bg-orange-600 transition-colors shadow-md shadow-orange-500/20 disabled:opacity-70"
+          >
+            {checking ? "Checking..." : "Check Eligibility"}
+          </button>
           {/* Mobile Menu Button (Hidden on Desktop) */}
           <button className="md:hidden p-2 text-gray-600">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path></svg>
@@ -47,10 +71,14 @@ export default function Home() {
                   Navigate the complexity of government schemes with confidence. Yojana Saarthi, advanced eligibility reasoning—ensuring you never miss out on what you deserve.
                 </p>
                 <div className="flex flex-wrap gap-4">
-                  <a className="inline-flex items-center justify-center px-8 py-3.5 text-base font-semibold text-white bg-orange-500 rounded-lg hover:bg-orange-600 transition-colors shadow-lg shadow-orange-500/30 group" href="#">
-                    Check Eligibility Now
+                  <button
+                    onClick={handleCheckEligibility}
+                    disabled={checking}
+                    className="inline-flex items-center justify-center px-8 py-3.5 text-base font-semibold text-white bg-orange-500 rounded-lg hover:bg-orange-600 transition-colors shadow-lg shadow-orange-500/30 group disabled:opacity-70"
+                  >
+                    {checking ? "Checking..." : "Check Eligibility Now"}
                     <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M14 5l7 7m0 0l-7 7m7-7H3" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"></path></svg>
-                  </a>
+                  </button>
                   <a className="inline-flex items-center justify-center px-8 py-3.5 text-base font-semibold text-navy-900 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors" href="#">
                     How It Works
                   </a>
