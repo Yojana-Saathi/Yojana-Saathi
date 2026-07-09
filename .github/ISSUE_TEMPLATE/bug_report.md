@@ -1,38 +1,55 @@
 ---
-name: Bug report
-about: Create a report to help us improve
-title: ''
-labels: ''
+name: Bug Report
+about: Report a reproducible defect in the product, API, or developer workflow.
+title: "bug: "
+labels: "bug, needs-triage"
 assignees: ''
 
 ---
 
-**Describe the bug**
-A clear and concise description of what the bug is.
+## Summary
 
-**To Reproduce**
-Steps to reproduce the behavior:
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
+Describe the bug in one or two sentences.
 
-**Expected behavior**
-A clear and concise description of what you expected to happen.
+## Affected Area
 
-**Screenshots**
-If applicable, add screenshots to help explain your problem.
+- [ ] Frontend
+- [ ] Backend API
+- [ ] Supabase/database
+- [ ] Edge Function
+- [ ] CI/CD
+- [ ] Documentation
+- [ ] Other
 
-**Desktop (please complete the following information):**
- - OS: [e.g. iOS]
- - Browser [e.g. chrome, safari]
- - Version [e.g. 22]
+## Steps to Reproduce
 
-**Smartphone (please complete the following information):**
- - Device: [e.g. iPhone6]
- - OS: [e.g. iOS8.1]
- - Browser [e.g. stock browser, safari]
- - Version [e.g. 22]
+1.
+2.
+3.
 
-**Additional context**
-Add any other context about the problem here.
+## Expected Behavior
+
+What should have happened?
+
+## Actual Behavior
+
+What happened instead?
+
+## Environment
+
+- OS:
+- Browser and version:
+- Node version, if frontend:
+- Python version, if backend:
+- Branch or commit:
+
+## Logs, Screenshots, or Request/Response Samples
+
+Paste only non-sensitive logs. Do not include secrets, JWTs, service role keys, full citizen profiles, or real documents.
+
+## Severity
+
+- [ ] Blocks all usage
+- [ ] Breaks a core workflow
+- [ ] Has a workaround
+- [ ] Cosmetic or low impact

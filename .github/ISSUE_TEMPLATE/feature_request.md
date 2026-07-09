@@ -1,20 +1,38 @@
 ---
-name: Feature request
-about: Suggest an idea for this project
-title: ''
-labels: ''
+name: Feature Request
+about: Propose a product, platform, or developer-experience improvement.
+title: "feat: "
+labels: "enhancement, needs-triage"
 assignees: ''
 
 ---
 
-**Is your feature request related to a problem? Please describe.**
-A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
+## Problem
 
-**Describe the solution you'd like**
-A clear and concise description of what you want to happen.
+What user, contributor, or operational problem does this solve?
 
-**Describe alternatives you've considered**
-A clear and concise description of any alternative solutions or features you've considered.
+## Proposed Solution
 
-**Additional context**
-Add any other context or screenshots about the feature request here.
+Describe the smallest useful version of the feature.
+
+## Target Users
+
+- [ ] Citizens
+- [ ] Maintainers/admins
+- [ ] Frontend contributors
+- [ ] Backend contributors
+- [ ] Deployment/operators
+
+## Acceptance Criteria
+
+- [ ]
+- [ ]
+- [ ]
+
+## Alternatives Considered
+
+Briefly describe other approaches and why they are less suitable.
+
+## Additional Context
+
+Add designs, screenshots, API sketches, or links when useful. Do not include sensitive data.
