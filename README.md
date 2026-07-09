@@ -6,14 +6,14 @@
 
 An AI-assisted eligibility engine that turns a single citizen profile into a ranked list of the exact Indian government schemes a person qualifies for — with the missing documents, benefit value, and a pre-filled application draft for each one.
 
-[![Backend CI](https://github.com/PREMRAJESH/Yojana-Saathi/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/PREMRAJESH/Yojana-Saathi/actions/workflows/backend-ci.yml)
+[![Backend CI](https://github.com/Yojana-Saathi/Yojana-Saathi/actions/workflows/backend-ci.yml/badge.svg)](https://github.com/Yojana-Saathi/Yojana-Saathi/actions/workflows/backend-ci.yml)
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.139-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=next.js&logoColor=white)](https://nextjs.org/)
 [![Deploy on Render](https://img.shields.io/badge/Deploy-Render-46E3B7?logo=render&logoColor=white)](https://render.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](#-license)
 
-[**Problem**](#-the-problem) · [**How it works**](#-how-it-works) · [**Quickstart**](#-quickstart) · [**API**](#-api-reference) · [**Architecture**](#-architecture) · [**Deploy**](#-deployment) · [**Roadmap**](#-roadmap)
+[**Problem**](#-the-problem) · [**How it works**](#-how-it-works) · [**Quickstart**](#-quickstart) · [**API**](#-api-reference) · [**Architecture**](#-architecture) · [**Wiki**](https://github.com/Yojana-Saathi/Yojana-Saathi/wiki) · [**Contribute**](CONTRIBUTING.md) · [**Deploy**](#-deployment)
 
 </div>
 
@@ -276,12 +276,7 @@ The frontend is a standard Next.js app and deploys cleanly to Vercel or any Node
 
 ## 🤝 Contributing
 
-Contributions are welcome. Please open an issue to discuss significant changes first.
-
-1. Fork and create a feature branch: `git checkout -b feat/your-feature`
-2. Make your change and add tests — keep the suite green (`pytest Backend -q`)
-3. Ensure `pip-audit` passes and follow the existing code style
-4. Open a pull request describing the *why*, not just the *what*
+Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a PR, and use the [YojanaSaathi Wiki](https://github.com/Yojana-Saathi/Yojana-Saathi/wiki) for deeper architecture and setup notes.
 
 ---
 

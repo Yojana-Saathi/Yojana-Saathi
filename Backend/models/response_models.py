@@ -1,6 +1,7 @@
 """Response contract models for all endpoints.
 
-FROZEN — field names, types, and shape must match API_CONTRACT.md exactly.
+FROZEN - field names, types, and shape must match the frontend TypeScript
+contract exactly.
 All models forbid unknown fields (extra="forbid").
 """
 

@@ -1,6 +1,7 @@
 """Shared enum types for the frozen API contract.
 
-These enums encode the EXACT lowercase snake_case values from API_CONTRACT.md.
+These enums encode the exact lowercase snake_case values shared by the backend
+Pydantic models and frontend TypeScript types.
 Any value outside these sets must be rejected with a 422 by Pydantic.
 """
 
@@ -96,4 +97,3 @@ GOV_ID_KEYS: tuple[str, ...] = (
     "voter_id",
     "education_marksheet",
 )
-

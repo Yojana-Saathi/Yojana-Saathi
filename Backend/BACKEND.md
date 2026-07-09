@@ -60,9 +60,10 @@ LLM. A partial degradation is reported honestly as `processing_status:
 
 ### 1.3 The API contract is frozen
 
-The request/response shapes match a `API_CONTRACT.md` spec exactly. All Pydantic
-models use `extra="forbid"` (unknown fields are rejected with a `422`), enum
-values are exact lowercase snake_case, and numeric fields refuse string values.
+The request/response shapes are enforced by the backend Pydantic models and the
+frontend TypeScript types. All Pydantic models use `extra="forbid"` (unknown
+fields are rejected with a `422`), enum values are exact lowercase snake_case,
+and numeric fields refuse string values.
 `eligible_schemes` is **always an array, never null** — an empty match is a valid,
 successful outcome, not an error.
 
