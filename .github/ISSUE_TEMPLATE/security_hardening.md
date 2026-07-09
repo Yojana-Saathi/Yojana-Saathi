@@ -1,8 +1,9 @@
 ---
 name: Security Hardening
-about: Propose a non-sensitive security, privacy, dependency, or infrastructure hardening improvement.
-title: "security: "
-labels: "security, hardening, needs-triage"
+about: Propose a non-sensitive security, privacy, dependency, or infrastructure hardening
+  improvement.
+title: 'security: '
+labels: ''
 assignees: ''
 
 ---
@@ -40,4 +41,3 @@ Describe the change and any migration or compatibility concerns.
 ## Validation
 
 How should maintainers verify the improvement?
-

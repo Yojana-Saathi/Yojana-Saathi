@@ -1,8 +1,9 @@
 ---
 name: Agent Behavior Report
-about: Report incorrect output from Intake, Eligibility, Ranking, DocGap, Drafter, or Document agents.
-title: "agent: "
-labels: "agent, bug, needs-triage"
+about: Report incorrect output from Intake, Eligibility, Ranking, DocGap, Drafter,
+  or Document agents.
+title: 'agent: '
+labels: bug
 assignees: ''
 
 ---
@@ -44,4 +45,3 @@ Explain the user impact, legal/eligibility risk, or downstream workflow impact.
 ## Suggested Test Case
 
 Describe the test that should fail before the fix and pass after it.
-

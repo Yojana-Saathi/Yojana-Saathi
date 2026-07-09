@@ -1,8 +1,8 @@
 ---
 name: API Contract Change
 about: Propose a field, enum, endpoint, or response-shape change before implementation.
-title: "contract: "
-labels: "api-contract, needs-triage"
+title: 'contract: '
+labels: ''
 assignees: ''
 
 ---
@@ -50,4 +50,3 @@ Describe the new shape and include an example payload when possible.
 ## Rationale
 
 Why is this change worth the contract cost?
-

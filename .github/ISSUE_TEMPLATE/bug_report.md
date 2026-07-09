@@ -1,8 +1,8 @@
 ---
 name: Bug Report
 about: Report a reproducible defect in the product, API, or developer workflow.
-title: "bug: "
-labels: "bug, needs-triage"
+title: 'bug: '
+labels: bug
 assignees: ''
 
 ---

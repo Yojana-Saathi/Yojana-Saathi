@@ -1,8 +1,8 @@
 ---
 name: Integration Blocker
 about: Flag a blocker between frontend, backend, Supabase, deployment, or CI.
-title: "blocker: "
-labels: "integration, blocker, needs-triage"
+title: 'blocker: '
+labels: ''
 assignees: ''
 
 ---
@@ -46,4 +46,3 @@ What happened instead?
 - [ ] Blocks a PR
 - [ ] Blocks local development
 - [ ] Needs clarification but has a workaround
-

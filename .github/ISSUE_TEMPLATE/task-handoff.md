@@ -1,8 +1,9 @@
 ---
-name: Task Handoff
-about: Hand off blocked or paused work with enough context for another contributor to continue.
-title: "handoff: "
-labels: "handoff, needs-owner"
+name: Task-Handoff
+about: Hand off blocked or paused work with enough context for another contributor
+  to continue.
+title: 'handoff: '
+labels: ''
 assignees: ''
 
 ---
@@ -30,4 +31,3 @@ Include commands run, errors seen, decisions made, links to branches/PRs, or scr
 ## Suggested Next Step
 
 What should the next person try first?
-

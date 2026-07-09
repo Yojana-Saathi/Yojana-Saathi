@@ -1,8 +1,8 @@
 ---
 name: Documentation Request
 about: Request missing, unclear, outdated, or misleading documentation to be improved.
-title: "docs: "
-labels: "documentation, needs-triage"
+title: 'docs: '
+labels: documentation
 assignees: ''
 
 ---
@@ -37,4 +37,3 @@ What should the documentation say or link to?
 ## Related Files or Links
 
 Add links to docs, code, issues, or pull requests.
-

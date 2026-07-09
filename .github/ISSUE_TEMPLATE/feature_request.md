@@ -1,8 +1,8 @@
 ---
 name: Feature Request
 about: Propose a product, platform, or developer-experience improvement.
-title: "feat: "
-labels: "enhancement, needs-triage"
+title: 'feat: '
+labels: enhancement
 assignees: ''
 
 ---
