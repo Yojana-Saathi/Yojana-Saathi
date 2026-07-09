@@ -144,7 +144,7 @@ Frontend/
 ## 4. The End-to-End Application Flow
 
 ### 4.1 Home Page Landing (`app/page.tsx`)
-1. User lands on the homepage which describes the platform, lists stats (1000+ Schemes, 10L+ Profiles, 95% Accuracy), and details common user pain points.
+1. User lands on the homepage which describes the platform, lists stats (4,700+ Schemes, 10L+ Profiles, 95% Accuracy), and details common user pain points.
 2. User clicks **Check Eligibility Now** which directs them to signup/register.
 
 ### 4.2 Registration & Onboarding (`app/register/page.tsx`)

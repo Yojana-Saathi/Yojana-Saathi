@@ -62,7 +62,7 @@ export default function Login() {
           {/* Stats */}
           <div className="grid grid-cols-3 gap-6">
             {[
-              { value: "1000+", label: "Schemes" },
+              { value: "4,700+", label: "Schemes" },
               { value: "95%", label: "Accuracy" },
               { value: "10L+", label: "Citizens Helped" },
             ].map((s) => (

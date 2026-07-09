@@ -3,7 +3,7 @@ import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Yojana Saarthi – Schemes Directory",
-  description: "Browse and discover 1000+ government welfare schemes across India.",
+  description: "Browse and discover 4,700+ government welfare schemes across India.",
 };
 
 export default function Schemes() {
@@ -172,7 +172,7 @@ export default function Schemes() {
           <div className="flex-grow">
             {/* Results Header */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-6 gap-4">
-              <p className="text-slate-600">Showing <span className="font-bold text-navy">1-8</span> of <span className="font-bold text-navy">1,200+</span> schemes</p>
+              <p className="text-slate-600">Showing <span className="font-bold text-navy">1-8</span> of <span className="font-bold text-navy">4,700+</span> schemes</p>
               <div className="flex items-center gap-2">
                 <label className="text-sm text-slate-500 whitespace-nowrap" htmlFor="sort">Sort by:</label>
                 <select className="block w-40 rounded-lg border-slate-200 py-1.5 pl-3 pr-10 text-sm focus:border-navy focus:outline-none focus:ring-navy" id="sort">

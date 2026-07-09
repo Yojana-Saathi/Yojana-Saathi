@@ -129,7 +129,7 @@ export default function Home() {
                 <h3 className="text-orange-500 font-bold uppercase tracking-wider text-sm mb-3">The Real Challenge</h3>
                 <h2 className="text-4xl font-bold text-navy-900 mb-6 leading-tight">Why Finding the Right Scheme is So Hard</h2>
                 <p className="text-gray-600 text-lg leading-relaxed">
-                  With 1000+ schemes, complex rules, and endless paperwork, most eligible benefits go unclaimed. It doesn&apos;t have to be this way.
+                  With 4,700+ schemes, complex rules, and endless paperwork, most eligible benefits go unclaimed. It doesn&apos;t have to be this way.
                 </p>
               </div>
               {/* Right Cards */}
@@ -224,7 +224,7 @@ export default function Home() {
               <div className="flex items-center gap-4 px-4">
                 <svg className="w-10 h-10 text-orange-500 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5"></path></svg>
                 <div>
-                  <div className="text-3xl font-bold text-white mb-1">1000+</div>
+                  <div className="text-3xl font-bold text-white mb-1">4,700+</div>
                   <div className="text-orange-100 text-sm">Government Schemes Analyzed</div>
                 </div>
               </div>
