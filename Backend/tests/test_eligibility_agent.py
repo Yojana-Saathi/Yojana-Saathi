@@ -61,7 +61,7 @@ def make_scheme(rule_overrides=None, **scheme_overrides) -> Scheme:
 
 @pytest.fixture(scope="module")
 def schemes():
-    return tuple(load_schemes())
+    return tuple(s for s in load_schemes() if s.eligibility_verified)
 
 
 # ---------------------------------------------------------------------------

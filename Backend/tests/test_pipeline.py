@@ -14,7 +14,7 @@ def profile(**overrides) -> CitizenProfile:
     return CitizenProfile(**make_profile_dict(**overrides))
 
 
-SCHEMES = tuple(load_schemes())
+SCHEMES = tuple(s for s in load_schemes() if s.eligibility_verified)
 
 
 class _DegradingLLM:

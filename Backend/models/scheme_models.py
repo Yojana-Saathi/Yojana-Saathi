@@ -45,6 +45,10 @@ class Scheme(BaseModel):
     benefit_value_estimate: str
     required_documents: list[str] = Field(default_factory=list)
     application_url: str
+    eligibility_text_raw: str | None = None
+    official_source_url: str | None = None
+    last_verified_date: str | None = None
+    eligibility_verified: bool = False
 
     @field_validator("scheme_id")
     @classmethod

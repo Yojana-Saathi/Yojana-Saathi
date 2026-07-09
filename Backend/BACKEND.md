@@ -142,7 +142,7 @@ Backend/
 │   └── gemini_client.py        # thin async Gemini wrapper (generation only)
 │
 ├── data/
-│   └── schemes.json            # 20 welfare scheme definitions + rules
+│   └── schemes.json            # 4,702 welfare scheme definitions + rules
 │
 └── tests/                      # pytest suite (~1,500 lines, per-agent + integration)
     ├── conftest.py             # shared fixtures + stateful MockSupabaseClient
@@ -427,7 +427,7 @@ Not part of the public contract, but validated at load time so a bad data entry 
 
 ## 8. The scheme dataset
 
-**File:** `data/schemes.json` — a JSON array of **20 real Indian welfare schemes**.
+**File:** `data/schemes.json` — a JSON array of **4,702 real Indian welfare schemes (20 verified seed schemes + 4,682 unverified schemes)**.
 
 Coverage spans every category: agriculture (PM-KISAN, PMFBY, KALIA), housing
 (PMAY-Gramin, PMAY-Urban), pensions (old-age, widow, disability), health

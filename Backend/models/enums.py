@@ -60,6 +60,8 @@ class SchemeCategory(str, Enum):
     WOMEN_CHILD = "women_child"
     HOUSING = "housing"
     PENSION = "pension"
+    EMPLOYMENT = "employment"
+    FINANCIAL_INCLUSION = "financial_inclusion"
     OTHER = "other"
 
 

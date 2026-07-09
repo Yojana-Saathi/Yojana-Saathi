@@ -69,8 +69,11 @@ json_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data"
 with open(json_path, "r", encoding="utf-8") as f:
     raw_schemes = json.load(f)
 
+# Filter for tests to only use verified seed schemes
+verified_raw_schemes = [s for s in raw_schemes if s.get("eligibility_verified") is True]
+
 SCHEMES_DB_DATA = []
-for idx, s in enumerate(raw_schemes):
+for idx, s in enumerate(verified_raw_schemes):
     SCHEMES_DB_DATA.append({
         "id": f"uuid-scheme-{idx}",
         "scheme_id": s["scheme_id"],

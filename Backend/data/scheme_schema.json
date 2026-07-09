@@ -1,0 +1,145 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Scheme",
+  "type": "object",
+  "properties": {
+    "scheme_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "scheme_name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scheme_category": {
+      "type": "string",
+      "enum": [
+        "agriculture",
+        "education",
+        "health",
+        "housing",
+        "employment",
+        "pension",
+        "disability",
+        "women_child",
+        "financial_inclusion",
+        "other"
+      ]
+    },
+    "issuing_authority": {
+      "type": "string",
+      "minLength": 1
+    },
+    "eligibility_rules": {
+      "type": "object",
+      "properties": {
+        "min_age": {
+          "type": ["integer", "null"]
+        },
+        "max_age": {
+          "type": ["integer", "null"]
+        },
+        "max_annual_income": {
+          "type": ["number", "null"]
+        },
+        "allowed_occupations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "allowed_social_categories": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["general", "obc", "sc", "st", "ews"]
+          }
+        },
+        "required_disability_status": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["physical", "visual", "hearing", "intellectual", "multiple"]
+          }
+        },
+        "state_restricted_to": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "gender_restricted_to": {
+          "type": "string",
+          "enum": ["any", "male", "female"]
+        }
+      },
+      "required": [
+        "min_age",
+        "max_age",
+        "max_annual_income",
+        "allowed_occupations",
+        "allowed_social_categories",
+        "required_disability_status",
+        "state_restricted_to",
+        "gender_restricted_to"
+      ],
+      "additionalProperties": false
+    },
+    "eligibility_text_raw": {
+      "type": ["string", "null"]
+    },
+    "benefit_summary": {
+      "type": "string"
+    },
+    "benefit_value_estimate": {
+      "type": "string"
+    },
+    "required_documents": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "aadhaar",
+          "income_certificate",
+          "caste_certificate",
+          "ration_card",
+          "domicile_certificate",
+          "disability_certificate",
+          "land_record",
+          "bank_passbook",
+          "voter_id",
+          "education_marksheet"
+        ]
+      }
+    },
+    "application_url": {
+      "type": "string"
+    },
+    "official_source_url": {
+      "type": ["string", "null"]
+    },
+    "last_verified_date": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+    },
+    "eligibility_verified": {
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "scheme_id",
+    "scheme_name",
+    "scheme_category",
+    "issuing_authority",
+    "eligibility_rules",
+    "eligibility_text_raw",
+    "benefit_summary",
+    "benefit_value_estimate",
+    "required_documents",
+    "application_url",
+    "official_source_url",
+    "last_verified_date",
+    "eligibility_verified"
+  ],
+  "additionalProperties": false
+}
