@@ -1,8 +1,66 @@
 "use client";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { supabase } from "./lib/supabaseClient";
+
+const profileFields = [
+  { icon: "person", label: "Age" },
+  { icon: "work", label: "Occupation" },
+  { icon: "location_on", label: "State" },
+  { icon: "payments", label: "Income" },
+  { icon: "category", label: "Category" },
+];
+
+const scanSteps = [
+  { label: "Checking Eligibility Rules", state: "done" },
+  { label: "Verifying Documents", state: "done" },
+  { label: "Matching Benefits", state: "active" },
+  { label: "Finalizing Results", state: "pending" },
+];
+
+const matchingSchemes = [
+  {
+    icon: "agriculture",
+    iconClass: "bg-green-50 text-green-600",
+    title: "PM-KISAN",
+    subtitle: "Farmer Income Support",
+    amount: "\u20B96,000 / year",
+    amountClass: "text-green-600",
+  },
+  {
+    icon: "medical_services",
+    iconClass: "bg-rose-50 text-rose-500",
+    title: "Ayushman Bharat",
+    subtitle: "Health Coverage",
+    amount: "Up to \u20B95 Lakh",
+    amountClass: "text-orange-500",
+  },
+  {
+    icon: "school",
+    iconClass: "bg-indigo-50 text-indigo-500",
+    title: "National Scholarship",
+    subtitle: "Education Support",
+    amount: "Up to \u20B975,000",
+    amountClass: "text-orange-500",
+  },
+  {
+    icon: "home",
+    iconClass: "bg-orange-50 text-orange-500",
+    title: "PM Awas Yojana",
+    subtitle: "Housing Assistance",
+    amount: "Up to \u20B91,20,000",
+    amountClass: "text-orange-500",
+  },
+];
+
+const stats = [
+  { icon: "description", value: "4,702+", label: "Government\nSchemes" },
+  { icon: "groups", value: "28", label: "States & UTs\nCovered" },
+  { icon: "check_circle", value: "95%+", label: "Match\nAccuracy" },
+  { icon: "shield", value: "100%", label: "Private &\nSecure" },
+];
 
 export default function Home() {
   const router = useRouter();
@@ -10,315 +68,273 @@ export default function Home() {
 
   async function handleCheckEligibility() {
     setChecking(true);
-    const { data: { session } } = await supabase.auth.getSession();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+
     if (session) {
       router.push("/dashboard");
     } else {
       router.push("/login");
     }
+
     setChecking(false);
   }
 
   return (
     <>
-      {/* ── NAVBAR ── */}
-      <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-100 shadow-sm py-3">
-        <div className="container mx-auto px-6 lg:px-10 max-w-7xl flex items-center justify-between">
-          <Link className="flex items-center gap-2 group" href="/">
+      <header className="sticky top-0 z-50 border-b border-gray-100 bg-white/90 py-3 shadow-sm backdrop-blur-md">
+        <div className="container mx-auto flex max-w-7xl items-center justify-between px-6 lg:px-10">
+          <Link className="group flex items-center gap-2" href="/">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/media/logo.png" alt="Yojana Saarthi Logo" width={34} height={34} className="group-hover:scale-105 transition-transform" />
+            <img
+              src="/media/logo.png"
+              alt="Yojana Saarthi Logo"
+              width={34}
+              height={34}
+              className="transition-transform group-hover:scale-105"
+            />
             <span className="text-xl font-bold tracking-tight text-[#1B2B4B]">Yojana Saarthi</span>
           </Link>
-          <nav className="hidden md:flex items-center gap-8 font-medium text-gray-500">
-            <Link className="hover:text-orange-500 transition-colors text-sm" href="/schemes">Schemes</Link>
-            <Link className="hover:text-orange-500 transition-colors text-sm" href="/dashboard">Eligibility</Link>
-            <Link className="hover:text-orange-500 transition-colors text-sm" href="/login">Sign In</Link>
-            <Link className="hover:text-orange-500 transition-colors text-sm" href="/register">Register</Link>
+
+          <nav className="hidden items-center gap-8 font-medium text-gray-500 md:flex">
+            <Link className="text-sm transition-colors hover:text-orange-500" href="/schemes">
+              Schemes
+            </Link>
+            <Link className="text-sm transition-colors hover:text-orange-500" href="/dashboard">
+              Eligibility
+            </Link>
+            <Link className="text-sm transition-colors hover:text-orange-500" href="/login">
+              Sign In
+            </Link>
+            <Link className="text-sm transition-colors hover:text-orange-500" href="/register">
+              Register
+            </Link>
           </nav>
+
           <button
             onClick={handleCheckEligibility}
             disabled={checking}
-            className="hidden md:inline-flex items-center justify-center px-5 py-2 text-sm font-semibold text-white bg-orange-500 rounded-full hover:bg-orange-600 transition-colors shadow-md shadow-orange-500/20 disabled:opacity-70"
+            className="hidden items-center justify-center rounded-full bg-orange-500 px-5 py-2 text-sm font-semibold text-white shadow-md shadow-orange-500/20 transition-colors hover:bg-orange-600 disabled:opacity-70 md:inline-flex"
           >
             {checking ? "Checking..." : "Check Eligibility"}
           </button>
-          <button className="md:hidden p-2 text-gray-600">
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path d="M4 6h16M4 12h16M4 18h16" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" />
-            </svg>
+
+          <button className="p-2 text-gray-600 md:hidden" aria-label="Open navigation">
+            <span className="material-symbols-outlined text-[28px]">menu</span>
           </button>
         </div>
       </header>
 
       <main>
-        {/* ════════════════════════════════════════════
-            HERO SECTION
-        ════════════════════════════════════════════ */}
-        <section className="relative overflow-hidden" style={{ background: "linear-gradient(135deg, #f0f4ff 0%, #f8f9ff 40%, #fffaf5 70%, #fff7f0 100%)" }}>
+        <section className="relative isolate overflow-hidden bg-[#f7fbff]">
+          <video
+            className="absolute inset-0 -z-20 h-full w-full object-cover object-[55%_center]"
+            autoPlay
+            muted
+            loop
+            playsInline
+            preload="auto"
+            aria-hidden="true"
+          >
+            <source src="/media/loop.mp4" type="video/mp4" />
+          </video>
+          <div className="absolute inset-0 -z-10 bg-gradient-to-r from-white/88 via-white/42 to-white/66" />
+          <div className="absolute inset-x-0 top-0 -z-10 h-40 bg-gradient-to-b from-white/70 to-transparent" />
 
-          {/* ── Hero 3-column grid ── */}
-          <div className="container mx-auto px-6 lg:px-10 max-w-7xl pt-14 pb-0">
-            <div className="grid grid-cols-1 lg:grid-cols-[400px_1fr_300px] gap-6 items-center">
-
-              {/* ── LEFT: Copy ── */}
-              <div className="space-y-5 z-10 py-8">
-                {/* Badge */}
-                <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-orange-200 bg-orange-50/80">
-                  <svg className="w-3.5 h-3.5 text-orange-500 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                  </svg>
-                  <span className="text-orange-600 font-semibold text-[10px] tracking-widest uppercase">
-                    AI-Powered • Open Source • For Every Citizen
-                  </span>
-                </div>
-
-                {/* Heading */}
-                <h1 className="text-5xl lg:text-[56px] font-extrabold leading-[1.08] text-[#1B2B4B]">
-                  Unlock Your<br />
-                  Right to<br />
-                  <span className="text-orange-500">Benefits</span>
-                </h1>
-
-                {/* Sub */}
-                <p className="text-gray-500 text-base leading-relaxed max-w-sm">
-                  We scan <span className="font-bold text-orange-500">4,702+</span> government schemes
-                  using advanced AI reasoning to find every benefit you are eligible for.
-                </p>
-
-                {/* CTAs */}
-                <div className="flex flex-wrap items-center gap-4 pt-1">
-                  <button
-                    onClick={handleCheckEligibility}
-                    disabled={checking}
-                    className="inline-flex items-center gap-2 px-6 py-3 text-sm font-bold text-white bg-orange-500 rounded-full hover:bg-orange-600 active:scale-95 transition-all shadow-lg shadow-orange-400/40 disabled:opacity-70"
-                  >
-                    {checking ? "Checking…" : "Check Eligibility Now"}
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                    </svg>
-                  </button>
-                  <a href="#how-it-works" className="text-sm font-semibold text-[#1B2B4B] hover:text-orange-500 transition-colors">
-                    How It Works
-                  </a>
-                </div>
+          <div className="mx-auto grid min-h-[calc(100vh-65px)] w-full max-w-[1580px] grid-cols-1 gap-8 px-5 pb-10 pt-10 sm:px-8 sm:pt-14 lg:px-12 xl:grid-cols-[minmax(390px,520px)_minmax(260px,330px)_minmax(300px,360px)] xl:items-center xl:gap-6 xl:pb-10 xl:pt-10 2xl:gap-10 2xl:pt-14">
+            <div className="relative z-20 flex flex-col justify-center">
+              <div className="inline-flex w-fit max-w-full items-center gap-2 rounded-full border border-orange-200 bg-white/70 px-3 py-1.5 shadow-sm backdrop-blur">
+                <span className="material-symbols-outlined text-[17px] text-orange-500">verified_user</span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-orange-500 sm:text-[11px] sm:tracking-[0.2em]">
+                  AI-Powered <span className="mx-1">{"\u2022"}</span> Open Source{" "}
+                  <span className="mx-1">{"\u2022"}</span> For Every Citizen
+                </span>
               </div>
 
-              {/* ── CENTER: AI Graphic + floating cards ── */}
-              <div className="relative flex items-end justify-center min-h-[520px]">
+              <h1 className="mt-6 text-[46px] font-extrabold leading-[1.05] text-[#142447] sm:text-6xl lg:text-[70px] xl:mt-5 xl:text-[66px] 2xl:text-[76px]">
+                Unlock Your
+                <br />
+                Right to
+                <br />
+                <span className="text-orange-500">Benefits</span>
+              </h1>
 
-                {/* Main AI circuit image */}
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src="/media/Center-Ai-Code.png"
-                  alt="AI Eligibility Engine"
-                  className="w-full max-w-[500px] mx-auto select-none pointer-events-none relative z-0"
-                  style={{ filter: "drop-shadow(0 0 40px rgba(249,115,22,0.15))" }}
-                />
+              <p className="mt-6 max-w-md text-base leading-relaxed text-gray-600 sm:text-lg xl:mt-5">
+                We scan <span className="font-bold text-orange-500">4,702+</span> government schemes using
+                advanced AI reasoning to find every benefit you are eligible for.
+              </p>
 
-                {/* Label: AI Eligibility Engine */}
-                <div className="absolute bottom-24 left-1/2 -translate-x-1/2 flex items-center gap-1.5 bg-white/80 backdrop-blur-sm border border-orange-100 rounded-full px-3 py-1 shadow-sm z-10 whitespace-nowrap">
-                  <span className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
-                  <span className="text-orange-500 text-[10px] font-bold tracking-widest uppercase">AI Eligibility Engine</span>
-                </div>
-
-                {/* Floating card: Your Profile */}
-                <div className="absolute top-10 left-0 lg:-left-8 bg-white rounded-2xl shadow-xl border border-gray-100 p-4 w-[160px] z-20 animate-[float_4s_ease-in-out_infinite]">
-                  <p className="text-[11px] font-bold text-gray-900 mb-3">Your Profile</p>
-                  {/* Avatar */}
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-200 to-blue-300 flex items-center justify-center mb-3 mx-auto">
-                    <svg className="w-6 h-6 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" />
-                    </svg>
-                  </div>
-                  <div className="space-y-2">
-                    {[
-                      { icon: (
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>
-                      ), label: "Age" },
-                      { icon: (
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
-                      ), label: "Occupation" },
-                      { icon: (
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                      ), label: "State" },
-                      { icon: (
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                      ), label: "Income" },
-                      { icon: (
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" /></svg>
-                      ), label: "Category" },
-                    ].map(({ icon, label }) => (
-                      <div key={label} className="flex items-center gap-2 text-[11px] text-gray-400">
-                        <span className="text-gray-300">{icon}</span>
-                        <span>{label}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Floating card: Scanning */}
-                <div className="absolute bottom-8 left-1/2 -translate-x-1/2 bg-white rounded-2xl shadow-xl border border-gray-100 p-4 w-[210px] z-20 animate-[float_5s_ease-in-out_infinite_1s]">
-                  <p className="text-[11px] font-bold text-gray-900 mb-3">Scanning 4,702+ Schemes</p>
-                  <div className="space-y-2.5">
-                    {[
-                      { label: "Checking Eligibility Rules", done: true, active: false },
-                      { label: "Verifying Documents",        done: true, active: false },
-                      { label: "Matching Benefits",          done: false, active: true },
-                      { label: "Finalizing Results",         done: false, active: false },
-                    ].map(({ label, done, active }) => (
-                      <div key={label} className="flex items-center gap-2 text-[11px]">
-                        {done ? (
-                          <svg className="w-3.5 h-3.5 text-green-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                          </svg>
-                        ) : active ? (
-                          <svg className="w-3.5 h-3.5 text-orange-400 flex-shrink-0 animate-spin" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                          </svg>
-                        ) : (
-                          <div className="w-3.5 h-3.5 rounded-full border border-gray-200 flex-shrink-0" />
-                        )}
-                        <span className={active ? "text-orange-500 font-semibold" : done ? "text-gray-700" : "text-gray-300"}>
-                          {label}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+              <div className="mt-8 flex flex-wrap items-center gap-3 sm:gap-4 xl:mt-7">
+                <button
+                  onClick={handleCheckEligibility}
+                  disabled={checking}
+                  className="inline-flex min-h-12 items-center gap-2 rounded-full bg-orange-500 px-6 py-3 text-sm font-bold text-white shadow-xl shadow-orange-400/30 transition-all hover:bg-orange-600 active:scale-95 disabled:opacity-70 sm:px-7 sm:py-3.5"
+                >
+                  {checking ? "Checking..." : "Check Eligibility Now"}
+                  <span className="material-symbols-outlined text-[19px]">arrow_forward</span>
+                </button>
+                <a
+                  href="#how-it-works"
+                  className="inline-flex min-h-12 items-center justify-center rounded-full bg-white/88 px-5 py-3 text-sm font-bold text-[#1B2B4B] shadow-sm ring-1 ring-gray-100 transition-colors hover:text-orange-500 sm:px-6 sm:py-3.5"
+                >
+                  How It Works
+                </a>
               </div>
 
-              {/* ── RIGHT: Matching Schemes ── */}
-              <div className="z-10 py-8">
-                <p className="text-orange-500 font-bold text-[10px] tracking-widest uppercase mb-3">Matching Schemes</p>
+              <div className="mt-11 grid max-w-xl grid-cols-2 gap-4 sm:mt-12 sm:grid-cols-4 xl:mt-9 xl:gap-3 2xl:gap-4">
+                {stats.map((stat) => (
+                  <div key={stat.value} className="flex min-w-0 items-center gap-2 sm:gap-3">
+                    <span className="material-symbols-outlined flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/88 text-[24px] text-[#1B2B4B] shadow-sm ring-1 ring-gray-100 sm:h-12 sm:w-12 sm:text-[25px]">
+                      {stat.icon}
+                    </span>
+                    <span className="min-w-0">
+                      <span className="block text-xl font-extrabold leading-none text-[#142447] sm:text-2xl xl:text-[22px] 2xl:text-2xl">
+                        {stat.value}
+                      </span>
+                      <span className="mt-1 block whitespace-pre-line text-[12px] leading-tight text-gray-600">
+                        {stat.label}
+                      </span>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="relative z-10 grid gap-4 sm:grid-cols-2 xl:flex xl:min-h-[540px] xl:flex-col xl:items-start xl:justify-center xl:gap-4">
+              <div className="order-2 hidden self-end rounded-full border border-orange-100 bg-white/82 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.16em] text-orange-500 shadow-sm backdrop-blur xl:block">
+                AI Eligibility Engine
+              </div>
+
+              <div className="order-1 rounded-[18px] border border-gray-100 bg-white/88 p-4 shadow-xl shadow-slate-900/10 backdrop-blur xl:w-[185px] xl:self-start 2xl:w-[195px]">
+                <p className="text-sm font-extrabold text-[#142447]">Your Profile</p>
+                <div className="mx-auto my-3 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-blue-100 to-blue-200">
+                  <span className="material-symbols-outlined filled text-[36px] text-[#1B76F2]">person</span>
+                </div>
                 <div className="space-y-2.5">
-                  {[
-                    {
-                      emoji: "🌾",
-                      bg: "bg-green-50",
-                      title: "PM-KISAN",
-                      subtitle: "Farmer Income Support",
-                      amount: "₹6,000 / year",
-                      amountColor: "text-green-600",
-                    },
-                    {
-                      emoji: "🏥",
-                      bg: "bg-red-50",
-                      title: "Ayushman Bharat",
-                      subtitle: "Health Coverage",
-                      amount: "Up to ₹5 Lakh",
-                      amountColor: "text-orange-500",
-                    },
-                    {
-                      emoji: "🎓",
-                      bg: "bg-blue-50",
-                      title: "National Scholarship",
-                      subtitle: "Education Support",
-                      amount: "Up to ₹75,000",
-                      amountColor: "text-orange-500",
-                    },
-                    {
-                      emoji: "🏠",
-                      bg: "bg-orange-50",
-                      title: "PM Awas Yojana",
-                      subtitle: "Housing Assistance",
-                      amount: "Up to ₹1,20,000",
-                      amountColor: "text-orange-500",
-                    },
-                  ].map((s) => (
-                    <div key={s.title} className="flex items-start gap-2.5 bg-white rounded-xl shadow-sm border border-gray-100 px-3 py-2.5 hover:shadow-md hover:-translate-y-0.5 transition-all cursor-default">
-                      <div className={`flex-shrink-0 w-8 h-8 rounded-lg ${s.bg} flex items-center justify-center text-sm mt-0.5`}>
-                        {s.emoji}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <p className="text-[12px] font-bold text-[#1B2B4B] truncate">{s.title}</p>
-                          <svg className="w-3.5 h-3.5 text-green-500 flex-shrink-0 ml-1" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                          </svg>
-                        </div>
-                        <p className="text-[10px] text-gray-400 mt-0.5">{s.subtitle}</p>
-                        <p className={`text-[12px] font-bold mt-1 ${s.amountColor}`}>{s.amount}</p>
-                      </div>
+                  {profileFields.map((field) => (
+                    <div key={field.label} className="flex items-center gap-2 text-xs font-medium text-[#1B2B4B]">
+                      <span className="material-symbols-outlined text-[16px] text-[#1B2B4B]">{field.icon}</span>
+                      <span>{field.label}</span>
                     </div>
                   ))}
                 </div>
               </div>
 
-            </div>
-          </div>
-
-          {/* ── STATS ROW ── */}
-          <div className="relative z-10 border-t border-gray-100/80 bg-white/50 backdrop-blur-sm mt-4">
-            <div className="container mx-auto px-6 lg:px-10 max-w-7xl py-5">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {[
-                  {
-                    icon: <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>,
-                    value: "4,702+", label: "Government\nSchemes",
-                  },
-                  {
-                    icon: <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>,
-                    value: "28", label: "States & UTs\nCovered",
-                  },
-                  {
-                    icon: <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>,
-                    value: "95%+", label: "Match\nAccuracy",
-                  },
-                  {
-                    icon: <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>,
-                    value: "100%", label: "Private &\nSecure",
-                  },
-                ].map(({ icon, value, label }) => (
-                  <div key={value} className="flex items-center gap-3">
-                    <div className="flex-shrink-0">{icon}</div>
-                    <div>
-                      <p className="text-lg font-extrabold text-[#1B2B4B]">{value}</p>
-                      <p className="text-[11px] text-gray-400 leading-tight whitespace-pre-line">{label}</p>
+              <div className="order-3 rounded-[18px] border border-gray-100 bg-white/90 p-4 shadow-xl shadow-slate-900/10 backdrop-blur sm:col-span-2 xl:w-[280px] xl:self-end 2xl:w-[295px]">
+                <p className="text-sm font-extrabold text-[#142447]">Scanning 4,702+ Schemes</p>
+                <div className="mt-3 space-y-2.5">
+                  {scanSteps.map((step) => (
+                    <div key={step.label} className="flex items-center gap-3 text-xs font-medium">
+                      {step.state === "done" ? (
+                        <span className="material-symbols-outlined filled text-[18px] text-green-500">check_circle</span>
+                      ) : step.state === "active" ? (
+                        <span className="h-[18px] w-[18px] rounded-full border-2 border-orange-400 border-t-transparent motion-safe:animate-spin" />
+                      ) : (
+                        <span className="h-[18px] w-[18px] rounded-full border border-gray-200" />
+                      )}
+                      <span
+                        className={
+                          step.state === "active"
+                            ? "text-orange-500"
+                            : step.state === "done"
+                              ? "text-gray-700"
+                              : "text-gray-400"
+                        }
+                      >
+                        {step.label}
+                      </span>
                     </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="relative z-10 xl:flex xl:min-h-[540px] xl:flex-col xl:justify-center">
+              <p className="mb-4 text-[12px] font-extrabold uppercase tracking-[0.18em] text-orange-500 xl:mb-5">
+                Matching Schemes
+              </p>
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
+                {matchingSchemes.map((scheme) => (
+                  <div
+                    key={scheme.title}
+                    className="flex min-h-[96px] items-center gap-4 rounded-[18px] border border-gray-100 bg-white/92 p-4 shadow-lg shadow-orange-900/5 backdrop-blur transition-transform hover:-translate-y-0.5"
+                  >
+                    <span
+                      className={`material-symbols-outlined filled flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-[30px] ${scheme.iconClass}`}
+                    >
+                      {scheme.icon}
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-extrabold text-[#142447]">{scheme.title}</span>
+                      <span className="mt-1 block text-xs text-gray-500">{scheme.subtitle}</span>
+                      <span className={`mt-2 block text-sm font-extrabold ${scheme.amountClass}`}>{scheme.amount}</span>
+                    </span>
+                    <span className="material-symbols-outlined filled shrink-0 text-[21px] text-green-500">
+                      check_circle
+                    </span>
                   </div>
                 ))}
               </div>
             </div>
           </div>
-
-          {/* ── BOTTOM WAVE (Indian cityscape) ── */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/media/bottom-waves.png"
-            alt=""
-            aria-hidden="true"
-            className="w-full block select-none pointer-events-none -mt-1"
-            style={{ display: "block" }}
-          />
-
         </section>
-        {/* ════ END HERO ════ */}
 
-        {/* ── Pain Points ── */}
-        <section className="py-24 bg-white" id="how-it-works">
-          <div className="container mx-auto px-6 lg:px-8 max-w-7xl">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+        <section className="bg-white py-24" id="how-it-works">
+          <div className="container mx-auto max-w-7xl px-6 lg:px-8">
+            <div className="grid grid-cols-1 items-center gap-16 lg:grid-cols-2">
               <div>
-                <h3 className="text-orange-500 font-bold uppercase tracking-wider text-sm mb-3">The Real Challenge</h3>
-                <h2 className="text-4xl font-bold text-[#1B2B4B] mb-6 leading-tight">Why Finding the Right Scheme is So Hard</h2>
-                <p className="text-gray-600 text-lg leading-relaxed">
-                  With 4,700+ schemes, complex rules, and endless paperwork, most eligible benefits go unclaimed. It doesn&apos;t have to be this way.
+                <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-orange-500">The Real Challenge</h3>
+                <h2 className="mb-6 text-4xl font-bold leading-tight text-[#1B2B4B]">
+                  Why Finding the Right Scheme is So Hard
+                </h2>
+                <p className="text-lg leading-relaxed text-gray-600">
+                  With 4,700+ schemes, complex rules, and endless paperwork, most eligible benefits go unclaimed.
+                  It doesn&apos;t have to be this way.
                 </p>
               </div>
               <div className="space-y-4">
                 {[
-                  { bg: "bg-red-50", border: "border-red-100", iconBg: "bg-red-100", iconColor: "text-red-600", title: "Too Much Information", desc: "Sifting through bureaucratic pages to figure out if you qualify.", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /> },
-                  { bg: "bg-orange-50", border: "border-orange-100", iconBg: "bg-orange-100", iconColor: "text-orange-500", title: "Irrelevant Results", desc: "Search results returning hundreds of irrelevant schemes.", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /> },
-                  { bg: "bg-blue-50/50", border: "border-blue-100", iconBg: "bg-blue-100", iconColor: "text-blue-600", title: "Wasted Time & Resources", desc: "Applying blindly and hoping for the best.", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /> },
-                ].map(({ bg, border, iconBg, iconColor, title, desc, icon }) => (
-                  <div key={title} className={`flex items-start p-6 ${bg} rounded-2xl border ${border} hover:-translate-y-1 transition-transform`}>
-                    <div className={`flex-shrink-0 w-12 h-12 ${iconBg} rounded-full flex items-center justify-center mr-5`}>
-                      <svg className={`w-6 h-6 ${iconColor}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">{icon}</svg>
+                  {
+                    bg: "bg-red-50",
+                    border: "border-red-100",
+                    iconBg: "bg-red-100",
+                    iconColor: "text-red-600",
+                    icon: "warning",
+                    title: "Too Much Information",
+                    desc: "Sifting through bureaucratic pages to figure out if you qualify.",
+                  },
+                  {
+                    bg: "bg-orange-50",
+                    border: "border-orange-100",
+                    iconBg: "bg-orange-100",
+                    iconColor: "text-orange-500",
+                    icon: "search",
+                    title: "Irrelevant Results",
+                    desc: "Search results returning hundreds of irrelevant schemes.",
+                  },
+                  {
+                    bg: "bg-blue-50/50",
+                    border: "border-blue-100",
+                    iconBg: "bg-blue-100",
+                    iconColor: "text-blue-600",
+                    icon: "schedule",
+                    title: "Wasted Time & Resources",
+                    desc: "Applying blindly and hoping for the best.",
+                  },
+                ].map((item) => (
+                  <div
+                    key={item.title}
+                    className={`flex items-start rounded-2xl border p-6 transition-transform hover:-translate-y-1 ${item.bg} ${item.border}`}
+                  >
+                    <div
+                      className={`mr-5 flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${item.iconBg}`}
+                    >
+                      <span className={`material-symbols-outlined text-[27px] ${item.iconColor}`}>{item.icon}</span>
                     </div>
                     <div>
-                      <h4 className="text-xl font-bold text-gray-900 mb-1">{title}</h4>
-                      <p className="text-gray-600 text-sm">{desc}</p>
+                      <h4 className="mb-1 text-xl font-bold text-gray-900">{item.title}</h4>
+                      <p className="text-sm text-gray-600">{item.desc}</p>
                     </div>
                   </div>
                 ))}
@@ -327,89 +343,143 @@ export default function Home() {
           </div>
         </section>
 
-        {/* ── Value Prop ── */}
-        <section className="py-24 bg-slate-50">
-          <div className="container mx-auto px-6 lg:px-8 max-w-7xl">
-            <div className="flex flex-col lg:flex-row gap-16">
+        <section className="bg-slate-50 py-24">
+          <div className="container mx-auto max-w-7xl px-6 lg:px-8">
+            <div className="flex flex-col gap-16 lg:flex-row">
               <div className="lg:w-1/3">
-                <h3 className="text-orange-500 font-bold uppercase tracking-wider text-sm mb-3">Why Yojana Saarthi</h3>
-                <h2 className="text-4xl font-bold text-[#1B2B4B] mb-6 leading-tight">Clarity.<br />Accuracy.<br />Personalization.</h2>
-                <p className="text-gray-600 mb-6 leading-relaxed">
-                  Yojana Saarthi cuts through the noise with AI-driven reasoning and personalized matching tailored specifically for you.
+                <h3 className="mb-3 text-sm font-bold uppercase tracking-wider text-orange-500">Why Yojana Saarthi</h3>
+                <h2 className="mb-6 text-4xl font-bold leading-tight text-[#1B2B4B]">
+                  Clarity.
+                  <br />
+                  Accuracy.
+                  <br />
+                  Personalization.
+                </h2>
+                <p className="mb-6 leading-relaxed text-gray-600">
+                  Yojana Saarthi cuts through the noise with AI-driven reasoning and personalized matching tailored
+                  specifically for you.
                 </p>
-                <Link className="inline-flex items-center text-[#1B2B4B] font-semibold hover:text-orange-500 transition-colors group" href="/schemes">
+                <Link
+                  className="group inline-flex items-center font-semibold text-[#1B2B4B] transition-colors hover:text-orange-500"
+                  href="/schemes"
+                >
                   Explore Schemes
-                  <svg className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 8l4 4m0 0l-4 4m4-4H3" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} /></svg>
+                  <span className="material-symbols-outlined ml-2 text-[19px] transition-transform group-hover:translate-x-1">
+                    arrow_forward
+                  </span>
                 </Link>
               </div>
-              <div className="lg:w-2/3 grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="grid grid-cols-1 gap-8 md:grid-cols-3 lg:w-2/3">
                 {[
-                  { bg: "bg-white", title: "AI-Driven Accuracy", desc: "Advanced AI understands complex eligibility rules and cross-verifies thousands of criteria.", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /> },
-                  { bg: "bg-blue-50", title: "Personalized for You", desc: "Matches are tailored to your demographic, financial, and personal profile.", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /> },
-                  { bg: "bg-white", title: "Transparent Reasoning", desc: "Clear reasons for every match — so you always know why you&apos;re eligible.", icon: <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /> },
-                ].map(({ bg, title, desc, icon }) => (
-                  <div key={title}>
-                    <div className={`w-16 h-16 ${bg} rounded-2xl shadow-sm flex items-center justify-center mb-6 border border-gray-100`}>
-                      <svg className="w-8 h-8 text-[#1B2B4B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">{icon}</svg>
+                  {
+                    bg: "bg-white",
+                    icon: "precision_manufacturing",
+                    title: "AI-Driven Accuracy",
+                    desc: "Advanced AI understands complex eligibility rules and cross-verifies thousands of criteria.",
+                  },
+                  {
+                    bg: "bg-blue-50",
+                    icon: "person_search",
+                    title: "Personalized for You",
+                    desc: "Matches are tailored to your demographic, financial, and personal profile.",
+                  },
+                  {
+                    bg: "bg-white",
+                    icon: "fact_check",
+                    title: "Transparent Reasoning",
+                    desc: "Clear reasons for every match, so you always know why you are eligible.",
+                  },
+                ].map((item) => (
+                  <div key={item.title}>
+                    <div
+                      className={`mb-6 flex h-16 w-16 items-center justify-center rounded-2xl border border-gray-100 shadow-sm ${item.bg}`}
+                    >
+                      <span className="material-symbols-outlined text-[34px] text-[#1B2B4B]">{item.icon}</span>
                     </div>
-                    <h4 className="text-xl font-bold text-gray-900 mb-3">{title}</h4>
-                    <p className="text-gray-600 text-sm leading-relaxed">{desc}</p>
+                    <h4 className="mb-3 text-xl font-bold text-gray-900">{item.title}</h4>
+                    <p className="text-sm leading-relaxed text-gray-600">{item.desc}</p>
                   </div>
                 ))}
               </div>
             </div>
           </div>
         </section>
-
       </main>
 
-      {/* ── FOOTER ── */}
-      <footer className="bg-[#1B2B4B] text-white pt-16 pb-8 border-t border-white/10">
-        <div className="container mx-auto px-6 lg:px-8 max-w-7xl">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
+      <footer className="border-t border-white/10 bg-[#1B2B4B] pb-8 pt-16 text-white">
+        <div className="container mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="mb-12 grid grid-cols-1 gap-12 md:grid-cols-4">
             <div className="md:col-span-1">
-              <Link className="flex items-center gap-2 mb-4" href="/">
+              <Link className="mb-4 flex items-center gap-2" href="/">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/media/logo.png" alt="Yojana Saarthi Logo" width={28} height={28} />
                 <span className="text-xl font-bold tracking-tight">Yojana Saarthi</span>
               </Link>
-              <p className="text-gray-400 text-sm leading-relaxed">
+              <p className="text-sm leading-relaxed text-gray-400">
                 An AI-powered eligibility initiative empowering every citizen to access the benefits they deserve.
               </p>
             </div>
             <div>
-              <h4 className="font-bold mb-4 text-white">Quick Links</h4>
+              <h4 className="mb-4 font-bold text-white">Quick Links</h4>
               <ul className="space-y-2 text-sm text-gray-400">
-                <li><Link className="hover:text-orange-500 transition-colors" href="/schemes">Schemes</Link></li>
-                <li><Link className="hover:text-orange-500 transition-colors" href="/dashboard">Eligibility Check</Link></li>
-                <li><Link className="hover:text-orange-500 transition-colors" href="/login">Sign In</Link></li>
-                <li><Link className="hover:text-orange-500 transition-colors" href="/register">Register</Link></li>
+                <li>
+                  <Link className="transition-colors hover:text-orange-500" href="/schemes">
+                    Schemes
+                  </Link>
+                </li>
+                <li>
+                  <Link className="transition-colors hover:text-orange-500" href="/dashboard">
+                    Eligibility Check
+                  </Link>
+                </li>
+                <li>
+                  <Link className="transition-colors hover:text-orange-500" href="/login">
+                    Sign In
+                  </Link>
+                </li>
+                <li>
+                  <Link className="transition-colors hover:text-orange-500" href="/register">
+                    Register
+                  </Link>
+                </li>
               </ul>
             </div>
             <div>
-              <h4 className="font-bold mb-4 text-white">Legal</h4>
+              <h4 className="mb-4 font-bold text-white">Legal</h4>
               <ul className="space-y-2 text-sm text-gray-400">
-                <li><a className="hover:text-orange-500 transition-colors" href="#">Privacy Policy</a></li>
-                <li><a className="hover:text-orange-500 transition-colors" href="#">Terms of Service</a></li>
-                <li><a className="hover:text-orange-500 transition-colors" href="#">Accessibility</a></li>
+                <li>
+                  <a className="transition-colors hover:text-orange-500" href="#">
+                    Privacy Policy
+                  </a>
+                </li>
+                <li>
+                  <a className="transition-colors hover:text-orange-500" href="#">
+                    Terms of Service
+                  </a>
+                </li>
+                <li>
+                  <a className="transition-colors hover:text-orange-500" href="#">
+                    Accessibility
+                  </a>
+                </li>
               </ul>
             </div>
             <div>
-              <h4 className="font-bold mb-4 text-white">Connect</h4>
+              <h4 className="mb-4 font-bold text-white">Connect</h4>
               <ul className="space-y-3 text-sm text-gray-400">
                 <li className="flex items-center gap-2">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} /></svg>
+                  <span className="material-symbols-outlined text-[18px]">mail</span>
                   info@yojanasaarthi.in
                 </li>
                 <li className="flex items-center gap-2">
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} /></svg>
+                  <span className="material-symbols-outlined text-[18px]">call</span>
                   1800-123-4567
                 </li>
               </ul>
             </div>
           </div>
           <div className="border-t border-white/10 pt-8 text-center text-sm text-gray-500">
-            © 2025 Yojana Saarthi. All rights reserved.
+            &copy; 2025 Yojana Saarthi. All rights reserved.
           </div>
         </div>
       </footer>
