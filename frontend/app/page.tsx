@@ -139,20 +139,20 @@ export default function Home() {
           >
             <source src="/media/loop.mp4" type="video/mp4" />
           </video>
-          <div className="absolute inset-0 -z-10 bg-gradient-to-r from-white/88 via-white/42 to-white/66" />
-          <div className="absolute inset-x-0 top-0 -z-10 h-40 bg-gradient-to-b from-white/70 to-transparent" />
+          <div className="absolute inset-0 -z-10 bg-gradient-to-r from-white/92 via-white/58 to-white/76" />
+          <div className="absolute inset-x-0 top-0 -z-10 h-44 bg-gradient-to-b from-white/80 to-transparent" />
 
-          <div className="mx-auto grid min-h-[calc(100vh-65px)] w-full max-w-[1580px] grid-cols-1 gap-8 px-5 pb-10 pt-10 sm:px-8 sm:pt-14 lg:px-12 xl:grid-cols-[minmax(390px,520px)_minmax(260px,330px)_minmax(300px,360px)] xl:items-center xl:gap-6 xl:pb-10 xl:pt-10 2xl:gap-10 2xl:pt-14">
+          <div className="mx-auto grid min-h-[calc(100vh-65px)] w-full max-w-[1440px] grid-cols-1 items-center gap-9 px-5 pb-10 pt-9 sm:px-8 sm:pt-12 lg:px-12 xl:grid-cols-[minmax(0,0.92fr)_minmax(420px,0.72fr)] xl:gap-12 xl:pb-12 xl:pt-12 2xl:gap-16">
             <div className="relative z-20 flex flex-col justify-center">
-              <div className="inline-flex w-fit max-w-full items-center gap-2 rounded-full border border-orange-200 bg-white/70 px-3 py-1.5 shadow-sm backdrop-blur">
+              <div className="inline-flex w-fit max-w-full items-center gap-2 rounded-full border border-orange-200 bg-white/75 px-3 py-1.5 shadow-sm backdrop-blur">
                 <span className="material-symbols-outlined text-[17px] text-orange-500">verified_user</span>
-                <span className="text-[10px] font-bold uppercase tracking-[0.16em] text-orange-500 sm:text-[11px] sm:tracking-[0.2em]">
+                <span className="text-[10px] font-bold uppercase tracking-[0.14em] text-orange-500 sm:text-[11px] sm:tracking-[0.2em]">
                   AI-Powered <span className="mx-1">{"\u2022"}</span> Open Source{" "}
                   <span className="mx-1">{"\u2022"}</span> For Every Citizen
                 </span>
               </div>
 
-              <h1 className="mt-6 text-[46px] font-extrabold leading-[1.05] text-[#142447] sm:text-6xl lg:text-[70px] xl:mt-5 xl:text-[66px] 2xl:text-[76px]">
+              <h1 className="mt-6 max-w-[760px] text-[44px] font-extrabold leading-[1.04] text-[#142447] sm:text-6xl lg:text-[78px] xl:mt-5 xl:text-[76px]">
                 Unlock Your
                 <br />
                 Right to
@@ -160,7 +160,7 @@ export default function Home() {
                 <span className="text-orange-500">Benefits</span>
               </h1>
 
-              <p className="mt-6 max-w-md text-base leading-relaxed text-gray-600 sm:text-lg xl:mt-5">
+              <p className="mt-6 max-w-[520px] text-base leading-relaxed text-gray-600 sm:text-lg xl:mt-5">
                 We scan <span className="font-bold text-orange-500">4,702+</span> government schemes using
                 advanced AI reasoning to find every benefit you are eligible for.
               </p>
@@ -182,14 +182,14 @@ export default function Home() {
                 </a>
               </div>
 
-              <div className="mt-11 grid max-w-xl grid-cols-2 gap-4 sm:mt-12 sm:grid-cols-4 xl:mt-9 xl:gap-3 2xl:gap-4">
+              <div className="mt-10 grid max-w-2xl grid-cols-2 gap-4 sm:mt-11 sm:grid-cols-4 xl:mt-9">
                 {stats.map((stat) => (
                   <div key={stat.value} className="flex min-w-0 items-center gap-2 sm:gap-3">
-                    <span className="material-symbols-outlined flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/88 text-[24px] text-[#1B2B4B] shadow-sm ring-1 ring-gray-100 sm:h-12 sm:w-12 sm:text-[25px]">
+                    <span className="material-symbols-outlined flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/90 text-[24px] text-[#1B2B4B] shadow-sm ring-1 ring-gray-100 sm:h-12 sm:w-12 sm:text-[25px]">
                       {stat.icon}
                     </span>
                     <span className="min-w-0">
-                      <span className="block text-xl font-extrabold leading-none text-[#142447] sm:text-2xl xl:text-[22px] 2xl:text-2xl">
+                      <span className="block text-xl font-extrabold leading-none text-[#142447] sm:text-2xl">
                         {stat.value}
                       </span>
                       <span className="mt-1 block whitespace-pre-line text-[12px] leading-tight text-gray-600">
@@ -201,80 +201,97 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="relative z-10 grid gap-4 sm:grid-cols-2 xl:flex xl:min-h-[540px] xl:flex-col xl:items-start xl:justify-center xl:gap-4">
-              <div className="order-2 hidden self-end rounded-full border border-orange-100 bg-white/82 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.16em] text-orange-500 shadow-sm backdrop-blur xl:block">
-                AI Eligibility Engine
-              </div>
-
-              <div className="order-1 rounded-[18px] border border-gray-100 bg-white/88 p-4 shadow-xl shadow-slate-900/10 backdrop-blur xl:w-[185px] xl:self-start 2xl:w-[195px]">
-                <p className="text-sm font-extrabold text-[#142447]">Your Profile</p>
-                <div className="mx-auto my-3 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-blue-100 to-blue-200">
-                  <span className="material-symbols-outlined filled text-[36px] text-[#1B76F2]">person</span>
+            <div className="relative z-10 mt-10 flex justify-center xl:mt-0 xl:justify-end">
+              <div className="w-full max-w-[520px] rounded-[26px] border border-white/80 bg-white/78 p-4 shadow-2xl shadow-slate-900/10 backdrop-blur-xl sm:p-5">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-orange-500">
+                      Eligibility Preview
+                    </p>
+                    <h2 className="mt-1 text-xl font-extrabold text-[#142447]">Find matches in minutes</h2>
+                  </div>
+                  <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-bold text-green-600 ring-1 ring-green-100">
+                    Live scan
+                  </span>
                 </div>
-                <div className="space-y-2.5">
+
+                <div className="mt-5 flex flex-wrap gap-2.5">
                   {profileFields.map((field) => (
-                    <div key={field.label} className="flex items-center gap-2 text-xs font-medium text-[#1B2B4B]">
-                      <span className="material-symbols-outlined text-[16px] text-[#1B2B4B]">{field.icon}</span>
+                    <div
+                      key={field.label}
+                      className="flex min-h-11 items-center gap-2 rounded-xl border border-gray-100 bg-white/82 px-3 text-xs font-semibold text-[#1B2B4B] shadow-sm"
+                    >
+                      <span className="material-symbols-outlined text-[17px] text-orange-500">{field.icon}</span>
                       <span>{field.label}</span>
                     </div>
                   ))}
                 </div>
-              </div>
 
-              <div className="order-3 rounded-[18px] border border-gray-100 bg-white/90 p-4 shadow-xl shadow-slate-900/10 backdrop-blur sm:col-span-2 xl:w-[280px] xl:self-end 2xl:w-[295px]">
-                <p className="text-sm font-extrabold text-[#142447]">Scanning 4,702+ Schemes</p>
-                <div className="mt-3 space-y-2.5">
-                  {scanSteps.map((step) => (
-                    <div key={step.label} className="flex items-center gap-3 text-xs font-medium">
-                      {step.state === "done" ? (
-                        <span className="material-symbols-outlined filled text-[18px] text-green-500">check_circle</span>
-                      ) : step.state === "active" ? (
-                        <span className="h-[18px] w-[18px] rounded-full border-2 border-orange-400 border-t-transparent motion-safe:animate-spin" />
-                      ) : (
-                        <span className="h-[18px] w-[18px] rounded-full border border-gray-200" />
-                      )}
-                      <span
-                        className={
-                          step.state === "active"
-                            ? "text-orange-500"
-                            : step.state === "done"
-                              ? "text-gray-700"
-                              : "text-gray-400"
-                        }
-                      >
-                        {step.label}
-                      </span>
+                <div className="mt-5 grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
+                  <div className="rounded-2xl border border-gray-100 bg-white/74 p-4">
+                    <p className="text-sm font-extrabold text-[#142447]">Scanning 4,702+ schemes</p>
+                    <div className="mt-3 space-y-2.5">
+                      {scanSteps.map((step) => (
+                        <div key={step.label} className="flex items-center gap-3 text-xs font-semibold">
+                          {step.state === "done" ? (
+                            <span className="material-symbols-outlined filled text-[18px] text-green-500">
+                              check_circle
+                            </span>
+                          ) : step.state === "active" ? (
+                            <span className="h-[18px] w-[18px] rounded-full border-2 border-orange-400 border-t-transparent motion-safe:animate-spin" />
+                          ) : (
+                            <span className="h-[18px] w-[18px] rounded-full border border-gray-200" />
+                          )}
+                          <span
+                            className={
+                              step.state === "active"
+                                ? "text-orange-500"
+                                : step.state === "done"
+                                  ? "text-gray-700"
+                                  : "text-gray-400"
+                            }
+                          >
+                            {step.label}
+                          </span>
+                        </div>
+                      ))}
                     </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <div className="relative z-10 xl:flex xl:min-h-[540px] xl:flex-col xl:justify-center">
-              <p className="mb-4 text-[12px] font-extrabold uppercase tracking-[0.18em] text-orange-500 xl:mb-5">
-                Matching Schemes
-              </p>
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
-                {matchingSchemes.map((scheme) => (
-                  <div
-                    key={scheme.title}
-                    className="flex min-h-[96px] items-center gap-4 rounded-[18px] border border-gray-100 bg-white/92 p-4 shadow-lg shadow-orange-900/5 backdrop-blur transition-transform hover:-translate-y-0.5"
-                  >
-                    <span
-                      className={`material-symbols-outlined filled flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-[30px] ${scheme.iconClass}`}
-                    >
-                      {scheme.icon}
-                    </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-extrabold text-[#142447]">{scheme.title}</span>
-                      <span className="mt-1 block text-xs text-gray-500">{scheme.subtitle}</span>
-                      <span className={`mt-2 block text-sm font-extrabold ${scheme.amountClass}`}>{scheme.amount}</span>
-                    </span>
-                    <span className="material-symbols-outlined filled shrink-0 text-[21px] text-green-500">
-                      check_circle
-                    </span>
                   </div>
-                ))}
+
+                  <div>
+                    <p className="mb-3 text-xs font-extrabold uppercase tracking-[0.18em] text-orange-500">
+                      Matching Schemes
+                    </p>
+                    <div className="grid gap-2.5 2xl:grid-cols-2">
+                      {matchingSchemes.map((scheme, index) => (
+                        <div
+                          key={scheme.title}
+                          className={`flex min-h-[78px] items-center gap-3 rounded-2xl border border-gray-100 bg-white/84 px-3 py-2.5 shadow-sm ${
+                            index > 1 ? "hidden sm:flex" : ""
+                          }`}
+                        >
+                          <span
+                            className={`material-symbols-outlined filled flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-[23px] ${scheme.iconClass}`}
+                          >
+                            {scheme.icon}
+                          </span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block text-[13px] font-extrabold leading-tight text-[#142447]">
+                              {scheme.title}
+                            </span>
+                            <span className="mt-0.5 block truncate text-xs text-gray-500">{scheme.subtitle}</span>
+                            <span className={`mt-1 block truncate text-[13px] font-extrabold ${scheme.amountClass}`}>
+                              {scheme.amount}
+                            </span>
+                          </span>
+                          <span className="material-symbols-outlined filled shrink-0 text-[20px] text-green-500">
+                            check_circle
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
