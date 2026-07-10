@@ -2,6 +2,7 @@
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { GOV_ID_KEYS, GOV_ID_LABELS, type GovIdKey, type IntakeResponse } from "../lib/api-types";
+import { supabase, isSupabaseConfigured } from "../lib/supabaseClient";
 
 type DocStatus = "uploaded" | "missing" | "uploading";
 
@@ -28,15 +29,17 @@ export default function Documents() {
     async function loadData() {
       let data: IntakeResponse | null = null;
 
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: history } = await supabase
-          .from("eligibility_history")
-          .select("results")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false })
-          .limit(1)
-          .single();
+      try {
+        if (!isSupabaseConfigured || !supabase) { throw new Error("supabase not configured"); }
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          const { data: history } = await supabase
+            .from("eligibility_history")
+            .select("results")
+            .eq("user_id", user.id)
+            .order("created_at", { ascending: false })
+            .limit(1)
+            .single();
 
         if (history && history.results) {
           data = history.results as IntakeResponse;

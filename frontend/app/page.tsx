@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { supabase } from "./lib/supabaseClient";
+import { supabase, isSupabaseConfigured } from "./lib/supabaseClient";
 
 const profileFields = [
   { icon: "person", label: "Age" },
@@ -68,6 +68,10 @@ export default function Home() {
 
   async function handleCheckEligibility() {
     setChecking(true);
+    if (!isSupabaseConfigured || !supabase) {
+      router.push("/login");
+      return;
+    }
     const {
       data: { session },
     } = await supabase.auth.getSession();

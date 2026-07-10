@@ -2,7 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 
-import { supabase } from "../lib/supabaseClient";
+import { supabase, isSupabaseConfigured } from "../lib/supabaseClient";
 
 export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
@@ -16,6 +16,12 @@ export default function Login() {
     setLoading(true);
     setError(null);
     
+    if (!isSupabaseConfigured || !supabase) {
+      setError("Database service is not available. Please try again later.");
+      setLoading(false);
+      return;
+    }
+
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email,

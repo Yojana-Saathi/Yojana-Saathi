@@ -13,7 +13,7 @@ import {
   type GovIdKey,
 } from "../lib/api-types";
 import { submitIntake } from "../lib/api-client";
-import { supabase } from "../lib/supabaseClient";
+import { supabase, isSupabaseConfigured } from "../lib/supabaseClient";
 
 const INDIAN_STATES = [
   "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh",
@@ -109,6 +109,12 @@ export default function Register() {
       education_level: form.education_level as CitizenProfile["education_level"],
       gov_id_available: form.gov_id_available,
     };
+
+    if (!isSupabaseConfigured || !supabase) {
+      setError("Database service is not available. Please try again later.");
+      setLoading(false);
+      return;
+    }
 
     try {
       // 1. Sign up user
