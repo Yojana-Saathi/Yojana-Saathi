@@ -100,8 +100,18 @@ export function Features() {
   ];
 
   return (
-    <section ref={sectionRef} className="border-t border-ink-navy/8 bg-white py-20 sm:py-28">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+    <section ref={sectionRef} className="relative overflow-hidden border-t border-ink-navy/8 py-20 sm:py-28">
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          backgroundImage: "url('/bottom-waves.svg')",
+          backgroundSize: "cover",
+          backgroundPosition: "center bottom",
+          backgroundRepeat: "no-repeat",
+        }}
+      />
+      <div className="absolute inset-0 bg-gradient-to-b from-white/70 via-white/20 to-white/70" />
+      <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="font-display text-3xl font-semibold tracking-tight text-ink-navy sm:text-4xl">
             Built for discovery, not bureaucracy
