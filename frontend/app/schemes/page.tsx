@@ -55,8 +55,15 @@ export default function SchemesPage() {
   return (
     <div ref={pageRef} className="flex min-h-screen flex-col">
       <Navbar />
-      <main className="flex-1 bg-gradient-to-b from-white to-warm-paper">
-        <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
+      <main className="relative flex-1 overflow-hidden bg-gradient-to-b from-white to-warm-paper">
+        <img
+          src="/labour2.png"
+          alt=""
+          aria-hidden
+          className="pointer-events-none absolute bottom-0"
+          style={{ right: "-2%", height: "500px", opacity: "0.15" }}
+        />
+        <div className="relative mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
           <div className="sc-hero text-center">
             <h1 className="font-display text-3xl font-semibold tracking-tight text-ink-navy sm:text-4xl">Browse schemes</h1>
             <p className="mt-2 text-base text-slate-blue">
