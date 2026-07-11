@@ -45,7 +45,8 @@ from .models.response_models import (
     IntakeResponse,
 )
 from .models.scheme_models import Scheme, EligibilityRules
-from .models.request_models import CitizenProfile
+from .models.request_models import CitizenProfile, ChatRequest
+from .models.response_models import ChatResponse
 
 
 AGENTS_ONLINE = ["intake", "eligibility", "ranking", "docgap", "drafter", "document"]
@@ -782,6 +783,93 @@ def _register_routes(app: FastAPI) -> None:
             return JSONResponse(
                 status_code=400,
                 content=_error_payload(f"Failed to create scheme: {str(exc)}", ErrorCode.INVALID_INPUT)
+            )
+
+    # ── Chat Q&A Endpoint (Public) ──
+
+    @app.post("/api/chat", response_model=ChatResponse)
+    async def chat(request: Request, body: ChatRequest) -> ChatResponse:
+        try:
+            schemes: tuple[Scheme, ...] = request.app.state.schemes
+            llm: GeminiClient = request.app.state.llm
+
+            # Find schemes relevant to the question
+            import re as _re
+            q = body.message.lower()
+            q_clean = _re.sub(r"[^a-z0-9\s-]", "", q)
+
+            def _score_scheme(s: Scheme) -> int:
+                name = s.scheme_name.lower()
+                cat = s.scheme_category.lower()
+                summary = s.benefit_summary.lower()
+                score = 0
+                # Exact phrase match in name
+                if q_clean in name:
+                    score += 100
+                # All words match in name
+                words = [w for w in q_clean.split() if len(w) > 2]
+                name_matches = sum(1 for w in words if w in name)
+                summary_matches = sum(1 for w in words if w in summary)
+                cat_matches = sum(1 for w in words if w in cat)
+                score += name_matches * 20 + summary_matches * 5 + cat_matches * 10
+                return score
+
+            scored = [(s, _score_scheme(s)) for s in schemes if _score_scheme(s) > 0]
+            scored.sort(key=lambda x: -x[1])
+            matched = [s for s, _ in scored[:5]]
+
+            # Build context from matched schemes
+            context = ""
+            sources = []
+            if matched:
+                lines = []
+                for s in matched:
+                    lines.append(f"- {s.scheme_name} ({s.scheme_category}): {s.benefit_summary}")
+                    sources.append(s.scheme_name)
+                context = "\n".join(lines)
+
+            prompt = f"""You are YojanaSaathi, a helpful assistant for Indian government welfare schemes.
+Answer the user's question using ONLY the scheme information below. If the information
+isn't in the provided schemes, say you don't have that information yet.
+
+Available schemes:
+{context or "No specific schemes matched — answer generally if possible."}
+
+User question: {body.message}
+
+Give a concise, helpful answer. If relevant schemes were found, mention them by name
+and explain their benefits, eligibility, or how to apply based on the data above."""
+
+            reply, _used_llm = await llm.polish(prompt, fallback="")
+            
+            if not reply:
+                # Deterministic fallback: build from real scheme data
+                if matched:
+                    lines = [f"I found some relevant schemes for you:"]
+                    for s in matched:
+                        cat = s.scheme_category.replace("SchemeCategory.", "").replace("_", " ").title() if s.scheme_category else ""
+                        lines.append(f"\n**{s.scheme_name}** ({cat})")
+                        lines.append(f"  {s.benefit_summary}")
+                        lines.append(f"  Benefit estimate: {s.benefit_value_estimate}")
+                        if s.required_documents:
+                            lines.append(f"  Required docs: {', '.join(s.required_documents)}")
+                        lines.append(f"  Apply: {s.application_url or 'Contact issuing authority'}")
+                    reply = "\n".join(lines)
+                else:
+                    reply = (
+                        "I couldn't find specific schemes matching your question. "
+                        "Try asking about a specific scheme name, category (e.g. agriculture, education, health), "
+                        "or benefit type. You can also browse all schemes on the Schemes page."
+                    )
+
+            return ChatResponse(reply=reply, sources=sources)
+
+        except Exception as exc:
+            capture_exception(exc)
+            logger.error("chat_failed", error=str(exc))
+            return ChatResponse(
+                reply="I encountered an error while processing your question. Please try again.",
+                sources=[]
             )
 
     # ── Health Route ──

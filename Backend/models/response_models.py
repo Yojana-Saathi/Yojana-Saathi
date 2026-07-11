@@ -63,6 +63,13 @@ class HealthResponse(BaseModel):
     agents_online: list[str]
 
 
+class ChatResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    reply: str
+    sources: list[str] = Field(default_factory=list)
+
+
 class ErrorResponse(BaseModel):
     """Standard error shape returned on any failure, for all endpoints."""
 

@@ -20,6 +20,13 @@ from .enums import (
 )
 
 
+class ChatRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    message: str = Field(min_length=1, max_length=2000)
+    history: list[dict[str, str]] = Field(default_factory=list)
+
+
 class GovIdAvailable(BaseModel):
     """Exactly four booleans — no more, no fewer (enforced by extra='forbid')."""
 

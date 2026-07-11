@@ -1,235 +1,195 @@
 "use client";
-import { useState, useRef, useEffect } from "react";
-import Link from "next/link";
-import { GOV_ID_KEYS, GOV_ID_LABELS, type GovIdKey, type IntakeResponse } from "../lib/api-types";
-import { supabase, isSupabaseConfigured } from "../lib/supabaseClient";
 
-type DocStatus = "uploaded" | "missing" | "uploading";
+import { useEffect, useRef } from "react";
+import gsap from "gsap";
+import { Navbar } from "@/components/ui/navbar";
+import { Footer } from "@/components/ui/footer";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { useState } from "react";
 
-type DocItem = {
-  key: GovIdKey;
-  status: DocStatus;
-  fileName?: string;
-  /** scheme names that require this document (derived from intake result) */
-  requiredFor: string[];
+interface UploadedDoc {
+  id: string;
+  name: string;
+  type: string;
+  uploadedAt: string;
+  status: "pending" | "verified" | "failed";
+  extractedData?: Record<string, string>;
+}
+
+const documentTypes = [
+  { id: "aadhaar", label: "Aadhaar Card", hint: "12-digit UID", icon: "card" },
+  { id: "income", label: "Income Certificate", hint: "Below ₹3L or ₹8L annual", icon: "income" },
+  { id: "caste", label: "Caste Certificate", hint: "SC/ST/OBC/EWS", icon: "caste" },
+  { id: "ration", label: "Ration Card", hint: "BPL/APL", icon: "ration" },
+  { id: "domicile", label: "Domicile Certificate", hint: "State residence proof", icon: "domicile" },
+  { id: "disability", label: "Disability Certificate", hint: "40%+ disability", icon: "disability" },
+];
+
+const initialDocs: UploadedDoc[] = [
+  { id: "1", name: "Aadhaar Card", type: "aadhaar", uploadedAt: "5 Jul 2026", status: "verified", extractedData: { Name: "Ravi Kumar", "Aadhaar No": "XXXX-XXXX-1234", DOB: "15/03/1995" } },
+  { id: "2", name: "Ration Card", type: "ration", uploadedAt: "5 Jul 2026", status: "pending", extractedData: { "Card Type": "BPL", "Family Size": "4" } },
+];
+
+const docIcons: Record<string, React.ReactNode> = {
+  card: <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><rect x="2" y="5" width="20" height="14" rx="2" /><path d="M2 10h20" /></svg>,
+  income: <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>,
+  caste: <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" /></svg>,
+  ration: <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><path d="M3 3h18v18H3V3z" /><path d="M3 9h18" /><path d="M9 21V9" /></svg>,
+  domicile: <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" /><path d="M9 22V12h6v10" /></svg>,
+  disability: <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><circle cx="12" cy="12" r="10" /><path d="M12 8v4l3 3" /><path d="M12 16h.01" /></svg>,
 };
 
-import { supabase } from "../lib/supabaseClient";
+export default function DocumentsPage() {
+  const [docs, setDocs] = useState(initialDocs);
+  const [showConfirm, setShowConfirm] = useState<string | null>(null);
+  const pageRef = useRef<HTMLDivElement>(null);
 
-export default function Documents() {
-  const [docs, setDocs] = useState<DocItem[]>(
-    GOV_ID_KEYS.map((key) => ({ key, status: "missing", requiredFor: [] }))
-  );
-  const [dragOver, setDragOver] = useState<GovIdKey | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [activeUploadKey, setActiveUploadKey] = useState<GovIdKey | null>(null);
-
-  // Populate initial state from intake result
   useEffect(() => {
-    async function loadData() {
-      let data: IntakeResponse | null = null;
-
-      try {
-        if (!isSupabaseConfigured || !supabase) { throw new Error("supabase not configured"); }
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          const { data: history } = await supabase
-            .from("eligibility_history")
-            .select("results")
-            .eq("user_id", user.id)
-            .order("created_at", { ascending: false })
-            .limit(1)
-            .single();
-
-        if (history && history.results) {
-          data = history.results as IntakeResponse;
-        }
-      }
-
-      // Fallback
-      if (!data) {
-        const raw = sessionStorage.getItem("intake_result");
-        if (raw) {
-          try { data = JSON.parse(raw) as IntakeResponse; } catch { /* ignore */ }
-        }
-      }
-
-      if (data) {
-        setDocs(GOV_ID_KEYS.map((key) => {
-          const requiredFor = data!.eligible_schemes
-            .filter(s => s.missing_documents.includes(key))
-            .map(s => s.scheme_name);
-          const wasMissing = data!.eligible_schemes.some(s => s.missing_documents.includes(key));
-          return { key, status: wasMissing ? "missing" : "uploaded", requiredFor };
-        }));
-      }
-    }
-    loadData();
+    try {
+      const dcEls = pageRef.current?.querySelectorAll(".dc-hero, .dc-card");
+      if (dcEls?.length) gsap.killTweensOf(dcEls);
+      const ctx = gsap.context(() => {
+        gsap.fromTo(".dc-hero", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out", clearProps: "all" });
+        gsap.fromTo(".dc-card", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.35, stagger: 0.06, delay: 0.15, ease: "power2.out", clearProps: "all" });
+      }, pageRef);
+      return () => ctx.revert();
+    } catch { return; }
   }, []);
 
-  const uploaded = docs.filter(d => d.status === "uploaded");
-  const missing = docs.filter(d => d.status !== "uploaded");
-
-  const handleUpload = (key: GovIdKey, file: File) => {
-    setDocs(prev => prev.map(d => d.key === key ? { ...d, status: "uploading" } : d));
-    setTimeout(() => {
-      setDocs(prev => prev.map(d => d.key === key ? { ...d, status: "uploaded", fileName: file.name } : d));
-    }, 1500);
-  };
-
-  const handleDrop = (e: React.DragEvent, key: GovIdKey) => {
-    e.preventDefault();
-    setDragOver(null);
-    const file = e.dataTransfer.files[0];
-    if (file) handleUpload(key, file);
-  };
-
-  const triggerUpload = (key: GovIdKey) => {
-    setActiveUploadKey(key);
-    fileInputRef.current?.click();
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file && activeUploadKey) { handleUpload(activeUploadKey, file); setActiveUploadKey(null); }
-    e.target.value = "";
-  };
-
-  const removeDoc = (key: GovIdKey) =>
-    setDocs(prev => prev.map(d => d.key === key ? { ...d, status: "missing", fileName: undefined } : d));
+  const uploadedCount = docs.length;
+  const verifiedCount = docs.filter((d) => d.status === "verified").length;
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <input ref={fileInputRef} type="file" accept=".pdf,.jpg,.jpeg,.png" className="hidden" onChange={handleFileChange} />
-
-      {/* Header */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-40">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center gap-4">
-          <Link href="/dashboard" className="w-8 h-8 rounded-full hover:bg-slate-100 flex items-center justify-center">
-            <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" /></svg>
-          </Link>
-          <div>
-            <h1 className="font-bold text-navy-900 text-sm">Document Vault</h1>
-            <p className="text-xs text-slate-500">{uploaded.length} of {docs.length} uploaded · 4 documents tracked by eligibility engine</p>
+    <div ref={pageRef} className="flex min-h-screen flex-col">
+      <Navbar isSignedIn={true} />
+      <main className="flex-1 bg-gradient-to-b from-white to-warm-paper">
+        <div className="mx-auto max-w-4xl px-4 py-8 sm:px-6 sm:py-10">
+          <div className="dc-hero">
+            <h1 className="font-display text-2xl font-semibold tracking-tight text-ink-navy sm:text-3xl">Document vault</h1>
+            <p className="mt-1 text-sm text-slate-blue">Upload once. We&apos;ll use these to verify eligibility and pre-fill your applications.</p>
           </div>
-        </div>
-      </header>
 
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
-        {/* Progress Banner */}
-        <div className="bg-gradient-to-r from-navy-900 to-navy-800 rounded-2xl p-6 text-white">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <p className="text-orange-300 text-sm font-semibold mb-1">Document Completion</p>
-              <p className="text-2xl font-bold">{Math.round((uploaded.length / docs.length) * 100)}%</p>
-            </div>
-            <div className="text-right">
-              <p className="text-slate-300 text-sm">Upload remaining documents to</p>
-              <p className="text-orange-400 font-semibold text-sm">improve your eligibility results</p>
-            </div>
-          </div>
-          <div className="h-2 bg-white/10 rounded-full overflow-hidden">
-            <div className="h-full bg-orange-500 rounded-full transition-all duration-500" style={{ width: `${(uploaded.length / docs.length) * 100}%` }} />
-          </div>
-          <div className="flex justify-between mt-2 text-xs text-slate-400">
-            <span>{uploaded.length} uploaded</span>
-            <span>{docs.length} tracked by eligibility engine</span>
-          </div>
-        </div>
-
-        {/* Info note about doc scope */}
-        <div className="bg-blue-50 border border-blue-100 rounded-xl px-4 py-3 text-xs text-blue-700 flex items-start gap-2">
-          <svg className="w-4 h-4 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" /></svg>
-          The eligibility engine tracks exactly these 4 documents: <strong className="ml-1">Aadhaar, Income Certificate, Caste Certificate, Ration Card</strong>. These are the only ones that affect your missing_documents list.
-        </div>
-
-        {/* Missing Docs */}
-        {missing.length > 0 && (
-          <section>
-            <h2 className="text-lg font-bold text-navy-900 mb-4 flex items-center gap-2">
-              <span className="w-6 h-6 rounded-full bg-orange-100 text-orange-500 flex items-center justify-center text-xs font-bold">{missing.length}</span>
-              Missing Documents
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {missing.map((doc) => (
-                <div
-                  key={doc.key}
-                  onDragOver={e => { e.preventDefault(); setDragOver(doc.key); }}
-                  onDragLeave={() => setDragOver(null)}
-                  onDrop={e => handleDrop(e, doc.key)}
-                  className={`border-2 border-dashed rounded-2xl p-5 transition-all cursor-pointer ${dragOver === doc.key ? "border-orange-400 bg-orange-50" : "border-slate-200 bg-white hover:border-orange-300 hover:bg-orange-50/50"}`}
-                >
-                  {doc.status === "uploading" ? (
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center animate-pulse">
-                        <svg className="w-6 h-6 text-orange-400 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
-                      </div>
-                      <div>
-                        <div className="font-semibold text-navy-900 text-sm">Uploading…</div>
-                        <div className="text-slate-400 text-xs">Processing {GOV_ID_LABELS[doc.key].label}</div>
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="text-3xl">{GOV_ID_LABELS[doc.key].icon}</div>
-                          <div>
-                            <div className="font-semibold text-navy-900 text-sm">{GOV_ID_LABELS[doc.key].label}</div>
-                            {doc.requiredFor.length > 0 && (
-                              <div className="text-slate-400 text-xs mt-0.5">
-                                Needed for: {doc.requiredFor.slice(0, 2).join(", ")}{doc.requiredFor.length > 2 ? ` +${doc.requiredFor.length - 2}` : ""}
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        <button onClick={() => triggerUpload(doc.key)}
-                          className="flex-shrink-0 bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold px-4 py-2 rounded-full transition-colors shadow-sm">
-                          Upload
-                        </button>
-                      </div>
-                      <div className="mt-3 flex items-center gap-2 text-xs text-slate-400">
-                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" /></svg>
-                        Drag & drop or click Upload · PDF, JPG, PNG
-                      </div>
-                    </>
-                  )}
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Uploaded Docs */}
-        <section>
-          <h2 className="text-lg font-bold text-navy-900 mb-4 flex items-center gap-2">
-            <span className="w-6 h-6 rounded-full bg-green-100 text-green-600 flex items-center justify-center">
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" /></svg>
-            </span>
-            Uploaded Documents
-          </h2>
-          {uploaded.length === 0 && <p className="text-slate-400 text-sm">No documents uploaded yet.</p>}
-          <div className="space-y-3">
-            {uploaded.map((doc) => (
-              <div key={doc.key} className="bg-white rounded-2xl border border-slate-100 p-4 flex items-center justify-between hover:shadow-sm transition-shadow">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center text-xl">{GOV_ID_LABELS[doc.key].icon}</div>
-                  <div>
-                    <div className="font-semibold text-navy-900 text-sm">{GOV_ID_LABELS[doc.key].label}</div>
-                    <div className="text-slate-400 text-xs flex items-center gap-1 mt-0.5">
-                      <svg className="w-3 h-3 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" /></svg>
-                      {doc.fileName ?? "Verified"} · Ready for applications
-                    </div>
-                  </div>
-                </div>
-                <button onClick={() => removeDoc(doc.key)} className="w-8 h-8 rounded-full hover:bg-red-50 flex items-center justify-center transition-colors group" title="Remove">
-                  <svg className="w-4 h-4 text-slate-400 group-hover:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" /></svg>
-                </button>
+          {/* Stats mini row */}
+          <div className="dc-hero mt-6 grid grid-cols-3 gap-3">
+            {[
+              { label: "Uploaded", value: String(uploadedCount), color: "bg-verified-teal/10 text-verified-teal" },
+              { label: "Verified", value: String(verifiedCount), color: "bg-signal-orange/10 text-signal-orange" },
+              { label: "Completion", value: `${Math.round(uploadedCount / documentTypes.length * 100)}%`, color: "bg-ink-navy/5 text-ink-navy" },
+            ].map((stat) => (
+              <div key={stat.label} className="rounded-xl border border-ink-navy/10 bg-white p-4 text-center">
+                <p className={`text-2xl font-bold font-display ${stat.color.split(" ")[1]}`}>{stat.value}</p>
+                <p className="text-xs text-slate-blue-400 mt-0.5">{stat.label}</p>
               </div>
             ))}
           </div>
-        </section>
+
+          {/* Upload grid */}
+          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {documentTypes.map((dt) => {
+              const existing = docs.find((d) => d.type === dt.id);
+              return (
+                <div
+                  key={dt.id}
+                  className={cn(
+                    "dc-card rounded-xl border-2 transition-all",
+                    existing ? "border-verified-teal/30 bg-verified-teal/[0.02]" : "border-dashed border-ink-navy/15 bg-white hover:border-signal-orange/40 hover:bg-signal-orange/[0.02] hover:shadow-sm"
+                  )}
+                >
+                  <div className="p-5">
+                    <div className="flex items-center justify-between">
+                      <div className={cn(
+                        "flex h-9 w-9 items-center justify-center rounded-lg",
+                        existing ? "bg-verified-teal/10 text-verified-teal" : "bg-warm-paper text-slate-blue-400"
+                      )}>
+                        {docIcons[dt.icon] ?? docIcons.card}
+                      </div>
+                      {existing?.status === "verified" && (
+                        <span className="flex items-center gap-1 text-xs font-medium text-verified-teal">
+                          <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                          Verified
+                        </span>
+                      )}
+                      {existing?.status === "pending" && (
+                        <span className="text-xs font-medium text-caution-amber">Awaiting</span>
+                      )}
+                    </div>
+                    <p className="mt-2 text-sm font-semibold text-ink-navy">{dt.label}</p>
+                    <p className="mt-0.5 text-xs text-slate-blue-400">{dt.hint}</p>
+                    {!existing ? (
+                      <label className="mt-3 flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-ink-navy/10 bg-warm-paper/50 px-3 py-2 text-xs font-medium text-slate-blue transition-colors hover:border-signal-orange/30 hover:text-signal-orange">
+                        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M12 4v16m8-8H4" /></svg>
+                        Upload
+                        <input type="file" className="hidden" accept="image/*,.pdf" />
+                      </label>
+                    ) : (
+                      <div className="mt-3 flex items-center gap-2">
+                        <span className="text-xs text-slate-blue-400">Uploaded {existing.uploadedAt}</span>
+                        {existing.status === "pending" && (
+                          <button onClick={() => setShowConfirm(existing.id)} className="text-xs font-semibold text-signal-orange hover:text-signal-orange-600 transition-colors">Confirm</button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* OCR confirmation */}
+          {showConfirm && (
+            <div className="dc-card mt-8 rounded-2xl border border-caution-amber/20 bg-white p-6 shadow-sm">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-caution-amber/10 text-caution-amber">
+                  <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-display text-lg font-semibold text-ink-navy">Confirm extracted information</h3>
+                  <p className="mt-1 text-sm text-slate-blue">We read the document you uploaded. Please confirm the information below is correct.</p>
+                  <div className="mt-4 rounded-xl border border-ink-navy/10 bg-warm-paper/50 p-4 space-y-2">
+                    <div className="flex justify-between text-sm"><span className="text-slate-blue-400">Name</span><span className="font-medium text-ink-navy">Ravi Kumar</span></div>
+                    <div className="flex justify-between text-sm"><span className="text-slate-blue-400">Aadhaar No</span><span className="font-mono font-medium text-ink-navy">XXXX-XXXX-1234</span></div>
+                    <div className="flex justify-between text-sm"><span className="text-slate-blue-400">Date of Birth</span><span className="font-medium text-ink-navy">15/03/1995</span></div>
+                  </div>
+                  <div className="mt-4 flex gap-3">
+                    <Button onClick={() => setShowConfirm(null)}>
+                      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}><path d="M5 13l4 4L19 7" /></svg>
+                      Looks correct
+                    </Button>
+                    <Button variant="outline" onClick={() => setShowConfirm(null)}>Re-upload</Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Uploaded list */}
+          {docs.length > 0 && (
+            <div className="mt-10">
+              <h2 className="font-display text-lg font-semibold text-ink-navy">Uploaded documents</h2>
+              <div className="mt-3 space-y-2">
+                {docs.map((doc) => (
+                  <div key={doc.id} className="flex items-center justify-between rounded-xl border border-ink-navy/10 bg-white px-4 py-3 hover:shadow-sm transition-all">
+                    <div className="flex items-center gap-3">
+                      <div className={cn("flex h-8 w-8 items-center justify-center rounded-lg", doc.status === "verified" ? "bg-verified-teal/10 text-verified-teal" : "bg-caution-amber/10 text-caution-amber")}>
+                        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-ink-navy">{doc.name}</p>
+                        <p className="text-xs text-slate-blue-400">Uploaded {doc.uploadedAt}</p>
+                      </div>
+                    </div>
+                    <span className={cn("text-xs font-medium", doc.status === "verified" ? "text-verified-teal" : "text-caution-amber")}>
+                      {doc.status === "verified" ? "Verified" : "Awaiting confirmation"}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       </main>
+      <Footer />
     </div>
   );
 }

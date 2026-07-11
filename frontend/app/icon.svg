@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 100 100">
+  <defs>
+    <clipPath id="c">
+      <circle cx="50" cy="50" r="46"/>
+    </clipPath>
+  </defs>
+  <circle cx="50" cy="50" r="50" fill="#ffffff"/>
+  <circle cx="50" cy="50" r="48" fill="none" stroke="#e5e7eb" stroke-width="1"/>
+  <image x="4" y="4" width="92" height="92" clip-path="url(#c)" xlink:href="/favicon.png" preserveAspectRatio="xMidYMid slice"/>
+</svg>
