@@ -3,7 +3,7 @@
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { Button } from "@/components/ui/button";
-import { HeroPanel } from "@/components/landing/hero-panel";
+
 
 export function Hero() {
   const sectionRef = useRef<HTMLElement>(null);
@@ -42,7 +42,7 @@ export function Hero() {
       </div>
 
       <div className="mx-auto max-w-7xl px-4 pb-16 pt-12 sm:px-6 sm:pb-20 lg:px-8 lg:pb-24 lg:pt-16">
-        <div className="grid gap-12 lg:grid-cols-2 lg:gap-16">
+        <div className="grid grid-cols-1 gap-12 lg:grid-cols-[1fr_auto] lg:gap-20">
           {/* Left — text */}
           <div className="flex flex-col justify-center">
             <div className="hero-badge mb-4 inline-flex items-center gap-1.5 rounded-full border border-signal-orange/20 bg-signal-orange/5 px-3 py-1 text-xs font-medium text-signal-orange">
@@ -96,9 +96,33 @@ export function Hero() {
             </div>
           </div>
 
-          {/* Right — premium eligibility panel */}
-          <div className="flex items-center">
-            <HeroPanel />
+          {/* Right — AI Code illustration */}
+          <div className="relative flex items-center">
+            {/* Ring accent */}
+            <div className="pointer-events-none absolute -right-10 -top-10 h-64 w-64 animate-[spin_30s_linear_infinite] opacity-15">
+              <svg viewBox="0 0 200 200" fill="none" className="h-full w-full">
+                <circle cx="100" cy="100" r="90" stroke="#F97316" strokeWidth="1" strokeDasharray="6 8" />
+                <circle cx="100" cy="100" r="70" stroke="#14213D" strokeWidth="0.5" opacity="0.5" />
+                <circle cx="100" cy="100" r="50" stroke="#F97316" strokeWidth="0.5" strokeDasharray="3 6" opacity="0.4" />
+              </svg>
+            </div>
+            {/* Corner dots */}
+            <div className="pointer-events-none absolute -bottom-4 -left-4 flex gap-2 opacity-20">
+              <span className="h-1.5 w-1.5 rounded-full bg-signal-orange" />
+              <span className="h-1.5 w-1.5 rounded-full bg-ink-navy" />
+              <span className="h-1.5 w-1.5 rounded-full bg-signal-orange" />
+            </div>
+            {/* Main illustration - loader video */}
+            <div className="relative w-[700px] max-w-full">
+              <video
+                src="/loader.mp4"
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="w-full"
+              />
+            </div>
           </div>
         </div>
       </div>
