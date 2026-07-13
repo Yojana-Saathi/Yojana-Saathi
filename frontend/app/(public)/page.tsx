@@ -152,16 +152,22 @@ function SignedInHome() {
 export default function LandingPage() {
   const { user, loading } = useAuth();
   const [isSignedIn, setIsSignedIn] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    setMounted(true);
     if (!loading) setIsSignedIn(!!user);
   }, [user, loading]);
 
-  if (loading) {
+  if (!mounted || loading) {
     return (
-      <div className="fixed inset-0 z-[60] flex items-center justify-center bg-gradient-to-br from-[#0B1E3D] via-[#0F2645] to-[#142E4D]">
-        <div className="w-[300px] max-w-full px-4 sm:w-[400px]">
+      <div
+        suppressHydrationWarning
+        className="fixed inset-0 z-[60] flex items-center justify-center bg-gradient-to-br from-[#0B1E3D] via-[#0F2645] to-[#142E4D]"
+      >
+        <div suppressHydrationWarning className="w-[300px] max-w-full px-4 sm:w-[400px]">
           <video
+            suppressHydrationWarning
             src="/assets/loader-ring.mp4"
             autoPlay
             loop
