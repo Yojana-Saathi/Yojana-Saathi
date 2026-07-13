@@ -44,7 +44,7 @@ export default function RootLayout({
       className={`${fraunces.variable} ${inter.variable} ${jetbrainsMono.variable}`}
       suppressHydrationWarning
     >
-      <body className="min-h-screen bg-warm-paper font-body text-ink-navy antialiased">
+      <body suppressHydrationWarning className="min-h-screen bg-warm-paper font-body text-ink-navy antialiased">
         <SplashProvider>
           <AuthProvider>
             <PageTransition>{children}</PageTransition>
