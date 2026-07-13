@@ -1,14 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
 
 const tabs = ["Personal", "Location", "Economic", "Account"];
 
 export default function ProfilePage() {
+  const { user } = useAuth();
   const [tab, setTab] = useState(0);
+
+  const fullName: string = user?.user_metadata?.full_name ?? "";
+  const email: string = user?.email ?? "";
+  const memberSince = user?.created_at
+    ? new Date(user.created_at).toLocaleDateString("en-IN", { month: "long", year: "numeric" })
+    : "";
+
+  const initials = fullName
+    ? fullName.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase()
+    : email?.[0]?.toUpperCase() ?? "U";
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -16,20 +28,19 @@ export default function ProfilePage() {
         <div className="mx-auto max-w-3xl px-4 py-8 sm:px-6 sm:py-10">
           {/* Header with avatar */}
           <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start sm:gap-6">
-            <div className="group relative">
+            <div className="relative">
               <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-signal-orange/20 to-signal-orange/5 ring-2 ring-signal-orange/20">
-                <span className="text-2xl font-bold text-signal-orange">RK</span>
+                <span className="text-2xl font-bold text-signal-orange">{initials}</span>
               </div>
-              <button className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-ink-navy text-white shadow-sm transition-transform hover:scale-105">
-                <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round">
-                  <path d="M17 3a2.85 2.83 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z" />
-                </svg>
-              </button>
             </div>
             <div className="text-center sm:text-left">
-              <h1 className="font-display text-2xl font-semibold tracking-tight text-ink-navy">Ravi Kumar</h1>
-              <p className="mt-0.5 text-sm text-slate-blue">ravi@example.com</p>
-              <p className="mt-1 text-xs text-slate-blue-400">Member since July 2026</p>
+              <h1 className="font-display text-2xl font-semibold tracking-tight text-ink-navy">
+                {fullName || "Your Profile"}
+              </h1>
+              <p className="mt-0.5 text-sm text-slate-blue">{email}</p>
+              {memberSince && (
+                <p className="mt-1 text-xs text-slate-blue-400">Member since {memberSince}</p>
+              )}
             </div>
           </div>
 
@@ -56,20 +67,22 @@ export default function ProfilePage() {
                 <h2 className="font-display text-lg font-semibold text-ink-navy">Personal information</h2>
                 <p className="mt-1 text-sm text-slate-blue">This data determines which schemes you qualify for.</p>
                 <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                  <Input label="Full name" defaultValue="Ravi Kumar" />
-                  <Input label="Date of birth" type="date" defaultValue="1995-03-15" />
+                  <Input label="Full name" defaultValue={fullName} placeholder="Enter your full name" />
+                  <Input label="Date of birth" type="date" defaultValue="" />
                   <div className="space-y-1.5">
                     <label className="block text-sm font-medium text-ink-navy">Gender</label>
-                    <select defaultValue="male" className="block w-full rounded-lg border-2 border-ink-navy/15 bg-white px-3.5 py-2.5 text-sm text-ink-navy focus:border-signal-orange focus:outline-none">
+                    <select className="block w-full rounded-lg border-2 border-ink-navy/15 bg-white px-3.5 py-2.5 text-sm text-ink-navy focus:border-signal-orange focus:outline-none">
+                      <option value="">Select gender</option>
                       <option value="male">Male</option>
                       <option value="female">Female</option>
-                      <option value="other">Other</option>
+                      <option value="other">Other / Prefer not to say</option>
                     </select>
                   </div>
-                  <Input label="Phone number" type="tel" defaultValue="+91 98765 43210" />
+                  <Input label="Phone number" type="tel" defaultValue="" placeholder="+91 XXXXX XXXXX" />
                   <div className="space-y-1.5">
                     <label className="block text-sm font-medium text-ink-navy">Social category</label>
-                    <select defaultValue="obc" className="block w-full rounded-lg border-2 border-ink-navy/15 bg-white px-3.5 py-2.5 text-sm text-ink-navy focus:border-signal-orange focus:outline-none">
+                    <select className="block w-full rounded-lg border-2 border-ink-navy/15 bg-white px-3.5 py-2.5 text-sm text-ink-navy focus:border-signal-orange focus:outline-none">
+                      <option value="">Select category</option>
                       <option value="general">General</option>
                       <option value="obc">OBC</option>
                       <option value="sc">SC</option>
@@ -79,7 +92,8 @@ export default function ProfilePage() {
                   </div>
                   <div className="space-y-1.5">
                     <label className="block text-sm font-medium text-ink-navy">Marital status</label>
-                    <select defaultValue="married" className="block w-full rounded-lg border-2 border-ink-navy/15 bg-white px-3.5 py-2.5 text-sm text-ink-navy focus:border-signal-orange focus:outline-none">
+                    <select className="block w-full rounded-lg border-2 border-ink-navy/15 bg-white px-3.5 py-2.5 text-sm text-ink-navy focus:border-signal-orange focus:outline-none">
+                      <option value="">Select status</option>
                       <option value="single">Single</option>
                       <option value="married">Married</option>
                       <option value="widowed">Widowed</option>
@@ -98,7 +112,8 @@ export default function ProfilePage() {
                 <div className="mt-5 grid gap-4 sm:grid-cols-2">
                   <div className="space-y-1.5">
                     <label className="block text-sm font-medium text-ink-navy">State</label>
-                    <select defaultValue="odisha" className="block w-full rounded-lg border-2 border-ink-navy/15 bg-white px-3.5 py-2.5 text-sm text-ink-navy focus:border-signal-orange focus:outline-none">
+                    <select className="block w-full rounded-lg border-2 border-ink-navy/15 bg-white px-3.5 py-2.5 text-sm text-ink-navy focus:border-signal-orange focus:outline-none">
+                      <option value="">Select state</option>
                       <option value="odisha">Odisha</option>
                       <option value="mp">Madhya Pradesh</option>
                       <option value="up">Uttar Pradesh</option>
@@ -107,13 +122,15 @@ export default function ProfilePage() {
                       <option value="mh">Maharashtra</option>
                       <option value="ka">Karnataka</option>
                       <option value="tn">Tamil Nadu</option>
+                      <option value="gj">Gujarat</option>
+                      <option value="rj">Rajasthan</option>
                     </select>
                   </div>
-                  <Input label="District" defaultValue="Khordha" />
-                  <Input label="City / Village" defaultValue="Bhubaneswar" />
-                  <Input label="PIN code" defaultValue="751001" />
+                  <Input label="District" defaultValue="" placeholder="Your district" />
+                  <Input label="City / Village" defaultValue="" placeholder="City or village name" />
+                  <Input label="PIN code" defaultValue="" placeholder="6-digit PIN" />
                   <div className="sm:col-span-2">
-                    <Input label="Residential address" defaultValue="123, Unit-3, Kalinga Nagar" />
+                    <Input label="Residential address" defaultValue="" placeholder="Full address" />
                   </div>
                 </div>
               </div>
@@ -125,10 +142,11 @@ export default function ProfilePage() {
                 <h2 className="font-display text-lg font-semibold text-ink-navy">Economic indicators</h2>
                 <p className="mt-1 text-sm text-slate-blue">Used for means-tested scheme eligibility calculations.</p>
                 <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                  <Input label="Annual household income (₹)" type="number" defaultValue="300000" hint="Total income from all sources" />
+                  <Input label="Annual household income (₹)" type="number" defaultValue="" placeholder="e.g. 300000" hint="Total income from all sources" />
                   <div className="space-y-1.5">
                     <label className="block text-sm font-medium text-ink-navy">Occupation</label>
-                    <select defaultValue="farmer" className="block w-full rounded-lg border-2 border-ink-navy/15 bg-white px-3.5 py-2.5 text-sm text-ink-navy focus:border-signal-orange focus:outline-none">
+                    <select className="block w-full rounded-lg border-2 border-ink-navy/15 bg-white px-3.5 py-2.5 text-sm text-ink-navy focus:border-signal-orange focus:outline-none">
+                      <option value="">Select occupation</option>
                       <option value="farmer">Farmer</option>
                       <option value="labourer">Agricultural labourer</option>
                       <option value="daily">Daily wage worker</option>
@@ -141,10 +159,11 @@ export default function ProfilePage() {
                       <option value="retired">Retired</option>
                     </select>
                   </div>
-                  <Input label="Number of dependents" type="number" defaultValue="4" />
+                  <Input label="Number of dependents" type="number" defaultValue="" placeholder="e.g. 4" />
                   <div className="space-y-1.5">
                     <label className="block text-sm font-medium text-ink-navy">Housing type</label>
-                    <select defaultValue="owned" className="block w-full rounded-lg border-2 border-ink-navy/15 bg-white px-3.5 py-2.5 text-sm text-ink-navy focus:border-signal-orange focus:outline-none">
+                    <select className="block w-full rounded-lg border-2 border-ink-navy/15 bg-white px-3.5 py-2.5 text-sm text-ink-navy focus:border-signal-orange focus:outline-none">
+                      <option value="">Select type</option>
                       <option value="owned">Owned house</option>
                       <option value="rented">Rented</option>
                       <option value="kutcha">Kutcha house</option>
@@ -153,11 +172,11 @@ export default function ProfilePage() {
                   </div>
                 </div>
                 <div className="mt-5 space-y-3 border-t border-ink-navy/10 pt-5">
-                  <label className="flex items-center gap-3 rounded-lg bg-warm-paper/50 px-4 py-3">
-                    <input type="checkbox" defaultChecked className="h-4 w-4 rounded border-ink-navy/20 text-signal-orange focus:ring-signal-orange" />
+                  <label className="flex items-center gap-3 rounded-lg bg-warm-paper/50 px-4 py-3 cursor-pointer">
+                    <input type="checkbox" className="h-4 w-4 rounded border-ink-navy/20 text-signal-orange focus:ring-signal-orange" />
                     <span className="text-sm text-ink-navy">BPL (Below Poverty Line) ration card holder</span>
                   </label>
-                  <label className="flex items-center gap-3 rounded-lg bg-warm-paper/50 px-4 py-3">
+                  <label className="flex items-center gap-3 rounded-lg bg-warm-paper/50 px-4 py-3 cursor-pointer">
                     <input type="checkbox" className="h-4 w-4 rounded border-ink-navy/20 text-signal-orange focus:ring-signal-orange" />
                     <span className="text-sm text-ink-navy">Certified disability (40% or more)</span>
                   </label>
@@ -172,7 +191,7 @@ export default function ProfilePage() {
                   <h2 className="font-display text-lg font-semibold text-ink-navy">Account security</h2>
                   <p className="mt-1 text-sm text-slate-blue">Manage your email and password.</p>
                   <div className="mt-5 space-y-4">
-                    <Input label="Email" type="email" defaultValue="ravi@example.com" />
+                    <Input label="Email" type="email" defaultValue={email} />
                     <div className="flex gap-3">
                       <Button size="sm">Update email</Button>
                       <Button variant="outline" size="sm">Change password</Button>
@@ -188,12 +207,12 @@ export default function ProfilePage() {
                       { label: "Email notifications", desc: "New matches, deadline reminders" },
                       { label: "SMS alerts", desc: "Critical deadline reminders only" },
                     ].map((item) => (
-                      <label key={item.label} className="flex items-center justify-between rounded-lg bg-warm-paper/50 px-4 py-3">
+                      <label key={item.label} className="flex items-center justify-between rounded-lg bg-warm-paper/50 px-4 py-3 cursor-pointer">
                         <div>
                           <p className="text-sm font-medium text-ink-navy">{item.label}</p>
                           <p className="text-xs text-slate-blue-400">{item.desc}</p>
                         </div>
-                        <div className="relative inline-flex h-6 w-10 cursor-pointer items-center rounded-full bg-signal-orange transition-colors">
+                        <div className="relative inline-flex h-6 w-10 items-center rounded-full bg-signal-orange transition-colors">
                           <span className="inline-block h-4 w-4 translate-x-5 transform rounded-full bg-white shadow-sm transition-transform" />
                         </div>
                       </label>
