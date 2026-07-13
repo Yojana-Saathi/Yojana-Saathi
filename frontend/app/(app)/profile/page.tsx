@@ -136,22 +136,15 @@ export default function ProfilePage() {
       land_owned_acres: parseFloat(form.land_owned_acres) || 0,
       education_level: form.education_level || "other",
       is_current: true,
-      created_at: new Date().toISOString(),
     };
 
-    // Mark old profiles as not current
-    await supabase
+    // Upsert: insert if no row for this user, update if one exists
+    const { error: upsertErr } = await supabase
       .from("citizen_profiles")
-      .update({ is_current: false })
-      .eq("user_id", user.id)
-      .eq("is_current", true);
+      .upsert(payload, { onConflict: "user_id" });
 
-    const { error: insertErr } = await supabase
-      .from("citizen_profiles")
-      .insert(payload);
-
-    if (insertErr) {
-      setError(insertErr.message);
+    if (upsertErr) {
+      setError(upsertErr.message);
     } else {
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
