@@ -7,7 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import Link from "next/link";
 
 export default function LoginPage() {
-  const { signIn, signUp } = useAuth();
+  const { signIn, demoSignIn } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -22,10 +22,11 @@ export default function LoginPage() {
     if (result.error) {
       if (
         result.error.toLowerCase().includes("invalid login credentials") ||
-        result.error.toLowerCase().includes("invalid_grant")
+        result.error.toLowerCase().includes("invalid_grant") ||
+        result.error.toLowerCase().includes("email not confirmed")
       ) {
         setError(
-          "Invalid email or password. If you don't have an account yet, please click 'Create one' below."
+          "Invalid credentials or email not verified. Click 'Quick Demo Sign In' below to enter the sandbox instantly."
         );
       } else {
         setError(result.error);
@@ -36,17 +37,8 @@ export default function LoginPage() {
   async function handleDemoLogin() {
     setError("");
     setBusy(true);
-    const demoEmail = "demo.citizen@yojanasaathi.org";
-    const demoPass = "YojanaDemo2026!";
-    // Try signing in first
-    const res = await signIn(demoEmail, demoPass);
-    if (res.error) {
-      // If demo account doesn't exist yet, sign up and then sign in
-      await signUp(demoEmail, demoPass, "Demo Citizen");
-      const retryRes = await signIn(demoEmail, demoPass);
-      if (retryRes.error) {
-        setError(retryRes.error);
-      }
+    if (demoSignIn) {
+      await demoSignIn();
     }
     setBusy(false);
   }

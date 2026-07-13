@@ -14,6 +14,7 @@ type AuthState = {
   signIn: (email: string, password: string) => Promise<{ error?: string }>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
+  demoSignIn: () => Promise<void>;
 };
 
 export const AuthContext = createContext<AuthState>({
@@ -23,6 +24,7 @@ export const AuthContext = createContext<AuthState>({
   signIn: async () => ({}),
   signUp: async () => ({}),
   signOut: async () => {},
+  demoSignIn: async () => {},
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -32,23 +34,82 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    if (!supabase) {
-      setLoading(false);
-      return;
-    }
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setUser(data.session?.user ?? null);
-      setLoading(false);
-    });
+    const checkSession = async () => {
+      if (!supabase) {
+        // Check localStorage demo session
+        try {
+          const stored = localStorage.getItem("yojanasaathi_demo_session");
+          if (stored) {
+            const parsed = JSON.parse(stored) as Session;
+            setSession(parsed);
+            setUser(parsed.user ?? null);
+          }
+        } catch {}
+        setLoading(false);
+        return;
+      }
 
+      try {
+        const { data } = await supabase.auth.getSession();
+        if (data.session) {
+          setSession(data.session);
+          setUser(data.session.user ?? null);
+        } else {
+          // Check localStorage for demo session
+          const stored = localStorage.getItem("yojanasaathi_demo_session");
+          if (stored) {
+            const parsed = JSON.parse(stored) as Session;
+            setSession(parsed);
+            setUser(parsed.user ?? null);
+          }
+        }
+      } catch {
+        // fallback
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkSession();
+
+    if (!supabase) return;
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+      if (session) {
+        setSession(session);
+        setUser(session.user ?? null);
+      }
     });
 
     return () => listener?.subscription.unsubscribe();
   }, []);
+
+  const demoSignIn = useCallback(async () => {
+    const mockUser = {
+      id: "demo-citizen-2026",
+      app_metadata: { provider: "email" },
+      user_metadata: { full_name: "Aarav Sharma" },
+      aud: "authenticated",
+      created_at: new Date().toISOString(),
+      email: "citizen@yojanasaathi.org",
+      role: "authenticated",
+    } as unknown as User;
+
+    const mockSession = {
+      access_token: "demo-token-12345",
+      token_type: "bearer",
+      expires_in: 3600,
+      expires_at: Math.floor(Date.now() / 1000) + 3600,
+      refresh_token: "demo-refresh-12345",
+      user: mockUser,
+    } as unknown as Session;
+
+    setUser(mockUser);
+    setSession(mockSession);
+    try {
+      localStorage.setItem("yojanasaathi_demo_session", JSON.stringify(mockSession));
+    } catch {}
+    router.push("/dashboard");
+  }, [router]);
 
   const signIn = useCallback(async (email: string, password: string) => {
     if (!supabase) return { error: CONFIG_ERR };
@@ -78,7 +139,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
-    if (!supabase) return;
+    try {
+      localStorage.removeItem("yojanasaathi_demo_session");
+    } catch {}
+    setUser(null);
+    setSession(null);
+    if (!supabase) {
+      router.push("/");
+      return;
+    }
     try {
       await supabase.auth.signOut();
     } catch { /* ignore */ }
@@ -86,7 +155,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [router]);
 
   return (
-    <AuthContext.Provider value={{ user, session, loading, signIn, signUp, signOut }}>
+    <AuthContext.Provider value={{ user, session, loading, signIn, signUp, signOut, demoSignIn }}>
       {children}
     </AuthContext.Provider>
   );
