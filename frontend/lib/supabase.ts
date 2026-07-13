@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createBrowserClient } from "@supabase/ssr";
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -15,11 +15,9 @@ if (!isConfigured) {
   );
 }
 
-export function getSupabase() {
-  if (!isConfigured) {
-    return null;
-  }
-  return createClient(supabaseUrl!, supabaseAnonKey!);
-}
-
-export const supabase = isConfigured ? createClient(supabaseUrl!, supabaseAnonKey!) : null;
+// createBrowserClient from @supabase/ssr stores session in cookies so the
+// middleware (which reads cookies server-side) can see the session immediately
+// after sign-in and allow access to protected routes like /dashboard.
+export const supabase = isConfigured
+  ? createBrowserClient(supabaseUrl!, supabaseAnonKey!)
+  : null;
