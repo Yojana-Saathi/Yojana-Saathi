@@ -78,6 +78,19 @@ async def lifespan(app: FastAPI):
         ttl_seconds=settings.request_cache_ttl_seconds,
         max_size=settings.request_cache_max_size,
     )
+
+    # Auto-seed local schemes into Supabase DB on startup so DB is never out of sync
+    try:
+        if settings.supabase_url and settings.supabase_service_role_key:
+            service_client = get_service_role_client()
+            payload = [
+                {**s.model_dump(), "is_active": True} for s in schemes
+            ]
+            service_client.table("schemes").upsert(payload, on_conflict="scheme_id").execute()
+            logger.info("schemes_seeded_to_db", count=len(payload))
+    except Exception as exc:
+        logger.warning("schemes_seed_failed", error=str(exc))
+
     logger.info(
         "startup_complete",
         scheme_count=len(schemes),
@@ -195,23 +208,30 @@ def _register_routes(app: FastAPI) -> None:
                         "verification_status": "verified"
                     }).execute()
 
-            # 4. Fetch active schemes from database
-            db_schemes = supabase.table("schemes").select("*").eq("is_active", True).execute()
+            # 4. Fetch active schemes from database (fallback to local verified schemes if empty/error)
             schemes = []
-            for row in db_schemes.data:
-                schemes.append(Scheme(
-                    scheme_id=row["scheme_id"],
-                    scheme_name=row["scheme_name"],
-                    scheme_category=row["scheme_category"],
-                    issuing_authority=row["issuing_authority"],
-                    eligibility_rules=EligibilityRules(**row["eligibility_rules"]),
-                    benefit_summary=row["benefit_summary"],
-                    benefit_value_estimate=row["benefit_value_estimate"],
-                    required_documents=row["required_documents"],
-                    application_url=row["application_url"]
-                ))
+            try:
+                db_schemes = supabase.table("schemes").select("*").eq("is_active", True).execute()
+                for row in db_schemes.data:
+                    schemes.append(Scheme(
+                        scheme_id=row["scheme_id"],
+                        scheme_name=row["scheme_name"],
+                        scheme_category=row["scheme_category"],
+                        issuing_authority=row["issuing_authority"],
+                        eligibility_rules=EligibilityRules(**row["eligibility_rules"]),
+                        benefit_summary=row["benefit_summary"],
+                        benefit_value_estimate=row["benefit_value_estimate"],
+                        required_documents=row["required_documents"],
+                        application_url=row["application_url"]
+                    ))
+            except Exception as exc:
+                logger.warning("fetch_db_schemes_failed", error=str(exc))
+
+            if not schemes:
+                schemes = list(request.app.state.schemes)
 
             # 5. Run pipeline using newly updated documents mapping
+
             output = await run_intake_pipeline(
                 profile=profile,
                 request_id=request_id,
