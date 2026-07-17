@@ -88,18 +88,24 @@ async def run_intake_pipeline(
                 degraded = True
 
     scheme_results: list[SchemeResult] = []
+    all_missing_docs: set[str] = set()
     for ranked_scheme in ranked:
         scheme = ranked_scheme.result.scheme
+        missing_docs = missing_documents_for_scheme(normalized, scheme, user_id=user_id)
+        all_missing_docs.update(missing_docs)
+        score_val = round(ranked_scheme.result.score, 2)
         scheme_results.append(
             SchemeResult(
                 scheme_id=scheme.scheme_id,
                 scheme_name=scheme.scheme_name,
                 scheme_category=scheme.scheme_category,
+                issuing_authority=scheme.issuing_authority,
                 benefit_summary=summaries.get(scheme.scheme_id, scheme.benefit_summary),
                 benefit_value_estimate=scheme.benefit_value_estimate,
-                eligibility_match_score=round(ranked_scheme.result.score, 2),
+                eligibility_match_score=score_val,
+                match_score=score_val,
                 priority_rank=ranked_scheme.priority_rank,
-                missing_documents=missing_documents_for_scheme(normalized, scheme, user_id=user_id),
+                missing_documents=missing_docs,
                 application_url=scheme.application_url,
                 drafted_application_text=None,  # populated only via /api/draft
             )
@@ -110,8 +116,11 @@ async def run_intake_pipeline(
     response = IntakeResponse(
         request_id=request_id,
         eligible_schemes=scheme_results,
+        ranked_schemes=scheme_results,
         total_eligible_count=len(scheme_results),
+        missing_documents_summary=sorted(list(all_missing_docs)),
         processing_status=status,
         error_message=None,
     )
     return PipelineOutput(response=response, normalized_profile=normalized)
+

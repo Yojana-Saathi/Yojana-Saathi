@@ -163,6 +163,37 @@ def _register_error_handlers(app: FastAPI) -> None:
 def _register_routes(app: FastAPI) -> None:
     logger = get_logger("api")
 
+    @app.get("/api/intake")
+    @app.get("/api/matches")
+    async def get_matches(auth: AuthenticatedUser = Depends(get_current_user_client)):
+        """Return existing eligibility matches for the current user."""
+        user_id = auth.user_id
+        supabase = auth.supabase
+        try:
+            res = supabase.table("eligibility_matches").select("*, schemes(*)").eq("user_id", user_id).order("priority_rank", desc=False).execute()
+            matches = []
+            for row in res.data:
+                scheme = row.get("schemes") or {}
+                matches.append({
+                    "scheme_id": scheme.get("scheme_id", ""),
+                    "scheme_name": scheme.get("scheme_name", ""),
+                    "scheme_category": scheme.get("scheme_category", ""),
+                    "issuing_authority": scheme.get("issuing_authority", ""),
+                    "match_score": row.get("match_score", 0.0),
+                    "eligibility_match_score": row.get("match_score", 0.0),
+                    "benefit_summary": scheme.get("benefit_summary", ""),
+                    "benefit_value_estimate": scheme.get("benefit_value_estimate", ""),
+                    "missing_documents": row.get("missing_documents") or [],
+                    "priority_rank": row.get("priority_rank", 1),
+                    "application_url": scheme.get("application_url", ""),
+                    "id": row.get("id", ""),
+                    "matched_at": row.get("matched_at", "")
+                })
+            return {"ranked_schemes": matches, "eligible_schemes": matches, "total_eligible_count": len(matches)}
+        except Exception as exc:
+            logger.error("get_matches_failed", error=str(exc))
+            return {"ranked_schemes": [], "eligible_schemes": [], "total_eligible_count": 0}
+
     @app.post("/api/intake", response_model=IntakeResponse)
     async def intake(
         request: Request,
@@ -210,6 +241,7 @@ def _register_routes(app: FastAPI) -> None:
 
             # 4. Fetch active schemes from database (fallback to local verified schemes if empty/error)
             schemes = []
+            slug_to_uuid = {}
             try:
                 db_schemes = supabase.table("schemes").select("*").eq("is_active", True).execute()
                 for row in db_schemes.data:
@@ -224,11 +256,13 @@ def _register_routes(app: FastAPI) -> None:
                         required_documents=row["required_documents"],
                         application_url=row["application_url"]
                     ))
+                    slug_to_uuid[row["scheme_id"]] = row.get("id", row["scheme_id"])
             except Exception as exc:
                 logger.warning("fetch_db_schemes_failed", error=str(exc))
 
             if not schemes:
                 schemes = list(request.app.state.schemes)
+                slug_to_uuid = {s.scheme_id: s.scheme_id for s in schemes}
 
             # 5. Run pipeline using newly updated documents mapping
 
@@ -241,6 +275,29 @@ def _register_routes(app: FastAPI) -> None:
             )
             # Cache the normalized profile for the later /api/draft call.
             request.app.state.request_cache.set(request_id, output.normalized_profile)
+
+            # Sync matches to eligibility_matches table in Supabase so dashboard/history queries work directly
+            try:
+                eligible_slugs = {s.scheme_id for s in output.response.eligible_schemes}
+                eligible_uuids = {slug_to_uuid[s] for s in eligible_slugs if s in slug_to_uuid}
+                if eligible_uuids:
+                    supabase.table("eligibility_matches").delete().eq("user_id", user_id).not_.in_("scheme_id", list(eligible_uuids)).execute()
+                else:
+                    supabase.table("eligibility_matches").delete().eq("user_id", user_id).execute()
+                for match in output.response.eligible_schemes:
+                    scheme_uuid = slug_to_uuid.get(match.scheme_id)
+                    if scheme_uuid:
+                        supabase.table("eligibility_matches").upsert({
+                            "user_id": user_id,
+                            "scheme_id": scheme_uuid,
+                            "match_score": match.eligibility_match_score,
+                            "missing_documents": match.missing_documents,
+                            "priority_rank": match.priority_rank,
+                            "matched_at": "now()"
+                        }, on_conflict="user_id,scheme_id").execute()
+            except Exception as exc:
+                logger.warning("sync_eligibility_matches_failed", error=str(exc))
+
             logger.info(
                 "intake_processed",
                 outcome=output.response.processing_status.value,
@@ -250,6 +307,7 @@ def _register_routes(app: FastAPI) -> None:
         except Exception as exc:
             capture_exception(exc)
             logger.error("intake_failed", error=str(exc))
+
             # Return the standard error shape (200-body style contract error).
             return JSONResponse(
                 status_code=500,

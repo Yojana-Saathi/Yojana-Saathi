@@ -15,14 +15,16 @@ from .enums import ErrorCode, ProcessingStatus, SchemeCategory
 class SchemeResult(BaseModel):
     """One eligible scheme in the IntakeResponse.eligible_schemes array."""
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore", populate_by_name=True)
 
     scheme_id: str
     scheme_name: str
     scheme_category: SchemeCategory
+    issuing_authority: str = ""
     benefit_summary: str
     benefit_value_estimate: str
     eligibility_match_score: float = Field(ge=0.0, le=1.0)
+    match_score: float = Field(default=0.0, ge=0.0, le=1.0)
     priority_rank: int = Field(ge=1)
     missing_documents: list[str]
     application_url: str
@@ -33,14 +35,18 @@ class SchemeResult(BaseModel):
 class IntakeResponse(BaseModel):
     """Response body for POST /api/intake."""
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore", populate_by_name=True)
 
     request_id: str
     # ALWAYS an array, never null — empty list when nobody matches.
     eligible_schemes: list[SchemeResult]
+    ranked_schemes: list[SchemeResult] = Field(default_factory=list)
     total_eligible_count: int = Field(ge=0)
+    missing_documents_summary: list[str] = Field(default_factory=list)
+    processing_time_ms: int = 0
     processing_status: ProcessingStatus
     error_message: str | None = None
+
 
 
 class DraftResponse(BaseModel):

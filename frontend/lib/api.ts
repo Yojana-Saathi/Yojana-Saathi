@@ -276,25 +276,24 @@ export type EligibilityMatch = {
 export async function getUserMatches(token: string): Promise<EligibilityMatch[]> {
   // Try the backend API first
   try {
-    const res = await fetch(`${API_URL}/api/intake`, {
+    const res = await fetch(`${API_URL}/api/matches`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (res.ok) {
       const data = await res.json();
-      // API returns { ranked_schemes: [...] } for intake submission
       if (data.ranked_schemes) return data.ranked_schemes;
-      // Or array directly for match listing
+      if (data.eligible_schemes) return data.eligible_schemes;
       if (Array.isArray(data)) return data;
     }
   } catch { /* fall through to Supabase query */ }
 
-  // Fallback: query Supabase eligibility_matches table
+  // Fallback: query Supabase eligibility_matches table without inner-join restriction
   try {
     const { supabase: sb } = await import("@/lib/supabase");
     if (!sb) throw new Error("Supabase not configured");
     const { data, error } = await sb
       .from("eligibility_matches")
-      .select("*, schemes!inner(*), applications!inner(*)")
+      .select("*, schemes(*), applications(*)")
       .order("priority_rank", { ascending: true });
 
     if (error) throw error;
@@ -304,17 +303,17 @@ export async function getUserMatches(token: string): Promise<EligibilityMatch[]>
       const app = (row.applications as Record<string, unknown>[])?.[0];
       return {
         id: row.id as string,
-        scheme_id: scheme.scheme_id as string,
-        scheme_name: scheme.scheme_name as string,
-        scheme_category: scheme.scheme_category as string,
-        issuing_authority: scheme.issuing_authority as string,
-        match_score: row.match_score as number,
-        benefit_summary: scheme.benefit_summary as string,
-        benefit_value_estimate: scheme.benefit_value_estimate as string,
+        scheme_id: (scheme.scheme_id as string) || (row.scheme_id as string) || "",
+        scheme_name: (scheme.scheme_name as string) || "",
+        scheme_category: (scheme.scheme_category as string) || "",
+        issuing_authority: (scheme.issuing_authority as string) || "",
+        match_score: (row.match_score as number) || 0.0,
+        benefit_summary: (scheme.benefit_summary as string) || "",
+        benefit_value_estimate: (scheme.benefit_value_estimate as string) || "",
         missing_documents: (row.missing_documents as string[]) || [],
-        priority_rank: row.priority_rank as number,
-        application_url: scheme.application_url as string,
-        matched_at: row.matched_at as string,
+        priority_rank: (row.priority_rank as number) || 1,
+        application_url: (scheme.application_url as string) || "",
+        matched_at: (row.matched_at as string) || "",
         application_status: (app?.status as EligibilityMatch["application_status"]) || "matched",
       };
     });
