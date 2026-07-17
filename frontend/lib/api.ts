@@ -137,17 +137,7 @@ export async function searchSchemes(query?: string): Promise<Scheme[]> {
     if (error) throw error;
     return (data || []).map(rawSchemeToScheme);
   } catch { /* fall through */ }
-
-  // 3. Local schemes.json (works offline, no backend needed)
-  try {
-    const res = await fetch("/schemes.json");
-    if (!res.ok) throw new Error("Failed to fetch schemes.json");
-    const raw = await res.json() as Record<string, unknown>[];
-    const all = raw.map(rawSchemeToScheme).filter((s) => s.is_active);
-    return filterSchemes(all, query);
-  } catch {
-    return [];
-  }
+  return [];
 }
 
 // --- Documents ---
