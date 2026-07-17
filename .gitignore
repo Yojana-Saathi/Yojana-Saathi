@@ -4,7 +4,7 @@ schemes_source.html
 scheme_details_source.html
 
 # Old frontend directory (renamed to frontend/)
-UI/
+/UI/
 
 # OS
 .DS_Store
