@@ -13,11 +13,15 @@ from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+from pathlib import Path
+
+_ENV_FILE = Path(__file__).parent / ".env"
+
 class Settings(BaseSettings):
     """Typed application settings, populated from the environment."""
 
     model_config = SettingsConfigDict(
-        env_file=".env",
+        env_file=str(_ENV_FILE),
         env_file_encoding="utf-8",
         extra="ignore",  # ignore unrelated env vars in the process
         case_sensitive=False,

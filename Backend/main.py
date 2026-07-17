@@ -162,11 +162,8 @@ def _register_routes(app: FastAPI) -> None:
         # Bind request_id to the log context; NEVER log the full profile.
         structlog.contextvars.bind_contextvars(request_id=request_id)
         try:
-            
-            # 1. Flip is_current to False for existing user profiles in a transaction/sequence
-            supabase.table("citizen_profiles").update({"is_current": False}).eq("user_id", user_id).eq("is_current", True).execute()
-            
-            # 2. Insert new current profile
+            # Upsert profile — single operation handles both first-time and updates.
+            # The UNIQUE(user_id) constraint means on conflict it updates in-place.
             profile_dict = {
                 "user_id": user_id,
                 "full_name": profile.full_name.strip(),
@@ -184,7 +181,7 @@ def _register_routes(app: FastAPI) -> None:
                 "education_level": profile.education_level.value,
                 "is_current": True
             }
-            supabase.table("citizen_profiles").insert(profile_dict).execute()
+            supabase.table("citizen_profiles").upsert(profile_dict, on_conflict="user_id").execute()
 
             # 3. Seed documents table with available IDs checked in the intake form
             existing_docs = supabase.table("documents").select("doc_type").eq("user_id", user_id).execute()
