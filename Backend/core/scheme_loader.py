@@ -31,7 +31,7 @@ def load_schemes(path: Path | None = None) -> list[Scheme]:
     schemes_path = path or DEFAULT_SCHEMES_PATH
 
     try:
-        raw = schemes_path.read_text(encoding="utf-8")
+        raw = schemes_path.read_text(encoding="utf-8-sig")
     except OSError as exc:  # missing/unreadable file
         raise SchemeDataError(f"Cannot read schemes file at {schemes_path}: {exc}") from exc
 

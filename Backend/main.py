@@ -84,9 +84,22 @@ async def lifespan(app: FastAPI):
         if settings.supabase_url and settings.supabase_service_role_key:
             service_client = get_service_role_client()
             payload = [
-                {**s.model_dump(), "is_active": True} for s in schemes
+                {
+                    "scheme_id": s.scheme_id,
+                    "scheme_name": s.scheme_name,
+                    "scheme_category": s.scheme_category.value,
+                    "issuing_authority": s.issuing_authority,
+                    "eligibility_rules": s.eligibility_rules.model_dump(),
+                    "benefit_summary": s.benefit_summary,
+                    "benefit_value_estimate": s.benefit_value_estimate,
+                    "required_documents": s.required_documents,
+                    "application_url": s.application_url,
+                    "is_active": True,
+                }
+                for s in schemes
             ]
-            service_client.table("schemes").upsert(payload, on_conflict="scheme_id").execute()
+            for i in range(0, len(payload), 500):
+                service_client.table("schemes").upsert(payload[i : i + 500], on_conflict="scheme_id").execute()
             logger.info("schemes_seeded_to_db", count=len(payload))
     except Exception as exc:
         logger.warning("schemes_seed_failed", error=str(exc))

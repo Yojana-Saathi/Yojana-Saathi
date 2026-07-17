@@ -62,6 +62,16 @@ class SchemeCategory(str, Enum):
     PENSION = "pension"
     OTHER = "other"
 
+    @classmethod
+    def _missing_(cls, value: object) -> SchemeCategory | None:
+        if isinstance(value, str):
+            val = value.strip().lower()
+            for member in cls:
+                if member.value == val:
+                    return member
+            return cls.OTHER
+        return None
+
 
 class ProcessingStatus(str, Enum):
     SUCCESS = "success"
@@ -81,6 +91,17 @@ class GenderRestriction(str, Enum):
     MALE = "male"
     FEMALE = "female"
     ANY = "any"
+
+    @classmethod
+    def _missing_(cls, value: object) -> GenderRestriction | None:
+        if isinstance(value, str):
+            val = value.strip().lower()
+            if val in ("male", "m"):
+                return cls.MALE
+            if val in ("female", "f"):
+                return cls.FEMALE
+            return cls.ANY
+        return cls.ANY
 
 
 # The extensible government-ID document keys, used by both gov_id_available (request)
