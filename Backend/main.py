@@ -152,7 +152,12 @@ def _register_error_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(RequestValidationError)
     async def _validation_handler(request: Request, exc: RequestValidationError):
-        # 422 with the standard error shape; do not echo internal structures.
+        # Log the exact validation errors server-side to diagnose 422 issues.
+        logger.warning(
+            "request_validation_error",
+            path=request.url.path,
+            errors=exc.errors(),
+        )
         return JSONResponse(
             status_code=422,
             content=_error_payload(
