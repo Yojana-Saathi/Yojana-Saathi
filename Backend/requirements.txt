@@ -1,5 +1,6 @@
 # YojanaSaathi backend — pinned dependencies (exact versions, no ranges).
 # Python 3.12. Regenerate with: pip install -r requirements.txt
+# cache-bust: 2026-07-19
 
 # --- Web framework / server ---
 fastapi==0.139.0

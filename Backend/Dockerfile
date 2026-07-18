@@ -31,6 +31,9 @@ COPY --from=builder /wheels /wheels
 RUN pip install --no-index --find-links /wheels -r requirements.txt \
     && rm -rf /wheels
 
+# Cache-busting ARG — must be set at build time (e.g. --build-arg CACHEBUST=$(date +%s))
+# This forces the COPY layer to always rebuild so Python code changes are always picked up.
+ARG CACHEBUST=1
 # Copy the application code. It lives under the Backend/ package, so we place it
 # at /app/Backend to preserve the `Backend.<module>` import paths.
 COPY . /app/Backend
