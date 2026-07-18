@@ -4,7 +4,8 @@ import React, { useState, useEffect } from "react";
 import { Navbar } from "@/components/ui/navbar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { api } from "@/lib/api";
+import { submitIntake } from "@/lib/api";
+import { useAuth } from "@/hooks/useAuth";
 
 interface CitizenProfileForm {
   full_name: string;
@@ -166,6 +167,7 @@ const PRESET_PROFILES: Record<string, { label: string; icon: string; description
 };
 
 export default function TestAgentsPage() {
+  const { session } = useAuth();
   const [profile, setProfile] = useState<CitizenProfileForm>(PRESET_PROFILES.farmer.data);
   const [activePreset, setActivePreset] = useState("farmer");
   const [backendHealth, setBackendHealth] = useState<{ status: string; scheme_count?: number; llm_active?: boolean; backend_url: string } | null>(null);
@@ -223,7 +225,7 @@ export default function TestAgentsPage() {
       const stepTimer2 = setTimeout(() => setStepProgress(3), 1300); // Ranking Agent
       const stepTimer3 = setTimeout(() => setStepProgress(4), 2000); // DocGap Agent
 
-      const response = await api.submitIntake(profile as any);
+      const response = await submitIntake(session?.access_token || "", profile as any);
       
       clearTimeout(stepTimer1);
       clearTimeout(stepTimer2);
