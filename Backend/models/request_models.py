@@ -28,14 +28,17 @@ class ChatRequest(BaseModel):
 
 
 class GovIdAvailable(BaseModel):
-    """Exactly four booleans — no more, no fewer (enforced by extra='forbid')."""
+    """Boolean flags for each government ID the citizen has available.
+    Extra fields are silently ignored so the frontend can send additional
+    convenience fields without breaking validation.
+    """
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
-    aadhaar: bool
-    income_certificate: bool
-    caste_certificate: bool
-    ration_card: bool
+    aadhaar: bool = False
+    income_certificate: bool = False
+    caste_certificate: bool = False
+    ration_card: bool = False
 
 
 class CitizenProfile(BaseModel):
@@ -43,9 +46,10 @@ class CitizenProfile(BaseModel):
 
     All fields are required EXCEPT ``land_owned_acres`` (default 0) and
     ``disability_status`` (default "none").
+    Extra fields are ignored so future frontend additions don't cause 422s.
     """
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="ignore")
 
     full_name: str = Field(min_length=1, max_length=200)
     age: int = Field(ge=0, le=120)
