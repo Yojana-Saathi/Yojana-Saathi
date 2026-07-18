@@ -25,6 +25,34 @@ class Occupation(str, Enum):
     UNEMPLOYED = "unemployed"
     OTHER = "other"
 
+    @classmethod
+    def _missing_(cls, value: object) -> "Occupation | None":
+        """Map common non-standard occupation strings to valid enum values."""
+        if not isinstance(value, str):
+            return None
+        val = value.strip().lower()
+        _ALIASES: dict[str, "Occupation"] = {
+            "salaried_private": cls.SALARIED,
+            "salaried_govt": cls.SALARIED,
+            "government": cls.SALARIED,
+            "govt": cls.SALARIED,
+            "business": cls.SELF_EMPLOYED,
+            "shopkeeper": cls.SELF_EMPLOYED,
+            "artisan": cls.SELF_EMPLOYED,
+            "labour": cls.DAILY_WAGE,
+            "labourer": cls.DAILY_WAGE,
+            "daily_labour": cls.DAILY_WAGE,
+            "agriculture": cls.FARMER,
+            "cultivator": cls.FARMER,
+            "homemaker": cls.UNEMPLOYED,
+        }
+        if val in _ALIASES:
+            return _ALIASES[val]
+        for member in cls:
+            if member.value == val:
+                return member
+        return cls.OTHER  # safe fallback
+
 
 class SocialCategory(str, Enum):
     GENERAL = "general"
@@ -50,6 +78,36 @@ class EducationLevel(str, Enum):
     HIGHER_SECONDARY = "higher_secondary"
     GRADUATE = "graduate"
     POSTGRADUATE = "postgraduate"
+
+    @classmethod
+    def _missing_(cls, value: object) -> "EducationLevel | None":
+        """Map common non-standard frontend strings to valid enum values."""
+        if not isinstance(value, str):
+            return None
+        val = value.strip().lower()
+        _ALIASES: dict[str, "EducationLevel"] = {
+            "below_10th": cls.SECONDARY,
+            "10th_pass": cls.SECONDARY,
+            "10th": cls.SECONDARY,
+            "matric": cls.SECONDARY,
+            "12th_pass": cls.HIGHER_SECONDARY,
+            "12th": cls.HIGHER_SECONDARY,
+            "inter": cls.HIGHER_SECONDARY,
+            "intermediate": cls.HIGHER_SECONDARY,
+            "ug": cls.GRADUATE,
+            "undergraduate": cls.GRADUATE,
+            "pg": cls.POSTGRADUATE,
+            "post_graduate": cls.POSTGRADUATE,
+            "postgrad": cls.POSTGRADUATE,
+            "masters": cls.POSTGRADUATE,
+            "illiterate": cls.NONE,
+        }
+        if val in _ALIASES:
+            return _ALIASES[val]
+        for member in cls:
+            if member.value == val:
+                return member
+        return cls.SECONDARY  # safe fallback
 
 
 class SchemeCategory(str, Enum):
