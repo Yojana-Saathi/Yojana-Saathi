@@ -45,11 +45,14 @@ export function Navbar() {
           <span className="font-extrabold text-[17px] text-[#1B2B4B] tracking-tight">YojanaSaathi</span>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-8 text-[13.5px] font-medium text-gray-600">
+        <nav className="hidden md:flex items-center gap-6 text-[13.5px] font-medium text-gray-600">
           <Link href="/#how-it-works" className="hover:text-orange-500 transition-colors">How It Works</Link>
           <Link href="/schemes" className="hover:text-orange-500 transition-colors">Browse Schemes</Link>
           <Link href="/documents" className="hover:text-orange-500 transition-colors">Document Vault</Link>
           <Link href="/chat" className="hover:text-orange-500 transition-colors">AI Assistant</Link>
+          <Link href="/test-agents" className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-bold transition-all border border-indigo-100 shadow-2xs">
+            <span>🧪 Agent Lab</span>
+          </Link>
         </nav>
 
         <div className="flex items-center gap-3">
@@ -90,6 +93,13 @@ export function Navbar() {
                     className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                   >
                     Profile
+                  </Link>
+                  <Link
+                    href="/test-agents"
+                    onClick={() => setMenuOpen(false)}
+                    className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-indigo-600 bg-indigo-50/50 hover:bg-indigo-50 transition-colors"
+                  >
+                    🧪 Agent Lab
                   </Link>
                   <Link
                     href="/settings"
