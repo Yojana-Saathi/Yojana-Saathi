@@ -48,22 +48,31 @@ export type CitizenProfile = {
   education_level: string;
 };
 
+export type SchemeResultType = {
+  scheme_id: string;
+  scheme_name: string;
+  scheme_category: string;
+  issuing_authority?: string;
+  match_score?: number;
+  eligibility_match_score?: number;
+  benefit_summary: string;
+  benefit_value_estimate?: string;
+  missing_documents: string[];
+  priority_rank?: number;
+  application_url?: string;
+  drafted_application_text?: string | null;
+};
+
 export type IntakeResponse = {
   request_id: string;
-  ranked_schemes: Array<{
-    scheme_id: string;
-    scheme_name: string;
-    scheme_category: string;
-    issuing_authority: string;
-    match_score: number;
-    benefit_summary: string;
-    benefit_value_estimate: string;
-    missing_documents: string[];
-    priority_rank: number;
-    application_url: string;
-  }>;
+  eligible_schemes?: SchemeResultType[];
+  ranked_schemes: SchemeResultType[];
+  total_eligible_count?: number;
   missing_documents_summary: string[];
   processing_time_ms: number;
+  processing_status?: string;
+  error_message?: string;
+  normalized_profile?: Record<string, any>;
 };
 
 export async function submitIntake(token: string, profile: CitizenProfile) {
