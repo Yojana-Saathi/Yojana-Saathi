@@ -76,10 +76,39 @@ export type IntakeResponse = {
   normalized_profile?: Record<string, any>;
 };
 
-export async function submitIntake(token: string, profile: CitizenProfile) {
+export async function submitIntake(token: string, profile: CitizenProfile | Record<string, any>) {
+  const cleanProfile = {
+    full_name: profile.full_name || "Citizen Candidate",
+    age: Number(profile.age) || 30,
+    gender: profile.gender || "male",
+    state: profile.state || "Uttar Pradesh",
+    district: profile.district || "Varanasi",
+    annual_income: Number(profile.annual_income) || 0,
+    occupation: profile.occupation === "salaried_private" ? "salaried" : profile.occupation || "other",
+    social_category: profile.social_category || "general",
+    disability_status: profile.disability_status || "none",
+    family_size: Number(profile.family_size) || 1,
+    has_bpl_card: Boolean(profile.has_bpl_card),
+    land_owned_acres: Number(profile.land_owned_acres) || 0,
+    education_level:
+      profile.education_level === "below_10th" || profile.education_level === "10th_pass"
+        ? "secondary"
+        : profile.education_level === "12th_pass"
+        ? "higher_secondary"
+        : profile.education_level === "post_graduate"
+        ? "postgraduate"
+        : profile.education_level || "graduate",
+    gov_id_available: {
+      aadhaar: Boolean(profile.gov_id_available?.aadhaar),
+      income_certificate: Boolean(profile.gov_id_available?.income_certificate),
+      caste_certificate: Boolean(profile.gov_id_available?.caste_certificate),
+      ration_card: Boolean(profile.gov_id_available?.ration_card),
+    },
+  };
+
   return fetchApi<IntakeResponse>("/api/intake", {
     method: "POST",
-    body: JSON.stringify(profile),
+    body: JSON.stringify(cleanProfile),
     token,
   });
 }

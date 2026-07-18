@@ -53,7 +53,7 @@ const PRESET_PROFILES: Record<string, { label: string; icon: string; description
       family_size: 5,
       has_bpl_card: true,
       land_owned_acres: 2.5,
-      education_level: "below_10th",
+      education_level: "secondary",
       gov_id_available: {
         aadhaar: true,
         pan: false,
@@ -117,7 +117,7 @@ const PRESET_PROFILES: Record<string, { label: string; icon: string; description
       family_size: 3,
       has_bpl_card: false,
       land_owned_acres: 0,
-      education_level: "12th_pass",
+      education_level: "higher_secondary",
       gov_id_available: {
         aadhaar: true,
         pan: true,
@@ -143,13 +143,13 @@ const PRESET_PROFILES: Record<string, { label: string; icon: string; description
       state: "Maharashtra",
       district: "Mumbai",
       annual_income: 380000,
-      occupation: "salaried_private",
+      occupation: "salaried",
       social_category: "general",
       disability_status: "none",
       family_size: 4,
       has_bpl_card: false,
       land_owned_acres: 0,
-      education_level: "post_graduate",
+      education_level: "postgraduate",
       gov_id_available: {
         aadhaar: true,
         pan: true,
@@ -226,7 +226,36 @@ export default function TestAgentsPage() {
       const stepTimer2 = setTimeout(() => setStepProgress(3), 1300); // Ranking Agent
       const stepTimer3 = setTimeout(() => setStepProgress(4), 2000); // DocGap Agent
 
-      const response = await submitIntake(session?.access_token || "", profile as any);
+      const cleanPayload = {
+        full_name: profile.full_name || "Test Candidate",
+        age: Number(profile.age) || 30,
+        gender: profile.gender || "male",
+        state: profile.state || "Uttar Pradesh",
+        district: profile.district || "Varanasi",
+        annual_income: Number(profile.annual_income) || 0,
+        occupation: profile.occupation === "salaried_private" ? "salaried" : profile.occupation || "other",
+        social_category: profile.social_category || "general",
+        disability_status: profile.disability_status || "none",
+        family_size: Number(profile.family_size) || 1,
+        has_bpl_card: Boolean(profile.has_bpl_card),
+        land_owned_acres: Number(profile.land_owned_acres) || 0,
+        education_level:
+          profile.education_level === "below_10th" || profile.education_level === "10th_pass"
+            ? "secondary"
+            : profile.education_level === "12th_pass"
+            ? "higher_secondary"
+            : profile.education_level === "post_graduate"
+            ? "postgraduate"
+            : profile.education_level || "graduate",
+        gov_id_available: {
+          aadhaar: Boolean(profile.gov_id_available?.aadhaar),
+          income_certificate: Boolean(profile.gov_id_available?.income_certificate),
+          caste_certificate: Boolean(profile.gov_id_available?.caste_certificate),
+          ration_card: Boolean(profile.gov_id_available?.ration_card),
+        },
+      };
+
+      const response = await submitIntake(session?.access_token || "", cleanPayload as any);
       
       clearTimeout(stepTimer1);
       clearTimeout(stepTimer2);
@@ -467,7 +496,7 @@ export default function TestAgentsPage() {
                     <option value="farmer">Farmer</option>
                     <option value="student">Student</option>
                     <option value="self_employed">Self Employed / SHG</option>
-                    <option value="salaried_private">Salaried (Private)</option>
+                    <option value="salaried">Salaried (Private)</option>
                     <option value="unemployed">Unemployed</option>
                     <option value="daily_wage">Daily Wage Worker</option>
                   </select>
