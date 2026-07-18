@@ -36,17 +36,24 @@ export type SignupPayload = { email: string; password: string; full_name: string
 export type CitizenProfile = {
   full_name: string;
   age: number;
-  gender: "male" | "female" | "transgender";
+  gender: string;
   state: string;
   district: string;
   annual_income: number;
   occupation: string;
-  social_category: "general" | "obc" | "sc" | "st" | "ews";
-  disability_status: "none" | "physical" | "visual" | "hearing" | "multiple";
+  social_category: string;
+  disability_status: string;
   family_size: number;
   has_bpl_card: boolean;
   land_owned_acres: number;
   education_level: string;
+  gov_id_available?: {
+    aadhaar?: boolean;
+    income_certificate?: boolean;
+    caste_certificate?: boolean;
+    ration_card?: boolean;
+    [key: string]: boolean | undefined;
+  };
 };
 
 export type SchemeResultType = {
