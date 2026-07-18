@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { submitIntake } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
+import { createBrowserClient } from "@supabase/ssr";
 
 interface CitizenProfileForm {
   full_name: string;
@@ -222,6 +223,23 @@ export default function TestAgentsPage() {
     setStepProgress(1); // Intake Agent started
 
     try {
+      // Get the freshest possible session token
+      let token = session?.access_token || "";
+      if (!token) {
+        const supabase = createBrowserClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+        );
+        const { data } = await supabase.auth.getSession();
+        token = data.session?.access_token || "";
+      }
+      if (!token) {
+        setErrorMsg("⚠️ You must be logged in to run the agent pipeline. Please log in and return to this page.");
+        setRunning(false);
+        setStepProgress(0);
+        return;
+      }
+
       const stepTimer1 = setTimeout(() => setStepProgress(2), 600); // Eligibility Agent
       const stepTimer2 = setTimeout(() => setStepProgress(3), 1300); // Ranking Agent
       const stepTimer3 = setTimeout(() => setStepProgress(4), 2000); // DocGap Agent
@@ -255,7 +273,7 @@ export default function TestAgentsPage() {
         },
       };
 
-      const response = await submitIntake(session?.access_token || "", cleanPayload as any);
+      const response = await submitIntake(token, cleanPayload as any);
       
       clearTimeout(stepTimer1);
       clearTimeout(stepTimer2);
