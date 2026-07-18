@@ -186,7 +186,8 @@ export default function TestAgentsPage() {
 
   async function checkBackendHealth() {
     setHealthChecking(true);
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://yojanasaathi-backend.onrender.com/api";
+    const baseHost = (process.env.NEXT_PUBLIC_API_URL || "https://yojanasaathi-backend.onrender.com").replace(/\/api\/?$/, "").replace(/\/$/, "");
+    const apiUrl = `${baseHost}/api`;
     try {
       const res = await fetch(`${apiUrl}/health`);
       if (res.ok) {
