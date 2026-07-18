@@ -11,6 +11,7 @@ a standard error shape on every failure (no raw tracebacks leak to clients).
 
 from __future__ import annotations
 
+import asyncio
 import uuid
 import jwt
 from contextlib import asynccontextmanager
@@ -62,6 +63,29 @@ def _error_payload(message: str, code: ErrorCode) -> dict:
     }
 
 
+async def _keep_alive_loop(port: int = 8000) -> None:
+    """Ping /api/health every 5 minutes to prevent Render free-tier spin-down.
+
+    Render considers a service inactive when it receives no inbound HTTP
+    traffic for 15 minutes. By making a loopback request to our own health
+    endpoint every 5 minutes we guarantee continuous activity without any
+    external dependency (UptimeRobot, cron-job.org, etc.).
+    """
+    import httpx
+
+    url = f"http://127.0.0.1:{port}/api/health"
+    logger = get_logger("keep_alive")
+    await asyncio.sleep(30)  # wait for app to fully start before first ping
+    while True:
+        try:
+            async with httpx.AsyncClient(timeout=10) as client:
+                resp = await client.get(url)
+            logger.info("keep_alive_ping", status=resp.status_code)
+        except Exception as exc:
+            logger.warning("keep_alive_ping_failed", error=str(exc))
+        await asyncio.sleep(5 * 60)  # ping every 5 minutes
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Load schemes and initialize shared services once at startup."""
@@ -110,7 +134,19 @@ async def lifespan(app: FastAPI):
         llm_active=app.state.llm.available,
         environment=settings.environment,
     )
+
+    # Launch keep-alive background task to prevent Render free-tier spin-down.
+    import os as _os
+    _port = int(_os.environ.get("PORT", "8000"))
+    keep_alive_task = asyncio.create_task(_keep_alive_loop(_port))
+
     yield
+
+    keep_alive_task.cancel()
+    try:
+        await keep_alive_task
+    except asyncio.CancelledError:
+        pass
     logger.info("shutdown")
 
 
