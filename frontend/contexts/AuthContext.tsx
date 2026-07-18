@@ -11,7 +11,7 @@ type AuthState = {
   user: User | null;
   session: Session | null;
   loading: boolean;
-  signIn: (email: string, password: string) => Promise<{ error?: string }>;
+  signIn: (email: string, password: string, redirectPath?: string) => Promise<{ error?: string }>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
   demoSignIn: () => Promise<void>;
@@ -111,12 +111,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.push("/dashboard");
   }, [router]);
 
-  const signIn = useCallback(async (email: string, password: string) => {
+  const signIn = useCallback(async (email: string, password: string, redirectPath?: string) => {
     if (!supabase) return { error: CONFIG_ERR };
     try {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) return { error: error.message };
-      router.push("/dashboard");
+      const target = redirectPath || "/dashboard";
+      router.refresh();
+      if (typeof window !== "undefined") {
+        window.location.href = target;
+      } else {
+        router.push(target);
+      }
       return {};
     } catch (e) {
       return { error: e instanceof Error ? e.message : CONFIG_ERR };

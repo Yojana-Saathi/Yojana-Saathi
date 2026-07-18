@@ -17,7 +17,11 @@ export default function LoginPage() {
     e.preventDefault();
     setError("");
     setBusy(true);
-    const result = await signIn(email, password);
+    const redirectPath =
+      typeof window !== "undefined"
+        ? new URLSearchParams(window.location.search).get("redirect") || "/dashboard"
+        : "/dashboard";
+    const result = await signIn(email, password, redirectPath);
     setBusy(false);
     if (result.error) {
       if (
