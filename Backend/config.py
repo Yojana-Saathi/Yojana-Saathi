@@ -34,7 +34,7 @@ class Settings(BaseSettings):
 
     # --- CORS: explicit allowlist, NEVER "*" ---
     # Comma-separated list in the env var, e.g. "http://localhost:3000,https://app.example.com"
-    allowed_origins: str = Field(default="http://localhost:3000")
+    allowed_origins: str = Field(default="http://localhost:3000,https://yojana-saathi-seven.vercel.app,https://yojana-saathi.vercel.app")
 
     # --- Rate limiting ---
     rate_limit: str = Field(default="20/minute")
