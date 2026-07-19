@@ -327,7 +327,7 @@ export default function DocumentsPage() {
                             Pending
                           </span>
                         )}
-                        {existing?.verification_status === "failed" && (
+                        {existing?.verification_status === "rejected" && (
                           <span className="flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-xs font-semibold text-red-500">
                             Failed
                           </span>
@@ -422,8 +422,8 @@ export default function DocumentsPage() {
                           </p>
                         </div>
                       </div>
-                      <span className={cn("text-xs font-semibold", doc.verification_status === "verified" ? "text-verified-teal" : doc.verification_status === "failed" ? "text-red-500" : "text-caution-amber")}>
-                        {doc.verification_status === "verified" ? "✓ Verified" : doc.verification_status === "failed" ? "Failed" : "Pending"}
+                      <span className={cn("text-xs font-semibold", doc.verification_status === "verified" ? "text-verified-teal" : doc.verification_status === "rejected" ? "text-red-500" : "text-caution-amber")}>
+                        {doc.verification_status === "verified" ? "✓ Verified" : doc.verification_status === "rejected" ? "Failed" : "Pending"}
                       </span>
                     </div>
                   );
