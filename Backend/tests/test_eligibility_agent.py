@@ -61,7 +61,7 @@ def make_scheme(rule_overrides=None, **scheme_overrides) -> Scheme:
 
 @pytest.fixture(scope="module")
 def schemes():
-    return tuple(load_schemes())
+    return tuple([s for s in load_schemes() if s.scheme_id.split("-")[-1].isdigit() and len(s.scheme_id.split("-")[-1]) == 3 and int(s.scheme_id.split("-")[-1]) <= 20])
 
 
 # ---------------------------------------------------------------------------

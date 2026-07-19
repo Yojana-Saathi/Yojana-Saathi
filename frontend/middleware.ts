@@ -15,6 +15,17 @@ const authRoutes = ["/login", "/register"];
 const protectedSet = new Set(protectedRoutes);
 const authSet = new Set(authRoutes);
 
+const BLOCKED_USER_AGENTS = [
+  "curl/",
+  "python-requests",
+  "masscan",
+  "nikto",
+  "sqlmap",
+  "postmanruntime",
+  "zgrab",
+  "nmap",
+];
+
 function isProtected(pathname: string): boolean {
   if (protectedSet.has(pathname)) return true;
   for (const route of protectedSet) {
@@ -32,6 +43,23 @@ function isAuthRoute(pathname: string): boolean {
 }
 
 export async function middleware(request: NextRequest) {
+  // ── Edge Shield: Block automated attack scanners and oversized requests ──
+  const userAgent = (request.headers.get("user-agent") || "").toLowerCase();
+  if (BLOCKED_USER_AGENTS.some((bot) => userAgent.includes(bot))) {
+    return new NextResponse(
+      JSON.stringify({ error: "Access Denied: Automated scraping or vulnerability scanning is strictly prohibited." }),
+      { status: 403, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
+  const contentLength = parseInt(request.headers.get("content-length") || "0", 10);
+  if (contentLength > 10 * 1024 * 1024) {
+    return new NextResponse(
+      JSON.stringify({ error: "Payload Too Large: Request body exceeds maximum edge limit." }),
+      { status: 413, headers: { "Content-Type": "application/json" } }
+    );
+  }
+
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 

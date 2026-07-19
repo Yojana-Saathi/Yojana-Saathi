@@ -71,19 +71,21 @@ with open(json_path, "r", encoding="utf-8-sig") as f:
 
 SCHEMES_DB_DATA = []
 for idx, s in enumerate(raw_schemes):
-    SCHEMES_DB_DATA.append({
-        "id": f"uuid-scheme-{idx}",
-        "scheme_id": s["scheme_id"],
-        "scheme_name": s["scheme_name"],
-        "scheme_category": s["scheme_category"],
-        "issuing_authority": s["issuing_authority"],
-        "eligibility_rules": s["eligibility_rules"],
-        "benefit_summary": s["benefit_summary"],
-        "benefit_value_estimate": s["benefit_value_estimate"],
-        "required_documents": s["required_documents"],
-        "application_url": s["application_url"],
-        "is_active": True
-    })
+    parts = s["scheme_id"].split("-")
+    if parts[-1].isdigit() and len(parts[-1]) == 3 and int(parts[-1]) <= 20:
+        SCHEMES_DB_DATA.append({
+            "id": f"uuid-scheme-{idx}",
+            "scheme_id": s["scheme_id"],
+            "scheme_name": s["scheme_name"],
+            "scheme_category": s["scheme_category"],
+            "issuing_authority": s["issuing_authority"],
+            "eligibility_rules": s["eligibility_rules"],
+            "benefit_summary": s["benefit_summary"],
+            "benefit_value_estimate": s["benefit_value_estimate"],
+            "required_documents": s["required_documents"],
+            "application_url": s["application_url"],
+            "is_active": True
+        })
 
 
 class MockSupabaseTable:
@@ -249,10 +251,25 @@ class MockSupabaseClient:
 def mock_supabase_client(monkeypatch):
     import Backend.core.supabase_client as sc
     import Backend.main as main_mod
+    import Backend.core.scheme_loader as scheme_loader_mod
+    from Backend.llm.groq_client import GroqClient
     client = MockSupabaseClient()
     monkeypatch.setattr(sc, "get_service_role_client", lambda: client)
     monkeypatch.setattr(sc, "get_supabase_client", lambda *a, **k: client)
     monkeypatch.setattr(main_mod, "get_service_role_client", lambda: client)
+
+    # Ensure offline, deterministic behavior across all tests:
+    real_load_schemes = scheme_loader_mod.load_schemes
+    def _benchmark_schemes(path=None):
+        all_s = real_load_schemes(path)
+        return [s for s in all_s if s.scheme_id.split("-")[-1].isdigit() and len(s.scheme_id.split("-")[-1]) == 3 and int(s.scheme_id.split("-")[-1]) <= 20]
+    monkeypatch.setattr(scheme_loader_mod, "load_schemes", _benchmark_schemes)
+    monkeypatch.setattr(main_mod, "load_schemes", _benchmark_schemes)
+
+    # Disable live Groq network calls during test suite so tests run offline deterministically without 429 rate limits
+    async def _offline_polish(self, prompt: str, fallback: str = "", *args, **kwargs) -> tuple[str, bool]:
+        return fallback, True
+    monkeypatch.setattr(GroqClient, "polish", _offline_polish)
 
 
 

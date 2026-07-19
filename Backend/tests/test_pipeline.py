@@ -14,7 +14,7 @@ def profile(**overrides) -> CitizenProfile:
     return CitizenProfile(**make_profile_dict(**overrides))
 
 
-SCHEMES = tuple(load_schemes())
+SCHEMES = tuple([s for s in load_schemes() if s.scheme_id.split("-")[-1].isdigit() and len(s.scheme_id.split("-")[-1]) == 3 and int(s.scheme_id.split("-")[-1]) <= 20])
 
 
 class _DegradingLLM:

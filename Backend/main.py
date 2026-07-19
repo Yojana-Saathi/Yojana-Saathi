@@ -166,6 +166,11 @@ def create_app() -> FastAPI:
     app.state.limiter = limiter
     app.add_middleware(SlowAPIMiddleware)
 
+    # Defensive Guardrails: Payload size limits & Enterprise Security headers
+    from .core.guardrails import PayloadSizeLimitMiddleware, SecurityHeadersMiddleware
+    app.add_middleware(PayloadSizeLimitMiddleware)
+    app.add_middleware(SecurityHeadersMiddleware)
+
     # CORS with explicit allowlist (never "*").
     configure_cors(app, settings)
 
@@ -216,6 +221,8 @@ def _register_error_handlers(app: FastAPI) -> None:
 
 def _register_routes(app: FastAPI) -> None:
     logger = get_logger("api")
+    limiter = app.state.limiter
+    from .core.guardrails import SanitizerEngine
 
     @app.get("/api/intake")
     @app.get("/api/matches")
@@ -249,6 +256,7 @@ def _register_routes(app: FastAPI) -> None:
             return {"ranked_schemes": [], "eligible_schemes": [], "total_eligible_count": 0, "last_refreshed": None}
 
     @app.post("/api/matches/refresh")
+    @limiter.limit("10/minute")
     async def refresh_matches(
         request: Request,
         auth: AuthenticatedUser = Depends(get_current_user_client)
@@ -415,6 +423,7 @@ def _register_routes(app: FastAPI) -> None:
             )
 
     @app.post("/api/intake", response_model=IntakeResponse)
+    @limiter.limit("10/minute")
     async def intake(
         request: Request,
         profile: CitizenProfile,
@@ -614,6 +623,7 @@ def _register_routes(app: FastAPI) -> None:
     # ── Document Vault Endpoints (JWT Protected) ──
 
     @app.post("/api/documents/upload")
+    @limiter.limit("10/minute")
     async def upload_document(
         request: Request,
         doc_type: str = Form(...),
@@ -623,6 +633,15 @@ def _register_routes(app: FastAPI) -> None:
         user_id = auth.user_id
         supabase = auth.supabase
         try:
+            # Check document size limit (10MB max for images/PDFs)
+            file_bytes = await file.read()
+            if len(file_bytes) > 10 * 1024 * 1024:
+                return JSONResponse(
+                    status_code=413,
+                    content=_error_payload("File size exceeds 10MB limit.", ErrorCode.INVALID_INPUT)
+                )
+            await file.seek(0)
+            # Proceed with OCR/upload logic as before...
             
             # Enforce owner-prefixed unique path structure {user_id}/{doc_type}/{unique_filename}
             unique_filename = f"{uuid.uuid4()}_{file.filename}"
@@ -677,7 +696,9 @@ def _register_routes(app: FastAPI) -> None:
             )
 
     @app.post("/api/documents/{doc_id}/confirm")
+    @limiter.limit("10/minute")
     async def confirm_document(
+        request: Request,
         doc_id: str,
         confirmed_data: dict,
         auth: AuthenticatedUser = Depends(get_current_user_client)
@@ -1090,14 +1111,26 @@ def _register_routes(app: FastAPI) -> None:
     # ── Chat Q&A Endpoint (Public) ──
 
     @app.post("/api/chat", response_model=ChatResponse)
+    @limiter.limit("20/minute")
     async def chat(request: Request, body: ChatRequest) -> ChatResponse:
         try:
+            # Defensive Guardrails: check for prompt injection & system override jailbreaks
+            from .core.guardrails import SanitizerEngine
+            if SanitizerEngine.check_prompt_injection(body.message):
+                logger.warning("prompt_injection_blocked", path=request.url.path, query=body.message[:100])
+                return ChatResponse(
+                    reply="⚠️ Security Alert: Your query contains disallowed instructions or system override patterns. Please ask a direct question about government welfare schemes.",
+                    sources=[]
+                )
+            clean_msg = SanitizerEngine.sanitize_string(body.message)
+            clean_history = SanitizerEngine.trim_and_sanitize_history(body.history, max_turns=8)
+
             schemes: tuple[Scheme, ...] = request.app.state.schemes
             llm: GroqClient = request.app.state.llm
 
             # Find schemes relevant to the question
             import re as _re
-            q = body.message.lower()
+            q = clean_msg.lower()
             q_clean = _re.sub(r"[^a-z0-9\s-]", "", q)
 
             def _score_scheme(s: Scheme) -> int:
@@ -1137,7 +1170,7 @@ isn't in the provided schemes, say you don't have that information yet.
 Available schemes:
 {context or "No specific schemes matched — answer generally if possible."}
 
-User question: {body.message}
+User question: {clean_msg}
 
 Give a concise, helpful answer. If relevant schemes were found, mention them by name
 and explain their benefits, eligibility, or how to apply based on the data above."""

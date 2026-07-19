@@ -1,7 +1,7 @@
 import pytest
 from httpx import ASGITransport, AsyncClient
 from Backend.main import create_app
-from Backend.core.auth import get_current_user, verify_internal_secret
+from Backend.core.auth import get_current_user, get_current_user_client, verify_internal_secret, AuthenticatedUser
 from Backend.core.supabase_client import get_supabase_client, get_service_role_client
 from .conftest import MockSupabaseClient, make_profile_dict
 
@@ -13,6 +13,7 @@ async def authed_client():
     
     # Enable dependencies mock
     app.dependency_overrides[get_current_user] = lambda: "mocked_user_uuid"
+    app.dependency_overrides[get_current_user_client] = lambda: AuthenticatedUser(user_id="mocked_user_uuid", supabase=mock_db)
     app.dependency_overrides[get_supabase_client] = lambda: mock_db
     app.dependency_overrides[get_service_role_client] = lambda: mock_db
     
