@@ -1,24 +1,22 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
-import dynamic from "next/dynamic";
-import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { getUserMatches, listDocuments, type EligibilityMatch, type UserDocument } from "@/lib/api";
 
+// ─── GSAP entrance ───────────────────────────────────────────────────────────
 const useGSAPAnimation = (pageRef: React.RefObject<HTMLDivElement | null>, deps: unknown[]) => {
   useEffect(() => {
     let cleanup: (() => void) | undefined;
     (async () => {
       const gsap = (await import("gsap")).default;
       try {
-        const els = pageRef.current?.querySelectorAll(".db-hero, .db-stat, .db-card, .db-item");
-        if (els?.length) gsap.killTweensOf(els);
         const ctx = gsap.context(() => {
-          gsap.fromTo(".db-hero", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out", clearProps: "all" });
-          gsap.fromTo(".db-stat", { opacity: 0, y: 12 }, { opacity: 1, y: 0, duration: 0.35, stagger: 0.08, delay: 0.15, ease: "power2.out", clearProps: "all" });
-          gsap.fromTo(".db-card", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.35, stagger: 0.06, delay: 0.25, ease: "power2.out", clearProps: "all" });
+          gsap.fromTo(".db-hero", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, ease: "power2.out", clearProps: "all" });
+          gsap.fromTo(".db-stat", { opacity: 0, y: 16, scale: 0.97 }, { opacity: 1, y: 0, scale: 1, duration: 0.4, stagger: 0.08, delay: 0.2, ease: "power2.out", clearProps: "all" });
+          gsap.fromTo(".db-section", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.4, stagger: 0.1, delay: 0.35, ease: "power2.out", clearProps: "all" });
         }, pageRef);
         cleanup = () => ctx.revert();
       } catch { return; }
@@ -28,21 +26,87 @@ const useGSAPAnimation = (pageRef: React.RefObject<HTMLDivElement | null>, deps:
   }, deps);
 };
 
+// ─── Score ring component ─────────────────────────────────────────────────────
+function ScoreRing({ score }: { score: number }) {
+  const pct = Math.round(score * 100);
+  const r = 18;
+  const circ = 2 * Math.PI * r;
+  const dash = (pct / 100) * circ;
+  const color = pct >= 70 ? "#0D9488" : pct >= 40 ? "#F59E0B" : "#64748B";
+  return (
+    <svg width="48" height="48" className="shrink-0" viewBox="0 0 48 48">
+      <circle cx="24" cy="24" r={r} fill="none" stroke="#F1F5F9" strokeWidth="5" />
+      <circle
+        cx="24" cy="24" r={r} fill="none"
+        stroke={color} strokeWidth="5"
+        strokeDasharray={`${dash} ${circ}`}
+        strokeLinecap="round"
+        transform="rotate(-90 24 24)"
+        style={{ transition: "stroke-dasharray 0.6s ease" }}
+      />
+      <text x="24" y="28" textAnchor="middle" fontSize="10" fontWeight="700" fill={color}>{pct}%</text>
+    </svg>
+  );
+}
+
+// ─── Document badge component ─────────────────────────────────────────────────
+const DOC_LABELS: Record<string, string> = {
+  aadhaar: "Aadhaar",
+  income_certificate: "Income Cert.",
+  caste_certificate: "Caste Cert.",
+  ration_card: "Ration Card",
+  domicile_certificate: "Domicile",
+  disability_certificate: "Disability",
+  land_record: "Land Record",
+  bank_passbook: "Bank Passbook",
+  voter_id: "Voter ID",
+  education_marksheet: "Marksheet",
+};
+function docLabel(key: string) { return DOC_LABELS[key] ?? key.replace(/_/g, " "); }
+
+function DocStatusBadge({ status }: { status: string }) {
+  if (status === "verified") return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-teal-50 px-2 py-0.5 text-[11px] font-semibold text-teal-600">
+      <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}><path d="M5 13l4 4L19 7" /></svg>
+      Verified
+    </span>
+  );
+  if (status === "rejected") return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-[11px] font-semibold text-red-500">Failed</span>
+  );
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-600">
+      <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}><circle cx="12" cy="12" r="10" /><path d="M12 8v4m0 4h.01" /></svg>
+      Pending
+    </span>
+  );
+}
+
+// ─── Category → colour ────────────────────────────────────────────────────────
+const CAT_COLORS: Record<string, { bg: string; text: string }> = {
+  Agriculture:   { bg: "bg-green-50",   text: "text-green-700"  },
+  Housing:       { bg: "bg-orange-50",  text: "text-orange-600" },
+  Health:        { bg: "bg-rose-50",    text: "text-rose-600"   },
+  Education:     { bg: "bg-cyan-50",    text: "text-cyan-700"   },
+  Pension:       { bg: "bg-purple-50",  text: "text-purple-700" },
+  "Women & Child": { bg: "bg-pink-50",  text: "text-pink-600"   },
+  Livelihood:    { bg: "bg-amber-50",   text: "text-amber-700"  },
+};
+function catColor(cat: string) { return CAT_COLORS[cat] ?? { bg: "bg-slate-100", text: "text-slate-600" }; }
+
+// ─── Main page ────────────────────────────────────────────────────────────────
 export default function DashboardPage() {
-  const { session } = useAuth();
+  const { session, user } = useAuth();
   const pageRef = useRef<HTMLDivElement>(null);
   const [matches, setMatches] = useState<EligibilityMatch[]>([]);
   const [docs, setDocs] = useState<UserDocument[]>([]);
-  const [tab, setTab] = useState<"schemes" | "documents">("schemes");
+  const [filter, setFilter] = useState<"all" | "ready" | "pending">("all");
   const [expanded, setExpanded] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!session?.access_token) return;
-    Promise.all([
-      getUserMatches(session.access_token),
-      listDocuments(session.access_token),
-    ])
+    Promise.all([getUserMatches(session.access_token), listDocuments(session.access_token)])
       .then(([m, d]) => { setMatches(m); setDocs(d); })
       .catch(() => {})
       .finally(() => setLoading(false));
@@ -51,14 +115,17 @@ export default function DashboardPage() {
   useGSAPAnimation(pageRef, [matches]);
 
   const toggleExpanded = useCallback((id: string) => {
-    setExpanded((prev) => prev === id ? null : id);
+    setExpanded((prev) => (prev === id ? null : id));
   }, []);
 
   if (loading) {
     return (
       <div className="flex min-h-screen flex-col">
         <main className="flex flex-1 items-center justify-center bg-gradient-to-b from-white to-warm-paper">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-ink-navy/10 border-t-signal-orange" />
+          <div className="flex flex-col items-center gap-4">
+            <div className="h-10 w-10 animate-spin rounded-full border-[3px] border-orange-100 border-t-orange-500" />
+            <p className="text-sm font-medium text-slate-500">Loading your dashboard…</p>
+          </div>
         </main>
       </div>
     );
@@ -68,191 +135,396 @@ export default function DashboardPage() {
   const readyCount = matches.filter((m) => m.missing_documents.length === 0).length;
   const pendingCount = matches.filter((m) => m.missing_documents.length > 0).length;
   const verifiedDocs = docs.filter((d) => d.verification_status === "verified").length;
+  const allMissingDocs = Array.from(new Set(matches.flatMap((m) => m.missing_documents)));
+  const docsVerifiedPct = docs.length > 0 ? Math.round((verifiedDocs / docs.length) * 100) : 0;
+
+  const firstName = (user?.user_metadata?.full_name as string | undefined)?.split(" ")[0] ?? "there";
+
+  const filteredMatches = filter === "ready"
+    ? matches.filter((m) => m.missing_documents.length === 0)
+    : filter === "pending"
+    ? matches.filter((m) => m.missing_documents.length > 0)
+    : matches;
 
   return (
-    <div ref={pageRef} className="flex min-h-screen flex-col">
-      <main className="flex-1 bg-gradient-to-b from-white to-warm-paper">
-        <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
-          <div className="db-hero flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+    <div ref={pageRef} className="min-h-screen bg-[#F8F9FB]">
+      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
+
+        {/* ── Hero Banner ─────────────────────────────────────────────────── */}
+        <div className="db-hero relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0F2645] via-[#16365C] to-[#1E487A] px-6 py-8 sm:px-10 sm:py-10 text-white shadow-xl mb-8">
+          {/* Decorative blobs */}
+          <div className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full bg-orange-400/10 blur-3xl" />
+          <div className="pointer-events-none absolute -left-10 bottom-0 h-48 w-48 rounded-full bg-teal-400/10 blur-3xl" />
+
+          <div className="relative z-10 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <h1 className="font-display text-2xl font-semibold tracking-tight text-ink-navy sm:text-3xl">Dashboard</h1>
-              <p className="mt-1 text-sm text-slate-blue">{totalMatches} schemes matched to your profile</p>
+              <p className="text-sm font-medium text-orange-300 mb-1">Welcome back 👋</p>
+              <h1 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
+                Hi, {firstName}!
+              </h1>
+              <p className="mt-2 text-sm text-slate-300 max-w-md leading-relaxed">
+                {totalMatches > 0
+                  ? `You match ${totalMatches} government scheme${totalMatches !== 1 ? "s" : ""}. ${readyCount > 0 ? `${readyCount} ${readyCount === 1 ? "is" : "are"} ready to apply right now.` : "Upload missing documents to unlock applications."}`
+                  : "Complete your profile to discover schemes you qualify for."}
+              </p>
             </div>
-            <div className="flex gap-2">
-              <Button href="/profile" variant="outline" size="sm">Edit profile</Button>
-              <Button href="/documents" size="sm">Upload documents</Button>
-            </div>
-          </div>
-
-          <div className="db-hero mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {[
-              { label: "Schemes Found", value: totalMatches, color: "bg-signal-orange/10 text-signal-orange" },
-              { label: "Ready to Apply", value: readyCount, color: "bg-verified-teal/10 text-verified-teal" },
-              { label: "Need Documents", value: pendingCount, color: "bg-caution-amber/10 text-caution-amber" },
-              { label: "Docs Verified", value: `${verifiedDocs}/${docs.length}`, color: "bg-ink-navy/5 text-ink-navy" },
-            ].map((stat) => (
-              <div key={stat.label} className="db-stat rounded-xl border border-ink-navy/10 bg-white p-4 text-center sm:text-left">
-                <p className={`text-2xl font-bold font-display ${stat.color.split(" ")[1]}`}>{stat.value}</p>
-                <p className="text-xs text-slate-blue-400 mt-0.5">{stat.label}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="db-hero mt-6 flex gap-1 rounded-lg bg-ink-navy/5 p-1">
-            {(["schemes", "documents"] as const).map((t) => (
-              <button
-                key={t}
-                onClick={() => setTab(t)}
-                className={cn(
-                  "flex-1 rounded-md px-4 py-2 text-sm font-medium transition-all capitalize",
-                  tab === t ? "bg-white text-ink-navy shadow-sm" : "text-slate-blue hover:text-ink-navy"
-                )}
+            <div className="flex gap-3 shrink-0">
+              <Link
+                href="/profile"
+                className="inline-flex items-center gap-2 rounded-xl bg-white/10 border border-white/20 px-4 py-2.5 text-sm font-semibold text-white backdrop-blur hover:bg-white/20 transition-all"
               >
-                {t === "schemes" ? `Matched schemes (${totalMatches})` : `Document library (${docs.length})`}
-              </button>
-            ))}
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                Edit Profile
+              </Link>
+              <Link
+                href="/documents"
+                className="inline-flex items-center gap-2 rounded-xl bg-orange-500 px-4 py-2.5 text-sm font-bold text-white hover:bg-orange-600 transition-all shadow-lg shadow-orange-500/30"
+              >
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M12 4v16m8-8H4"/></svg>
+                Upload Docs
+              </Link>
+            </div>
           </div>
+        </div>
 
-          {tab === "schemes" && (
-            <div className="mt-5 space-y-3">
-              {totalMatches === 0 ? (
-                <div className="db-card rounded-xl border border-ink-navy/10 bg-white p-8 text-center">
-                  <p className="text-sm font-medium text-ink-navy">No scheme matches yet</p>
-                  <p className="text-sm text-slate-blue-400 mt-1">Complete your profile to see which schemes you qualify for.</p>
-                  <Button href="/profile" size="sm" className="mt-4">Complete profile</Button>
+        {/* ── Stats Row ───────────────────────────────────────────────────── */}
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 mb-8">
+          {[
+            {
+              label: "Schemes Matched",
+              value: totalMatches,
+              icon: (
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+              ),
+              iconBg: "bg-orange-500",
+              valColor: "text-orange-500",
+              href: undefined,
+            },
+            {
+              label: "Ready to Apply",
+              value: readyCount,
+              icon: (
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}><path d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z"/></svg>
+              ),
+              iconBg: "bg-teal-500",
+              valColor: "text-teal-600",
+              href: undefined,
+            },
+            {
+              label: "Need Documents",
+              value: pendingCount,
+              icon: (
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}><path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+              ),
+              iconBg: "bg-amber-500",
+              valColor: "text-amber-600",
+              href: "/documents",
+            },
+            {
+              label: "Docs Verified",
+              value: `${verifiedDocs}/${docs.length || "—"}`,
+              icon: (
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              ),
+              iconBg: "bg-indigo-500",
+              valColor: "text-indigo-600",
+              href: "/documents",
+            },
+          ].map((stat) => (
+            <div
+              key={stat.label}
+              className={cn(
+                "db-stat relative overflow-hidden rounded-2xl bg-white border border-slate-100 p-5 shadow-sm",
+                stat.href && "hover:shadow-md hover:border-slate-200 transition-all cursor-pointer group"
+              )}
+              onClick={stat.href ? () => window.location.href = stat.href! : undefined}
+            >
+              <div className="flex items-start justify-between">
+                <div className={cn("flex h-9 w-9 items-center justify-center rounded-xl text-white", stat.iconBg)}>
+                  {stat.icon}
                 </div>
-              ) : (
-                matches.map((m) => (
-                  <div key={m.scheme_id} className="db-card rounded-xl border border-ink-navy/10 bg-white transition-all hover:shadow-sm">
+                {stat.href && (
+                  <svg className="h-4 w-4 text-slate-400 group-hover:text-slate-600 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M9 18l6-6-6-6"/></svg>
+                )}
+              </div>
+              <p className={cn("mt-3 text-2xl font-bold font-display", stat.valColor)}>{stat.value}</p>
+              <p className="text-xs font-medium text-slate-500 mt-0.5">{stat.label}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* ── Two-column layout ───────────────────────────────────────────── */}
+        <div className="grid gap-6 lg:grid-cols-3">
+
+          {/* ── Left: Scheme Cards (2/3 width) ─────────────────────────── */}
+          <div className="lg:col-span-2 db-section space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="font-display text-lg font-bold text-[#1B2B4B]">
+                Matched Schemes
+                <span className="ml-2 text-sm font-normal text-slate-400">({filteredMatches.length})</span>
+              </h2>
+              {/* Filter pills */}
+              <div className="flex gap-1.5 rounded-xl bg-slate-100 p-1">
+                {(["all", "ready", "pending"] as const).map((f) => (
+                  <button
+                    key={f}
+                    onClick={() => setFilter(f)}
+                    className={cn(
+                      "rounded-lg px-3 py-1 text-xs font-semibold transition-all capitalize",
+                      filter === f ? "bg-white text-[#1B2B4B] shadow-sm" : "text-slate-500 hover:text-slate-700"
+                    )}
+                  >
+                    {f === "all" ? "All" : f === "ready" ? `✅ Ready (${readyCount})` : `⏳ Pending (${pendingCount})`}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {filteredMatches.length === 0 ? (
+              <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-white p-10 text-center">
+                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
+                  <svg className="h-6 w-6 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+                </div>
+                <p className="font-semibold text-slate-700">{totalMatches === 0 ? "No matches yet" : "No schemes in this filter"}</p>
+                <p className="mt-1 text-sm text-slate-400">
+                  {totalMatches === 0 ? "Complete your profile to see matched schemes." : "Try switching to 'All' above."}
+                </p>
+                {totalMatches === 0 && (
+                  <Link href="/profile" className="mt-4 inline-flex items-center gap-2 rounded-xl bg-orange-500 px-4 py-2.5 text-sm font-bold text-white hover:bg-orange-600 transition-all">
+                    Complete Profile
+                  </Link>
+                )}
+              </div>
+            ) : (
+              filteredMatches.map((m) => {
+                const isOpen = expanded === m.scheme_id;
+                const isReady = m.missing_documents.length === 0;
+                const cc = catColor(m.scheme_category);
+                return (
+                  <div
+                    key={m.scheme_id}
+                    className={cn(
+                      "rounded-2xl border bg-white shadow-sm transition-all duration-200",
+                      isOpen ? "border-orange-200 shadow-md" : "border-slate-100 hover:border-slate-200 hover:shadow-md"
+                    )}
+                  >
                     <button
                       onClick={() => toggleExpanded(m.scheme_id)}
-                      className="flex w-full items-center justify-between px-5 py-4 text-left"
+                      className="flex w-full items-start gap-4 px-5 py-4 text-left sm:items-center"
                     >
-                      <div className="flex items-center gap-3">
-                        <div className={cn(
-                          "flex h-10 w-10 items-center justify-center rounded-lg text-sm font-bold font-display",
-                          m.match_score >= 0.7 ? "bg-verified-teal/10 text-verified-teal" : m.match_score >= 0.4 ? "bg-caution-amber/10 text-caution-amber" : "bg-ink-navy/5 text-slate-blue"
-                        )}>
-                          {Math.round(m.match_score * 100)}%
+                      {/* Score ring */}
+                      <ScoreRing score={m.match_score} />
+
+                      {/* Scheme info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2 mb-1">
+                          <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-semibold", cc.bg, cc.text)}>
+                            {m.scheme_category}
+                          </span>
+                          {isReady ? (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-teal-50 px-2 py-0.5 text-[11px] font-semibold text-teal-600">
+                              <span className="h-1.5 w-1.5 rounded-full bg-teal-500" />
+                              Ready to Apply
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-600">
+                              <span className="h-1.5 w-1.5 rounded-full bg-amber-400" />
+                              {m.missing_documents.length} doc{m.missing_documents.length !== 1 ? "s" : ""} needed
+                            </span>
+                          )}
                         </div>
-                        <div>
-                          <p className="text-sm font-semibold text-ink-navy">{m.scheme_name}</p>
-                          <p className="text-xs text-slate-blue-400">{m.issuing_authority} · {m.scheme_category}</p>
-                        </div>
+                        <p className="text-sm font-bold text-[#1B2B4B] leading-snug">{m.scheme_name}</p>
+                        <p className="text-xs text-slate-500 mt-0.5 truncate">{m.issuing_authority}</p>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <span className={cn(
-                          "text-xs font-medium",
-                          m.missing_documents.length === 0 ? "text-verified-teal" : "text-caution-amber"
-                        )}>
-                          {m.missing_documents.length === 0 ? "Ready" : `${m.missing_documents.length} doc(s) needed`}
-                        </span>
-                        <svg className={cn("h-5 w-5 text-slate-blue-400 transition-transform", expanded === m.scheme_id && "rotate-180")} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M6 9l6 6 6-6" /></svg>
-                      </div>
+
+                      {/* Chevron */}
+                      <svg
+                        className={cn("h-5 w-5 shrink-0 text-slate-400 transition-transform duration-300", isOpen && "rotate-180")}
+                        viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}
+                      >
+                        <path d="M6 9l6 6 6-6" />
+                      </svg>
                     </button>
 
-                    {expanded === m.scheme_id && (
-                      <div className="border-t border-ink-navy/10 px-5 py-4">
-                        <p className="text-sm text-slate-blue">{m.benefit_summary}</p>
+                    {/* Expanded details */}
+                    {isOpen && (
+                      <div className="border-t border-slate-100 px-5 py-5 space-y-4">
+                        <p className="text-sm text-slate-600 leading-relaxed">{m.benefit_summary}</p>
 
                         {m.missing_documents.length > 0 && (
-                          <div className="mt-3">
-                            <p className="text-xs font-semibold text-caution-amber mb-2">Missing documents</p>
+                          <div>
+                            <p className="text-xs font-bold text-amber-600 uppercase tracking-wider mb-2">Missing Documents</p>
                             <div className="flex flex-wrap gap-2">
                               {m.missing_documents.map((doc) => (
-                                <span key={doc} className="rounded-md bg-caution-amber/10 px-2.5 py-1 text-xs font-medium text-caution-amber">{doc}</span>
+                                <span
+                                  key={doc}
+                                  className="inline-flex items-center gap-1.5 rounded-lg bg-amber-50 border border-amber-200 px-2.5 py-1 text-xs font-medium text-amber-700"
+                                >
+                                  <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
+                                  {docLabel(doc)}
+                                </span>
                               ))}
                             </div>
+                            <Link href="/documents" className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-orange-500 hover:text-orange-600 transition-colors">
+                              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M12 4v16m8-8H4"/></svg>
+                              Upload missing documents →
+                            </Link>
                           </div>
                         )}
 
-                        <div className="mt-4 flex gap-2">
-                          <Button size="sm" variant="outline" href={m.application_url} target="_blank" rel="noopener noreferrer">View scheme</Button>
-                          {m.missing_documents.length === 0 && (
-                            <Button size="sm">Mark as applied</Button>
+                        <div className="flex gap-2 pt-1">
+                          {m.application_url && (
+                            <a
+                              href={m.application_url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 hover:border-slate-300 hover:bg-slate-50 transition-all"
+                            >
+                              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+                              View Scheme
+                            </a>
+                          )}
+                          {isReady && (
+                            <button className="inline-flex items-center gap-2 rounded-xl bg-teal-500 px-4 py-2 text-xs font-bold text-white hover:bg-teal-600 transition-all shadow-sm">
+                              <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M5 13l4 4L19 7"/></svg>
+                              Mark as Applied
+                            </button>
                           )}
                         </div>
                       </div>
                     )}
                   </div>
-                ))
-              )}
-            </div>
-          )}
+                );
+              })
+            )}
+          </div>
 
-          {tab === "documents" && (
-            <div className="mt-5 space-y-2">
-              {docs.length === 0 ? (
-                <div className="db-card rounded-xl border border-ink-navy/10 bg-white p-8 text-center">
-                  <p className="text-sm font-medium text-ink-navy">No documents uploaded</p>
-                  <p className="text-sm text-slate-blue-400 mt-1">Upload your documents to help us verify your eligibility.</p>
-                  <Button href="/documents" size="sm" className="mt-4">Upload documents</Button>
+          {/* ── Right sidebar (1/3 width) ───────────────────────────────── */}
+          <div className="space-y-5 db-section">
+
+            {/* Document progress card */}
+            <div className="rounded-2xl bg-white border border-slate-100 p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-display text-sm font-bold text-[#1B2B4B]">Document Progress</h3>
+                <Link href="/documents" className="text-xs font-semibold text-orange-500 hover:text-orange-600 transition-colors">
+                  View all →
+                </Link>
+              </div>
+
+              {/* Radial-ish ring for verified % */}
+              <div className="flex items-center gap-4 mb-4">
+                <div className="relative flex h-16 w-16 items-center justify-center">
+                  <svg className="h-16 w-16 -rotate-90" viewBox="0 0 64 64">
+                    <circle cx="32" cy="32" r="26" fill="none" stroke="#F1F5F9" strokeWidth="8" />
+                    <circle
+                      cx="32" cy="32" r="26" fill="none"
+                      stroke={docsVerifiedPct === 100 ? "#0D9488" : "#F97316"}
+                      strokeWidth="8"
+                      strokeDasharray={`${(docsVerifiedPct / 100) * 163.4} 163.4`}
+                      strokeLinecap="round"
+                      style={{ transition: "stroke-dasharray 0.8s ease" }}
+                    />
+                  </svg>
+                  <span className="absolute text-sm font-bold text-[#1B2B4B]">{docsVerifiedPct}%</span>
+                </div>
+                <div>
+                  <p className="text-xl font-bold text-[#1B2B4B]">{verifiedDocs}<span className="text-slate-400 font-normal text-sm">/{docs.length}</span></p>
+                  <p className="text-xs text-slate-500">Verified</p>
+                  {docs.length < 10 && (
+                    <p className="text-[11px] text-amber-500 font-medium mt-0.5">{10 - docs.length} more to upload</p>
+                  )}
+                </div>
+              </div>
+
+              {docs.length > 0 ? (
+                <div className="space-y-2">
+                  {docs.slice(0, 5).map((doc) => (
+                    <div key={doc.id} className="flex items-center justify-between py-1">
+                      <p className="text-xs font-medium text-slate-700 capitalize truncate mr-2">{docLabel(doc.doc_type)}</p>
+                      <DocStatusBadge status={doc.verification_status ?? "pending"} />
+                    </div>
+                  ))}
+                  {docs.length > 5 && (
+                    <Link href="/documents" className="block text-center text-xs font-semibold text-orange-500 hover:text-orange-600 pt-1 transition-colors">
+                      +{docs.length - 5} more →
+                    </Link>
+                  )}
                 </div>
               ) : (
-                docs.map((doc) => (
-                  <div key={doc.id} className="db-card flex items-center justify-between rounded-xl border border-ink-navy/10 bg-white px-4 py-3 hover:shadow-sm transition-all">
-                    <div className="flex items-center gap-3">
-                      <div className={cn(
-                        "flex h-8 w-8 items-center justify-center rounded-lg",
-                        doc.verification_status === "verified" ? "bg-verified-teal/10 text-verified-teal" : "bg-caution-amber/10 text-caution-amber"
-                      )}>
-                        <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium text-ink-navy capitalize">{doc.doc_type.replace(/_/g, " ")}</p>
-                        <p className="text-xs text-slate-blue-400">{new Date(doc.uploaded_at).toLocaleDateString()}</p>
-                      </div>
-                    </div>
-                    <span className={cn("text-xs font-medium", doc.verification_status === "verified" ? "text-verified-teal" : "text-caution-amber")}>
-                      {doc.verification_status === "verified" ? "Verified" : doc.verification_status === "rejected" ? "Rejected" : "Pending"}
-                    </span>
-                  </div>
-                ))
+                <div className="rounded-xl border-2 border-dashed border-slate-200 p-4 text-center">
+                  <p className="text-xs font-medium text-slate-500">No documents yet</p>
+                  <Link href="/documents" className="mt-2 inline-block text-xs font-bold text-orange-500 hover:underline">
+                    Upload now →
+                  </Link>
+                </div>
               )}
+            </div>
 
-              <div className="db-card rounded-xl border border-ink-navy/10 bg-white p-5">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-semibold text-ink-navy">Document verification progress</p>
-                    <p className="text-xs text-slate-blue-400 mt-0.5">{verifiedDocs} of {docs.length} verified</p>
+            {/* Missing docs summary */}
+            {allMissingDocs.length > 0 && (
+              <div className="rounded-2xl bg-amber-50 border border-amber-200 p-5">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-500 text-white">
+                    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/></svg>
                   </div>
-                  <span className="text-lg font-bold font-display text-ink-navy">
-                    {docs.length > 0 ? Math.round((verifiedDocs / docs.length) * 100) : 0}%
-                  </span>
-                </div>
-                <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-ink-navy/10">
-                  <div
-                    className="h-full rounded-full bg-gradient-to-r from-signal-orange to-verified-teal transition-all"
-                    style={{ width: `${docs.length > 0 ? (verifiedDocs / docs.length) * 100 : 0}%` }}
-                  />
+                  <div className="min-w-0">
+                    <p className="text-xs font-bold text-amber-800 uppercase tracking-wide">Upload to unlock {pendingCount} scheme{pendingCount !== 1 ? "s" : ""}</p>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {allMissingDocs.slice(0, 6).map((doc) => (
+                        <span key={doc} className="rounded-lg bg-amber-100 border border-amber-300 px-2 py-0.5 text-[11px] font-semibold text-amber-800">{docLabel(doc)}</span>
+                      ))}
+                      {allMissingDocs.length > 6 && (
+                        <span className="rounded-lg bg-amber-100 border border-amber-300 px-2 py-0.5 text-[11px] font-semibold text-amber-800">+{allMissingDocs.length - 6} more</span>
+                      )}
+                    </div>
+                    <Link href="/documents" className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-bold text-white hover:bg-amber-600 transition-all">
+                      <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M12 4v16m8-8H4"/></svg>
+                      Upload Documents
+                    </Link>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {matches.length > 0 && (
-            <div className="db-card mt-6 rounded-xl border border-ink-navy/10 bg-white p-5">
-              <h3 className="font-display text-base font-semibold text-ink-navy">Missing documents across all schemes</h3>
-              <div className="mt-3 flex flex-wrap gap-2">
-                {Array.from(new Set(matches.flatMap((m) => m.missing_documents))).map((doc) => (
-                  <span key={doc} className="rounded-md bg-caution-amber/10 px-3 py-1.5 text-xs font-medium text-caution-amber capitalize">{doc.replace(/_/g, " ")}</span>
+            {/* Quick actions */}
+            <div className="rounded-2xl bg-white border border-slate-100 p-5 shadow-sm">
+              <h3 className="font-display text-sm font-bold text-[#1B2B4B] mb-3">Quick Actions</h3>
+              <div className="space-y-2">
+                {[
+                  { href: "/chat", label: "Ask AI Assistant", sub: "Get scheme guidance instantly", icon: "💬", badge: "" },
+                  { href: "/schemes", label: "Browse All Schemes", sub: "Explore the full database", icon: "🔍", badge: "" },
+                  { href: "/profile", label: "Update Profile", sub: "Keep your details current", icon: "✏️", badge: "" },
+                ].map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="flex items-center gap-3 rounded-xl border border-slate-100 p-3 hover:border-orange-200 hover:bg-orange-50/50 transition-all group"
+                  >
+                    <span className="text-xl">{item.icon}</span>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-bold text-[#1B2B4B] group-hover:text-orange-600 transition-colors">{item.label}</p>
+                      <p className="text-[11px] text-slate-400">{item.sub}</p>
+                    </div>
+                    <svg className="h-4 w-4 shrink-0 text-slate-300 group-hover:text-orange-400 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M9 18l6-6-6-6"/></svg>
+                  </Link>
                 ))}
-                {matches.every((m) => m.missing_documents.length === 0) && (
-                  <span className="text-sm text-verified-teal">All documents ready to apply!</span>
-                )}
               </div>
             </div>
-          )}
 
-          <div className="db-card mt-6 grid gap-4 sm:grid-cols-2">
-            <div className="rounded-xl border border-ink-navy/10 bg-white p-5">
-              <h3 className="font-display text-sm font-semibold text-ink-navy">Tip</h3>
-              <p className="mt-1 text-xs text-slate-blue">Upload your income certificate — it&apos;s required for most means-tested schemes.</p>
+            {/* Tip card */}
+            <div className="rounded-2xl bg-gradient-to-br from-[#0F2645] to-[#1E487A] border border-white/10 p-5 text-white">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-orange-300 mb-2">💡 Pro Tip</p>
+              <p className="text-sm font-semibold leading-relaxed">
+                Upload your <span className="text-orange-300">Income Certificate</span> — it unlocks the most schemes. Most means-tested benefits require it.
+              </p>
+              <Link
+                href="/documents"
+                className="mt-3 inline-flex items-center gap-1.5 text-xs font-bold text-orange-300 hover:text-orange-200 transition-colors"
+              >
+                Upload now →
+              </Link>
             </div>
-            <div className="rounded-xl border border-ink-navy/10 bg-white p-5">
-              <h3 className="font-display text-sm font-semibold text-ink-navy">Keep your profile updated</h3>
-              <p className="mt-1 text-xs text-slate-blue">Scheme rules change. An up-to-date profile ensures accurate matching.</p>
-            </div>
+
           </div>
         </div>
       </main>
