@@ -5,6 +5,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { getUserMatches, refreshUserMatches, listDocuments, type EligibilityMatch, type UserDocument } from "@/lib/api";
+import { getCategoryInfo, normalizeCategoryKey } from "@/lib/categories";
 
 // ─── GSAP entrance ───────────────────────────────────────────────────────────
 const useGSAPAnimation = (pageRef: React.RefObject<HTMLDivElement | null>, deps: unknown[]) => {
@@ -98,36 +99,6 @@ function DocStatusBadge({ status }: { status: string }) {
   );
 }
 
-// ─── Category → colour ────────────────────────────────────────────────────────
-const CAT_COLORS: Record<string, { bg: string; text: string }> = {
-  Agriculture:   { bg: "bg-green-50",   text: "text-green-700"  },
-  Housing:       { bg: "bg-orange-50",  text: "text-orange-600" },
-  Health:        { bg: "bg-rose-50",    text: "text-rose-600"   },
-  Education:     { bg: "bg-cyan-50",    text: "text-cyan-700"   },
-  Pension:       { bg: "bg-purple-50",  text: "text-purple-700" },
-  "Women & Child": { bg: "bg-pink-50",  text: "text-pink-600"   },
-  Livelihood:    { bg: "bg-amber-50",   text: "text-amber-700"  },
-};
-function catColor(cat: string) { return CAT_COLORS[cat] ?? { bg: "bg-slate-100", text: "text-slate-600" }; }
-
-const CAT_ICONS: Record<string, string> = {
-  Agriculture:     "🌾",
-  Housing:         "🏠",
-  Health:          "🏥",
-  Education:       "🎓",
-  Pension:         "👴",
-  "Women & Child": "👩‍👧",
-  Livelihood:      "💼",
-  Scholarship:     "📚",
-  Finance:         "💰",
-  Welfare:         "🤝",
-  Infrastructure:  "🏗️",
-  Energy:          "⚡",
-  Labour:          "⚒️",
-  Technology:      "💻",
-  Social:          "🫂",
-};
-
 
 // ─── Main page ────────────────────────────────────────────────────────────────
 export default function DashboardPage() {
@@ -207,7 +178,7 @@ export default function DashboardPage() {
 
   // Derive unique categories dynamically from actual matched schemes
   const availableCategories: string[] = Array.from(
-    new Set(matches.map((m) => m.scheme_category).filter(Boolean))
+    new Set(matches.map((m) => normalizeCategoryKey(m.scheme_category)).filter((c) => c && c !== "all"))
   ).sort();
 
   // Combined filter: status × category
@@ -216,7 +187,7 @@ export default function DashboardPage() {
       filter === "all" ||
       (filter === "ready" && m.missing_documents.length === 0) ||
       (filter === "pending" && m.missing_documents.length > 0);
-    const passCategory = category === "all" || m.scheme_category === category;
+    const passCategory = category === "all" || normalizeCategoryKey(m.scheme_category) === category;
     return passStatus && passCategory;
   });
 
@@ -398,10 +369,10 @@ export default function DashboardPage() {
                   All Categories
                 </button>
                 {availableCategories.map((cat) => {
-                  const cc = catColor(cat);
+                  const info = getCategoryInfo(cat);
                   const count = matches.filter(
                     (m) =>
-                      m.scheme_category === cat &&
+                      normalizeCategoryKey(m.scheme_category) === cat &&
                       (filter === "all" ||
                         (filter === "ready" && m.missing_documents.length === 0) ||
                         (filter === "pending" && m.missing_documents.length > 0))
@@ -413,12 +384,12 @@ export default function DashboardPage() {
                       className={cn(
                         "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold transition-all",
                         category === cat
-                          ? `${cc.bg} ${cc.text} border-transparent shadow-sm ring-1 ring-current/20`
+                          ? `${info.badge} border-transparent shadow-sm ring-1 ring-current/20`
                           : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
                       )}
                     >
-                      {CAT_ICONS[cat] && <span>{CAT_ICONS[cat]}</span>}
-                      {cat}
+                      <span>{info.icon}</span>
+                      <span>{info.label}</span>
                       <span className={cn(
                         "rounded-full px-1.5 py-0.5 text-[10px] font-bold",
                         category === cat ? "bg-black/10" : "bg-slate-100 text-slate-500"
@@ -457,7 +428,7 @@ export default function DashboardPage() {
               filteredMatches.map((m) => {
                 const isOpen = expanded === m.scheme_id;
                 const isReady = m.missing_documents.length === 0;
-                const cc = catColor(m.scheme_category);
+                const info = getCategoryInfo(m.scheme_category);
                 return (
                   <div
                     key={m.scheme_id}
@@ -476,8 +447,9 @@ export default function DashboardPage() {
                       {/* Scheme info */}
                       <div className="flex-1 min-w-0">
                         <div className="flex flex-wrap items-center gap-2 mb-1">
-                          <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-semibold", cc.bg, cc.text)}>
-                            {m.scheme_category}
+                          <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-semibold border", info.badge)}>
+                            <span>{info.icon}</span>
+                            <span>{info.label}</span>
                           </span>
                           {isReady ? (
                             <span className="inline-flex items-center gap-1 rounded-full bg-teal-50 px-2 py-0.5 text-[11px] font-semibold text-teal-600">
