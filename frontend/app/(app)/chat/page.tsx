@@ -185,9 +185,17 @@ export default function ChatPage() {
   const [loading, setLoading] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTo({
+        top: scrollContainerRef.current.scrollHeight,
+        behavior: "smooth",
+      });
+    } else {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+    }
   }, [messages, loading]);
 
   async function handleSend(customText?: string) {
@@ -233,20 +241,20 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="flex min-h-[calc(100vh-65px)] flex-col bg-gradient-to-b from-[#FFFDF9] to-[#F8F5F0]">
-      {/* Hero Header Banner */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-[#111C30] via-[#1B2B4B] to-[#111C30] text-white border-b border-orange-500/30 px-4 py-6 sm:px-8 sm:py-8 shadow-md">
+    <div className="flex h-[calc(100vh-65px)] max-h-[calc(100vh-65px)] flex-col bg-gradient-to-b from-[#FFFDF9] to-[#F8F5F0] overflow-hidden">
+      {/* Hero Header Banner — Fixed at top */}
+      <div className="relative shrink-0 overflow-hidden bg-gradient-to-r from-[#111C30] via-[#1B2B4B] to-[#111C30] text-white border-b border-orange-500/30 px-4 py-4 sm:px-8 sm:py-5 shadow-md">
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-[#FF9933] via-white to-[#138808]" />
-        <div className="mx-auto max-w-4xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="space-y-2">
-            <div className="inline-flex items-center gap-2 rounded-full bg-orange-500/20 border border-orange-500/40 px-3 py-1 text-xs font-bold text-orange-300 backdrop-blur-sm">
-              <span className="flex h-2 w-2 rounded-full bg-orange-400 animate-pulse" />
+        <div className="mx-auto max-w-4xl flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div className="space-y-1">
+            <div className="inline-flex items-center gap-2 rounded-full bg-orange-500/20 border border-orange-500/40 px-3 py-0.5 text-[11px] font-bold text-orange-300 backdrop-blur-sm">
+              <span className="flex h-1.5 w-1.5 rounded-full bg-orange-400 animate-pulse" />
               <span>AI Saathi • Groq Llama-3.3-70B Intelligence</span>
             </div>
-            <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-white">
+            <h1 className="font-display text-xl sm:text-2xl font-bold tracking-tight text-white">
               Welfare Scheme Q&A Advisor
             </h1>
-            <p className="text-xs sm:text-sm text-slate-300 max-w-2xl leading-relaxed">
+            <p className="text-xs text-slate-300 max-w-2xl leading-relaxed hidden sm:block">
               Real-time advice grounded strictly in live government scheme definitions. Ask about eligibility criteria, document vault matching, or application deadlines.
             </p>
           </div>
@@ -267,8 +275,11 @@ export default function ChatPage() {
         </div>
       </div>
 
-      {/* Main Conversation Container */}
-      <main className="mx-auto flex w-full max-w-4xl flex-1 flex-col px-4 sm:px-6 py-6">
+      {/* Main Conversation Container — Scrollable internally */}
+      <main
+        ref={scrollContainerRef}
+        className="mx-auto flex w-full max-w-4xl flex-1 min-h-0 flex-col overflow-y-auto px-4 sm:px-6 py-6 scroll-smooth"
+      >
         {/* Starter Category Chips — Shown on new chat */}
         {messages.length === 1 && (
           <div className="mb-8 space-y-4">
@@ -397,9 +408,9 @@ export default function ChatPage() {
         </div>
       </main>
 
-      {/* Modern Sticky Input Footer */}
-      <div className="sticky bottom-0 z-30 border-t border-orange-200/60 bg-white/90 backdrop-blur-md shadow-[0_-4px_25px_rgba(0,0,0,0.05)]">
-        <div className="mx-auto max-w-4xl px-4 py-4 sm:px-6">
+      {/* Modern Fixed Input Bar right at bottom of container */}
+      <div className="shrink-0 border-t border-orange-200/60 bg-white/95 backdrop-blur-md shadow-[0_-4px_25px_rgba(0,0,0,0.05)]">
+        <div className="mx-auto max-w-4xl px-4 py-3 sm:px-6">
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -412,13 +423,13 @@ export default function ChatPage() {
               value={input}
               onChange={(e) => setInput(e.target.value)}
               placeholder="Ask AI Saathi about any scheme eligibility, document checklist, or steps..."
-              className="flex-1 rounded-2xl border-2 border-slate-200 bg-slate-50/80 px-5 py-3.5 text-sm font-medium text-[#1B2B4B] placeholder:text-slate-400 focus:border-orange-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-orange-500/15 transition-all"
+              className="flex-1 rounded-2xl border-2 border-slate-200 bg-slate-50/80 px-5 py-3 text-sm font-medium text-[#1B2B4B] placeholder:text-slate-400 focus:border-orange-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-orange-500/15 transition-all"
               disabled={loading}
             />
             <Button
               type="submit"
               disabled={loading || !input.trim()}
-              className="rounded-2xl bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold px-6 py-6 shadow-md shadow-orange-500/25 transition-all flex items-center gap-2"
+              className="rounded-2xl bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold px-6 py-5.5 shadow-md shadow-orange-500/25 transition-all flex items-center gap-2"
             >
               <span>Send</span>
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
@@ -426,7 +437,7 @@ export default function ChatPage() {
               </svg>
             </Button>
           </form>
-          <div className="mt-2.5 flex items-center justify-center gap-1.5 text-[11px] font-semibold text-slate-500">
+          <div className="mt-2 flex items-center justify-center gap-1.5 text-[11px] font-semibold text-slate-500">
             <svg className="h-3.5 w-3.5 text-emerald-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
             </svg>

@@ -31,8 +31,8 @@ export default function AppLayout({
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />
-      <main className="flex-1">{children}</main>
-      <Footer />
+      <main className="flex-1 flex flex-col">{children}</main>
+      {pathname !== "/chat" && <Footer />}
       <ChatFloatingButton />
     </div>
   );
