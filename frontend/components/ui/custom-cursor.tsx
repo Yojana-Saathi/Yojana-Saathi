@@ -32,6 +32,7 @@ export function CustomCursor() {
     let color = "#F2641A", colorTarget = "#F2641A";
     let hidden = true;
     let mag: Element | null = null;
+    let isResting = false;
 
     const resetMag = (el: Element) => {
       (el as HTMLElement).style.transition = "transform 0.25s ease";
@@ -39,6 +40,36 @@ export function CustomCursor() {
     };
 
     const tick = () => {
+      if (
+        Math.abs(mx - dx) < 0.05 &&
+        Math.abs(my - dy) < 0.05 &&
+        Math.abs(mx - sx) < 0.05 &&
+        Math.abs(my - sy) < 0.05 &&
+        Math.abs(scaleTarget - scale) < 0.005 &&
+        Math.abs(opacityTarget - opacity) < 0.005 &&
+        color === colorTarget
+      ) {
+        if (!isResting) {
+          dx = mx; dy = my; sx = mx; sy = my; scale = scaleTarget; opacity = opacityTarget; color = colorTarget;
+          const dot = dotRef.current;
+          const ring = ringRef.current;
+          if (dot) {
+            dot.style.transform = `translate3d(${dx - 3.5}px, ${dy - 3.5}px, 0)`;
+            dot.style.opacity = String(!initialMoved || hidden ? 0 : Math.min(1, opacity));
+          }
+          if (ring) {
+            const s = !initialMoved || hidden ? 0.01 : Math.max(0.01, scale);
+            ring.style.transform = `translate3d(${sx - 15}px, ${sy - 15}px, 0) scale(${s})`;
+            ring.style.opacity = String(!initialMoved || hidden ? 0 : Math.min(1, Math.max(0.08, opacity * 0.4)));
+            ring.style.borderColor = color;
+          }
+          isResting = true;
+        }
+        requestAnimationFrame(tick);
+        return;
+      }
+
+      isResting = false;
       dx += (mx - dx) * 0.3;
       dy += (my - dy) * 0.3;
       sx += (dx - sx) * 0.12;
@@ -68,6 +99,7 @@ export function CustomCursor() {
 
     const hover = (cx: number, cy: number, target: HTMLElement | null) => {
       mx = cx; my = cy;
+      isResting = false;
       initialMoved = true;
       hidden = false;
       opacityTarget = 1;
