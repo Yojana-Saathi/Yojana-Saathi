@@ -22,7 +22,9 @@ build/
 
 # Env files (never commit secrets)
 .env
-*.env.local
+.env.*
+*.env.*
+tempjunk/
 
 # Logs
 *.log

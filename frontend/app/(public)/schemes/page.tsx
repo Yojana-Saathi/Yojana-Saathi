@@ -4,39 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { fetchAllSchemes, type Scheme } from "@/lib/api";
-
-// ─── Category config ──────────────────────────────────────────────────────────
-const CATEGORIES = [
-  { label: "All", value: "all",          icon: "🏛️" },
-  { label: "Agriculture",  value: "Agriculture",  icon: "🌾" },
-  { label: "Education",    value: "Education",    icon: "🎓" },
-  { label: "Health",       value: "Health",        icon: "🏥" },
-  { label: "Housing",      value: "Housing",       icon: "🏠" },
-  { label: "Pension",      value: "Pension",       icon: "👴" },
-  { label: "Women & Child", value: "Women & Child", icon: "👩‍👧" },
-  { label: "Livelihood",   value: "Livelihood",    icon: "💼" },
-  { label: "Scholarship",  value: "Scholarship",   icon: "📚" },
-  { label: "Finance",      value: "Finance",       icon: "💰" },
-];
-
-const CAT_STYLE: Record<string, { badge: string; border: string; glow: string }> = {
-  Agriculture:   { badge: "bg-green-50 text-green-700 border-green-200",   border: "border-l-green-400",  glow: "hover:shadow-green-100" },
-  Education:     { badge: "bg-cyan-50 text-cyan-700 border-cyan-200",     border: "border-l-cyan-400",   glow: "hover:shadow-cyan-100"  },
-  Health:        { badge: "bg-rose-50 text-rose-600 border-rose-200",     border: "border-l-rose-400",   glow: "hover:shadow-rose-100"  },
-  Housing:       { badge: "bg-orange-50 text-orange-600 border-orange-200", border: "border-l-orange-400", glow: "hover:shadow-orange-100"},
-  Pension:       { badge: "bg-purple-50 text-purple-700 border-purple-200",border: "border-l-purple-400", glow: "hover:shadow-purple-100"},
-  "Women & Child": { badge: "bg-pink-50 text-pink-600 border-pink-200",   border: "border-l-pink-400",   glow: "hover:shadow-pink-100"  },
-  Livelihood:    { badge: "bg-amber-50 text-amber-700 border-amber-200",   border: "border-l-amber-400",  glow: "hover:shadow-amber-100" },
-  Scholarship:   { badge: "bg-indigo-50 text-indigo-700 border-indigo-200",border: "border-l-indigo-400", glow: "hover:shadow-indigo-100"},
-  Finance:       { badge: "bg-teal-50 text-teal-700 border-teal-200",     border: "border-l-teal-400",   glow: "hover:shadow-teal-100"  },
-};
-function catStyle(cat: string) {
-  return CAT_STYLE[cat] ?? {
-    badge: "bg-slate-100 text-slate-600 border-slate-200",
-    border: "border-l-slate-300",
-    glow: "hover:shadow-slate-100",
-  };
-}
+import { CATEGORY_LIST, getCategoryInfo, normalizeCategoryKey } from "@/lib/categories";
 
 const PAGE_SIZE = 60;
 
@@ -94,7 +62,7 @@ export default function SchemesPage() {
   const filtered = useMemo(() => {
     const q = debouncedSearch.toLowerCase().trim();
     return allSchemes.filter((s) => {
-      const matchCat = category === "all" || s.scheme_category === category;
+      const matchCat = category === "all" || normalizeCategoryKey(s.scheme_category) === category;
       const matchSearch = !q ||
         s.scheme_name.toLowerCase().includes(q) ||
         s.benefit_summary.toLowerCase().includes(q) ||
@@ -121,7 +89,10 @@ export default function SchemesPage() {
         )
       : allSchemes;
     const map: Record<string, number> = {};
-    base.forEach((s) => { map[s.scheme_category] = (map[s.scheme_category] ?? 0) + 1; });
+    base.forEach((s) => {
+      const key = normalizeCategoryKey(s.scheme_category);
+      map[key] = (map[key] ?? 0) + 1;
+    });
     return map;
   }, [allSchemes, debouncedSearch]);
 
@@ -200,20 +171,19 @@ export default function SchemesPage() {
       <div className="sticky top-[64px] z-30 border-b border-slate-200 bg-white/95 backdrop-blur-md shadow-sm">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-2 overflow-x-auto py-3 scrollbar-none">
-            {CATEGORIES.map((cat) => {
-              const count = cat.value === "all" ? filtered.length : (catCounts[cat.value] ?? 0);
-              const isActive = category === cat.value;
-              const cs = cat.value === "all" ? null : catStyle(cat.value);
+            {CATEGORY_LIST.map((cat) => {
+              const count = cat.key === "all" ? filtered.length : (catCounts[cat.key] ?? 0);
+              const isActive = category === cat.key;
               return (
                 <button
-                  key={cat.value}
-                  onClick={() => setCategory(cat.value)}
+                  key={cat.key}
+                  onClick={() => setCategory(cat.key)}
                   className={cn(
                     "flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all whitespace-nowrap",
                     isActive
-                      ? cat.value === "all"
+                      ? cat.key === "all"
                         ? "border-[#1B2B4B] bg-[#1B2B4B] text-white shadow-md"
-                        : `${cs!.badge} border-transparent shadow-md ring-1 ring-current/30`
+                        : `${cat.badge} border-transparent shadow-md ring-1 ring-current/30`
                       : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
                   )}
                 >
@@ -283,7 +253,7 @@ export default function SchemesPage() {
           <>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
               {visible.map((s) => {
-                const cs = catStyle(s.scheme_category);
+                const cs = getCategoryInfo(s.scheme_category);
                 return (
                   <Link
                     key={s.scheme_id}
@@ -296,8 +266,9 @@ export default function SchemesPage() {
                   >
                     {/* Header */}
                     <div className="flex items-start justify-between gap-2 mb-3">
-                      <span className={cn("inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold", cs.badge)}>
-                        {s.scheme_category || "Other"}
+                      <span className={cn("inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-[11px] font-semibold", cs.badge)}>
+                        <span>{cs.icon}</span>
+                        <span>{cs.label}</span>
                       </span>
                       {s.benefit_value_estimate && (
                         <span className="shrink-0 text-[11px] font-bold text-teal-600 bg-teal-50 rounded-full px-2 py-0.5 border border-teal-200">

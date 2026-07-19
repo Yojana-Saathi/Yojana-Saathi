@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { submitIntake } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import { createBrowserClient } from "@supabase/ssr";
+import { getCategoryInfo } from "@/lib/categories";
 
 interface CitizenProfileForm {
   full_name: string;
@@ -680,7 +681,7 @@ export default function TestAgentsPage() {
                             <div className="flex items-start justify-between gap-3">
                               <div>
                                 <span className="text-[11px] font-bold text-orange-600 uppercase tracking-wide">
-                                  Priority #{scheme.priority_rank ?? idx + 1} • {scheme.scheme_category}
+                                  Priority #{scheme.priority_rank ?? idx + 1} • {getCategoryInfo(scheme.scheme_category).label}
                                 </span>
                                 <h4 className="font-extrabold text-sm sm:text-base text-[#1B2B4B] mt-0.5">
                                   {scheme.scheme_name}
