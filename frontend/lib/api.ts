@@ -164,27 +164,55 @@ function filterSchemes(schemes: Scheme[], query?: string): Scheme[] {
   );
 }
 
-export async function searchSchemes(query?: string): Promise<Scheme[]> {
-  // 1. Backend API
+export async function searchSchemes(query?: string, page = 1, pageSize = 60): Promise<Scheme[]> {
+  // 1. Backend API (falls through if not available)
   try {
     const qs = query ? `?q=${encodeURIComponent(query)}` : "";
     return await fetchApi<Scheme[]>(`/api/schemes/search${qs}`);
   } catch { /* fall through */ }
 
-  // 2. Supabase
+  // 2. Supabase with explicit pagination
   try {
     const { supabase: sb } = await import("@/lib/supabase");
     if (!sb) throw new Error("Supabase not configured");
+    const from = (page - 1) * pageSize;
+    const to = from + pageSize - 1;
     let q = sb.from("schemes").select("*").eq("is_active", true);
     if (query) {
-      q = q.textSearch("scheme_name", query, { type: "plain" });
+      q = q.or(`scheme_name.ilike.%${query}%,scheme_category.ilike.%${query}%,issuing_authority.ilike.%${query}%,benefit_summary.ilike.%${query}%`);
     }
-    const { data, error } = await q.order("scheme_name");
+    const { data, error } = await q.order("scheme_name").range(from, to);
     if (error) throw error;
     return (data || []).map(rawSchemeToScheme);
   } catch { /* fall through */ }
   return [];
 }
+
+/** Fetches ALL schemes across multiple pages (bypasses Supabase 1000-row limit) */
+export async function fetchAllSchemes(): Promise<{ schemes: Scheme[]; total: number }> {
+  try {
+    const { supabase: sb } = await import("@/lib/supabase");
+    if (!sb) throw new Error("Supabase not configured");
+    // First get count
+    const { count } = await sb.from("schemes").select("*", { count: "exact", head: true }).eq("is_active", true);
+    const total = count ?? 0;
+    const pageSize = 1000;
+    const pages = Math.ceil(total / pageSize);
+    const results: Scheme[] = [];
+    for (let p = 0; p < pages; p++) {
+      const { data, error } = await sb
+        .from("schemes")
+        .select("*")
+        .eq("is_active", true)
+        .order("scheme_name")
+        .range(p * pageSize, (p + 1) * pageSize - 1);
+      if (error) break;
+      results.push(...(data || []).map(rawSchemeToScheme));
+    }
+    return { schemes: results, total };
+  } catch { return { schemes: [], total: 0 }; }
+}
+
 
 // --- Documents ---
 

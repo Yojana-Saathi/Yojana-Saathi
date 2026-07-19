@@ -1,178 +1,356 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import gsap from "gsap";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { searchSchemes, type Scheme } from "@/lib/api";
+import { fetchAllSchemes, type Scheme } from "@/lib/api";
 
-const categories = [
-  { label: "All", value: "all" },
-  { label: "Agriculture", value: "agriculture" },
-  { label: "Housing", value: "housing" },
-  { label: "Health", value: "health" },
-  { label: "Education", value: "education" },
-  { label: "Pension", value: "pension" },
-  { label: "Women & Child", value: "women_child" },
+// ─── Category config ──────────────────────────────────────────────────────────
+const CATEGORIES = [
+  { label: "All", value: "all",          icon: "🏛️" },
+  { label: "Agriculture",  value: "Agriculture",  icon: "🌾" },
+  { label: "Education",    value: "Education",    icon: "🎓" },
+  { label: "Health",       value: "Health",        icon: "🏥" },
+  { label: "Housing",      value: "Housing",       icon: "🏠" },
+  { label: "Pension",      value: "Pension",       icon: "👴" },
+  { label: "Women & Child", value: "Women & Child", icon: "👩‍👧" },
+  { label: "Livelihood",   value: "Livelihood",    icon: "💼" },
+  { label: "Scholarship",  value: "Scholarship",   icon: "📚" },
+  { label: "Finance",      value: "Finance",       icon: "💰" },
 ];
 
-const categoryColors: Record<string, string> = {
-  Agriculture: "bg-verified-teal/10 text-verified-teal border-verified-teal/20",
-  Housing: "bg-signal-orange/10 text-signal-orange border-signal-orange/20",
-  Health: "bg-caution-amber/10 text-caution-amber border-caution-amber/20",
-  Education: "bg-[#E8A63D]/10 text-[#E8A63D] border-[#E8A63D]/20",
-  Pension: "bg-ink-navy/10 text-ink-navy border-ink-navy/20",
-  "Women & Child": "bg-[#E8A63D]/10 text-[#E8A63D] border-[#E8A63D]/20",
+const CAT_STYLE: Record<string, { badge: string; border: string; glow: string }> = {
+  Agriculture:   { badge: "bg-green-50 text-green-700 border-green-200",   border: "border-l-green-400",  glow: "hover:shadow-green-100" },
+  Education:     { badge: "bg-cyan-50 text-cyan-700 border-cyan-200",     border: "border-l-cyan-400",   glow: "hover:shadow-cyan-100"  },
+  Health:        { badge: "bg-rose-50 text-rose-600 border-rose-200",     border: "border-l-rose-400",   glow: "hover:shadow-rose-100"  },
+  Housing:       { badge: "bg-orange-50 text-orange-600 border-orange-200", border: "border-l-orange-400", glow: "hover:shadow-orange-100"},
+  Pension:       { badge: "bg-purple-50 text-purple-700 border-purple-200",border: "border-l-purple-400", glow: "hover:shadow-purple-100"},
+  "Women & Child": { badge: "bg-pink-50 text-pink-600 border-pink-200",   border: "border-l-pink-400",   glow: "hover:shadow-pink-100"  },
+  Livelihood:    { badge: "bg-amber-50 text-amber-700 border-amber-200",   border: "border-l-amber-400",  glow: "hover:shadow-amber-100" },
+  Scholarship:   { badge: "bg-indigo-50 text-indigo-700 border-indigo-200",border: "border-l-indigo-400", glow: "hover:shadow-indigo-100"},
+  Finance:       { badge: "bg-teal-50 text-teal-700 border-teal-200",     border: "border-l-teal-400",   glow: "hover:shadow-teal-100"  },
 };
+function catStyle(cat: string) {
+  return CAT_STYLE[cat] ?? {
+    badge: "bg-slate-100 text-slate-600 border-slate-200",
+    border: "border-l-slate-300",
+    glow: "hover:shadow-slate-100",
+  };
+}
+
+const PAGE_SIZE = 60;
+
+function SchemeCardSkeleton() {
+  return (
+    <div className="animate-pulse rounded-2xl border border-slate-100 bg-white p-5 shadow-sm border-l-4 border-l-slate-200">
+      <div className="flex items-start justify-between mb-3">
+        <div className="h-5 w-20 rounded-full bg-slate-100" />
+        <div className="h-4 w-28 rounded bg-slate-100" />
+      </div>
+      <div className="h-5 w-4/5 rounded bg-slate-100 mb-2" />
+      <div className="h-4 w-full rounded bg-slate-100 mb-1" />
+      <div className="h-4 w-3/4 rounded bg-slate-100 mb-3" />
+      <div className="h-4 w-24 rounded bg-slate-100" />
+    </div>
+  );
+}
 
 export default function SchemesPage() {
-  const [search, setSearch] = useState("");
-  const [category, setCategory] = useState("all");
-  const [schemes, setSchemes] = useState<Scheme[]>([]);
+  const [allSchemes, setAllSchemes] = useState<Scheme[]>([]);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
-  const pageRef = useRef<HTMLDivElement>(null);
-  const labourRef = useRef<HTMLImageElement>(null);
-  const kidsRef = useRef<HTMLImageElement>(null);
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [category, setCategory] = useState("all");
+  const [page, setPage] = useState(1);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Load ALL schemes once on mount (paginated behind the scenes)
   useEffect(() => {
-    searchSchemes()
-      .then(setSchemes)
+    setLoading(true);
+    fetchAllSchemes()
+      .then(({ schemes, total }) => {
+        setAllSchemes(schemes);
+        setTotal(total);
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, []);
 
+  // Debounce search input
   useEffect(() => {
-    try {
-      const scEls = pageRef.current?.querySelectorAll(".sc-hero, .sc-filter, .sc-card");
-      if (scEls?.length) gsap.killTweensOf(scEls);
-      const ctx = gsap.context(() => {
-        gsap.fromTo(".sc-hero", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.4, ease: "power2.out", clearProps: "all" });
-        gsap.fromTo(".sc-filter", { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.3, delay: 0.15, ease: "power2.out", clearProps: "all" });
-        gsap.fromTo(".sc-card", { opacity: 0, y: 16 }, { opacity: 1, y: 0, duration: 0.35, stagger: 0.05, delay: 0.25, ease: "power2.out", clearProps: "all" });
-      }, pageRef);
-      return () => ctx.revert();
-    } catch { return; }
-  }, [schemes]);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1);
+    }, 300);
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+  }, [search]);
 
-  useEffect(() => {
-    const labour = labourRef.current;
-    const kids = kidsRef.current;
-    if (!labour || !kids) return;
-    const tl = gsap.timeline({ repeat: -1, yoyo: true });
-    tl.to(labour, { y: -4, duration: 3.5, ease: "sine.inOut" }, 0);
-    tl.to(kids, { y: -5, duration: 4.2, ease: "sine.inOut" }, 0);
-    tl.progress(Math.random());
-    return () => { tl.kill(); };
-  }, []);
+  // Reset page when category changes
+  useEffect(() => { setPage(1); }, [category]);
 
-  const filtered = schemes.filter((s) => {
-    const q = search.toLowerCase();
-    const matchSearch = !search ||
-      s.scheme_name.toLowerCase().includes(q) ||
-      s.benefit_summary.toLowerCase().includes(q) ||
-      s.scheme_category.toLowerCase().includes(q) ||
-      s.issuing_authority.toLowerCase().includes(q);
-    const matchCat = category === "all" || s.scheme_category === category;
-    return matchSearch && matchCat;
-  });
+  // Client-side filtering
+  const filtered = useMemo(() => {
+    const q = debouncedSearch.toLowerCase().trim();
+    return allSchemes.filter((s) => {
+      const matchCat = category === "all" || s.scheme_category === category;
+      const matchSearch = !q ||
+        s.scheme_name.toLowerCase().includes(q) ||
+        s.benefit_summary.toLowerCase().includes(q) ||
+        s.issuing_authority.toLowerCase().includes(q) ||
+        s.scheme_category.toLowerCase().includes(q);
+      return matchCat && matchSearch;
+    });
+  }, [allSchemes, debouncedSearch, category]);
 
-  function categoryLabel(value: string) {
-    return categories.find((cat) => cat.value === value)?.label || value.replace(/_/g, " ");
-  }
+  const visible = filtered.slice(0, page * PAGE_SIZE);
+  const hasMore = visible.length < filtered.length;
+
+  const loadMore = useCallback(() => setPage((p) => p + 1), []);
+
+  // Derive live category counts from filtered-by-search results
+  const catCounts = useMemo(() => {
+    const q = debouncedSearch.toLowerCase().trim();
+    const base = q
+      ? allSchemes.filter((s) =>
+          s.scheme_name.toLowerCase().includes(q) ||
+          s.benefit_summary.toLowerCase().includes(q) ||
+          s.issuing_authority.toLowerCase().includes(q) ||
+          s.scheme_category.toLowerCase().includes(q)
+        )
+      : allSchemes;
+    const map: Record<string, number> = {};
+    base.forEach((s) => { map[s.scheme_category] = (map[s.scheme_category] ?? 0) + 1; });
+    return map;
+  }, [allSchemes, debouncedSearch]);
+
+  const displayTotal = total || allSchemes.length;
 
   return (
-    <div ref={pageRef} className="flex min-h-screen flex-col">
-      <main className="relative flex-1 overflow-hidden bg-gradient-to-b from-white to-warm-paper">
-        <img
-          ref={kidsRef}
-          src="/assets/kids.png"
-          alt=""
-          aria-hidden
-          className="pointer-events-none absolute bottom-0"
-          style={{ left: "-2%", height: "500px", opacity: "0.12" }}
-        />
-        <img
-          ref={labourRef}
-          src="/assets/labour2.png"
-          alt=""
-          aria-hidden
-          className="pointer-events-none absolute bottom-0"
-          style={{ right: "-2%", height: "500px", opacity: "0.15" }}
-        />
-        <div className="relative mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 lg:px-8">
-          <div className="sc-hero text-center">
-            <h1 className="font-display text-3xl font-semibold tracking-tight text-ink-navy sm:text-4xl">Browse schemes</h1>
-            <p className="mt-2 text-base text-slate-blue">
-              {loading ? "Loading…" : `${schemes.length} schemes mapped by the YojanaSaathi community`}
+    <div className="min-h-screen bg-[#F8F9FB]">
+      {/* ── Hero Header ──────────────────────────────────────────────── */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-[#0F2645] via-[#16365C] to-[#1E487A]">
+        <div className="pointer-events-none absolute -right-20 -top-20 h-80 w-80 rounded-full bg-orange-400/10 blur-3xl" />
+        <div className="pointer-events-none absolute -left-10 bottom-0 h-56 w-56 rounded-full bg-teal-400/10 blur-3xl" />
+
+        <div className="relative mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14 lg:px-8">
+          <div className="text-center">
+            <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-bold uppercase tracking-wider text-orange-300 backdrop-blur mb-4">
+              🏛️ Government Scheme Database
+            </span>
+            <h1 className="font-display text-3xl font-extrabold tracking-tight text-white sm:text-4xl lg:text-5xl">
+              Browse All Schemes
+            </h1>
+            <p className="mt-3 text-base text-slate-300 max-w-2xl mx-auto leading-relaxed">
+              {loading
+                ? "Loading scheme database…"
+                : `Explore ${displayTotal.toLocaleString()}+ government welfare schemes across India`}
             </p>
           </div>
 
-          <div className="sc-filter mx-auto mt-8 max-w-xl">
-            <div className="relative">
-              <svg className="absolute left-3.5 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-blue-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          {/* ── Search bar ── */}
+          <div className="mt-8 mx-auto max-w-2xl">
+            <div className="relative group">
+              <svg
+                className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400 pointer-events-none transition-colors group-focus-within:text-orange-400"
+                viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}
+              >
                 <circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" />
               </svg>
               <input
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search schemes by name, category, or state..."
-                className="w-full rounded-xl border-2 border-ink-navy/10 bg-white py-3 pl-11 pr-4 text-sm text-ink-navy placeholder:text-slate-blue-300 focus:border-signal-orange focus:outline-none transition-colors"
+                placeholder="Search by name, category, state, or ministry…"
+                className="w-full rounded-2xl border-2 border-white/20 bg-white/10 py-4 pl-12 pr-12 text-sm text-white placeholder:text-slate-400 backdrop-blur focus:border-orange-400 focus:bg-white/15 focus:outline-none transition-all"
               />
-            </div>
-          </div>
-
-          <div className="sc-filter mt-6 flex flex-wrap justify-center gap-2">
-            {categories.map((cat) => (
-              <button
-                key={cat.value}
-                onClick={() => setCategory(cat.value)}
-                className={cn(
-                  "rounded-lg px-3.5 py-1.5 text-sm font-medium transition-all",
-                  cat.value === category ? "bg-ink-navy text-white shadow-sm" : "bg-white text-slate-blue hover:bg-ink-navy/5 hover:text-ink-navy border border-ink-navy/10"
-                )}
-              >
-                {cat.label}
-              </button>
-            ))}
-          </div>
-
-          {loading ? (
-            <div className="mt-12 text-center">
-              <div className="h-8 w-8 animate-spin rounded-full border-2 border-ink-navy/10 border-t-signal-orange mx-auto" />
-            </div>
-          ) : filtered.length > 0 ? (
-            <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {filtered.map((s) => (
-                <Link
-                  key={s.scheme_id}
-                  href={`/schemes/${s.scheme_id}`}
-                  className={cn(
-                    "sc-card group rounded-xl border border-ink-navy/10 bg-white p-5 transition-all hover:border-ink-navy/20 hover:shadow-md"
-                  )}
+              {search && (
+                <button
+                  onClick={() => setSearch("")}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
                 >
-                  <div className="flex items-start justify-between">
-                    <span className={cn("rounded-md border px-2 py-0.5 text-xs font-medium", categoryColors[categoryLabel(s.scheme_category)] || "bg-ink-navy/10 text-ink-navy")}>
-                      {categoryLabel(s.scheme_category)}
-                    </span>
-                    <span className="text-xs text-slate-blue-400">{s.issuing_authority}</span>
-                  </div>
-                  <h3 className="mt-3 font-display text-lg font-semibold text-ink-navy group-hover:text-signal-orange transition-colors">{s.scheme_name}</h3>
-                  <p className="mt-1 text-sm text-slate-blue">{s.benefit_summary}</p>
-                  <p className="mt-2 text-xs font-medium text-verified-teal">{s.benefit_value_estimate}</p>
-                </Link>
-              ))}
+                  <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+              )}
             </div>
-          ) : (
-            <div className="sc-card mt-12 text-center">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-ink-navy/5">
-                <svg className="h-7 w-7 text-slate-blue-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><circle cx="11" cy="11" r="8" /><path d="M21 21l-4.35-4.35" /></svg>
-              </div>
-              <p className="mt-4 text-sm font-medium text-ink-navy">No schemes found</p>
-              <p className="text-sm text-slate-blue-400">Try adjusting your search or filter.</p>
+          </div>
+
+          {/* ── Stats bar ── */}
+          {!loading && (
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-4 text-xs font-semibold text-slate-300">
+              <span className="flex items-center gap-1.5">
+                <span className="h-2 w-2 rounded-full bg-teal-400" />
+                {displayTotal.toLocaleString()} Total Schemes
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="h-2 w-2 rounded-full bg-orange-400" />
+                {filtered.length.toLocaleString()} Matching
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="h-2 w-2 rounded-full bg-purple-400" />
+                {Object.keys(catCounts).length} Categories
+              </span>
             </div>
           )}
         </div>
+      </div>
+
+      {/* ── Category filter strip ──────────────────────────────────────── */}
+      <div className="sticky top-[64px] z-30 border-b border-slate-200 bg-white/95 backdrop-blur-md shadow-sm">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-2 overflow-x-auto py-3 scrollbar-none">
+            {CATEGORIES.map((cat) => {
+              const count = cat.value === "all" ? filtered.length : (catCounts[cat.value] ?? 0);
+              const isActive = category === cat.value;
+              const cs = cat.value === "all" ? null : catStyle(cat.value);
+              return (
+                <button
+                  key={cat.value}
+                  onClick={() => setCategory(cat.value)}
+                  className={cn(
+                    "flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all whitespace-nowrap",
+                    isActive
+                      ? cat.value === "all"
+                        ? "border-[#1B2B4B] bg-[#1B2B4B] text-white shadow-md"
+                        : `${cs!.badge} border-transparent shadow-md ring-1 ring-current/30`
+                      : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                  )}
+                >
+                  <span>{cat.icon}</span>
+                  <span>{cat.label}</span>
+                  {count > 0 && (
+                    <span className={cn(
+                      "rounded-full px-1.5 py-0.5 text-[10px] font-bold",
+                      isActive ? "bg-black/15" : "bg-slate-100 text-slate-500"
+                    )}>
+                      {count >= 1000 ? `${(count / 1000).toFixed(1)}k` : count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Main content ───────────────────────────────────────────────── */}
+      <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+
+        {/* Result count row */}
+        {!loading && (
+          <div className="mb-5 flex items-center justify-between">
+            <p className="text-sm font-semibold text-slate-600">
+              Showing <span className="text-[#1B2B4B]">{visible.length.toLocaleString()}</span>
+              {" "}of{" "}
+              <span className="text-[#1B2B4B]">{filtered.length.toLocaleString()}</span> schemes
+              {debouncedSearch && <span className="text-slate-400"> for "<span className="italic">{debouncedSearch}</span>"</span>}
+            </p>
+            {(debouncedSearch || category !== "all") && (
+              <button
+                onClick={() => { setSearch(""); setCategory("all"); }}
+                className="flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-all"
+              >
+                <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M6 18L18 6M6 6l12 12"/></svg>
+                Clear filters
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Loading skeleton */}
+        {loading ? (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 18 }).map((_, i) => <SchemeCardSkeleton key={i} />)}
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-white p-16 text-center">
+            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-slate-100">
+              <svg className="h-7 w-7 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+            </div>
+            <p className="text-lg font-bold text-slate-700">No schemes found</p>
+            <p className="mt-1 text-sm text-slate-400 max-w-sm mx-auto">
+              Try adjusting your search terms or selecting a different category.
+            </p>
+            <button
+              onClick={() => { setSearch(""); setCategory("all"); }}
+              className="mt-5 inline-flex items-center gap-2 rounded-xl bg-orange-500 px-5 py-2.5 text-sm font-bold text-white hover:bg-orange-600 transition-all shadow-lg shadow-orange-500/20"
+            >
+              Clear all filters
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {visible.map((s) => {
+                const cs = catStyle(s.scheme_category);
+                return (
+                  <Link
+                    key={s.scheme_id}
+                    href={`/schemes/${s.scheme_id}`}
+                    className={cn(
+                      "group flex flex-col rounded-2xl border border-slate-100 border-l-4 bg-white p-5 shadow-sm transition-all duration-200",
+                      "hover:shadow-lg hover:-translate-y-0.5 hover:border-slate-200",
+                      cs.border, cs.glow
+                    )}
+                  >
+                    {/* Header */}
+                    <div className="flex items-start justify-between gap-2 mb-3">
+                      <span className={cn("inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold", cs.badge)}>
+                        {s.scheme_category || "Other"}
+                      </span>
+                      {s.benefit_value_estimate && (
+                        <span className="shrink-0 text-[11px] font-bold text-teal-600 bg-teal-50 rounded-full px-2 py-0.5 border border-teal-200">
+                          {s.benefit_value_estimate.length > 18 ? s.benefit_value_estimate.slice(0, 18) + "…" : s.benefit_value_estimate}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Title */}
+                    <h3 className="text-sm font-bold leading-snug text-[#1B2B4B] group-hover:text-orange-600 transition-colors line-clamp-2 mb-1.5">
+                      {s.scheme_name}
+                    </h3>
+
+                    {/* Summary */}
+                    <p className="text-xs text-slate-500 leading-relaxed line-clamp-2 flex-1 mb-3">
+                      {s.benefit_summary}
+                    </p>
+
+                    {/* Footer */}
+                    <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+                      <p className="text-[11px] text-slate-400 truncate max-w-[75%]">{s.issuing_authority}</p>
+                      <svg className="h-4 w-4 shrink-0 text-slate-300 group-hover:text-orange-400 transition-colors" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                        <path d="M9 18l6-6-6-6"/>
+                      </svg>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+
+            {/* Load more */}
+            {hasMore && (
+              <div className="mt-10 text-center">
+                <p className="text-sm text-slate-500 mb-4">
+                  Showing {visible.length.toLocaleString()} of {filtered.length.toLocaleString()} schemes
+                </p>
+                <button
+                  onClick={loadMore}
+                  className="inline-flex items-center gap-2 rounded-2xl bg-gradient-to-r from-[#1B2B4B] to-[#1E487A] px-8 py-3.5 text-sm font-bold text-white hover:opacity-90 transition-all shadow-lg shadow-[#1B2B4B]/20 active:scale-95"
+                >
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+                  Load {Math.min(PAGE_SIZE, filtered.length - visible.length).toLocaleString()} more schemes
+                </button>
+              </div>
+            )}
+
+            {!hasMore && filtered.length > PAGE_SIZE && (
+              <p className="mt-8 text-center text-sm font-medium text-slate-400">
+                ✅ All {filtered.length.toLocaleString()} matching schemes shown
+              </p>
+            )}
+          </>
+        )}
       </main>
     </div>
   );
