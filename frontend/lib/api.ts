@@ -386,6 +386,44 @@ export async function getUserMatches(token: string): Promise<EligibilityMatch[]>
   }
 }
 
+export type RefreshMatchesResult = {
+  status: string;
+  eligible_count?: number;
+  last_refreshed?: string;
+  message?: string;
+  error?: string;
+  retry_after_seconds?: number;
+};
+
+export async function refreshUserMatches(token: string): Promise<RefreshMatchesResult> {
+  try {
+    const res = await fetch(`${API_URL}/api/matches/refresh`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      return {
+        status: "error",
+        error: data.error || "failed",
+        message: data.message || "Failed to refresh matches",
+        retry_after_seconds: data.retry_after_seconds,
+        last_refreshed: data.last_refreshed,
+      };
+    }
+    return data;
+  } catch (err) {
+    return {
+      status: "error",
+      error: "network_error",
+      message: "Network error while refreshing matches.",
+    };
+  }
+}
+
 // --- Chat Q&A ---
 
 export type ChatMessage = {

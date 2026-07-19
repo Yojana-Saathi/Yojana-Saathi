@@ -4,7 +4,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
-import { getUserMatches, listDocuments, type EligibilityMatch, type UserDocument } from "@/lib/api";
+import { getUserMatches, refreshUserMatches, listDocuments, type EligibilityMatch, type UserDocument } from "@/lib/api";
 
 // ─── GSAP entrance ───────────────────────────────────────────────────────────
 const useGSAPAnimation = (pageRef: React.RefObject<HTMLDivElement | null>, deps: unknown[]) => {
@@ -25,6 +25,22 @@ const useGSAPAnimation = (pageRef: React.RefObject<HTMLDivElement | null>, deps:
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, deps);
 };
+
+function formatTimeAgo(isoString?: string | null) {
+  if (!isoString) return null;
+  try {
+    const date = new Date(isoString);
+    const now = new Date();
+    const diffSecs = Math.floor((now.getTime() - date.getTime()) / 1000);
+    if (diffSecs < 60) return "just now";
+    const diffMins = Math.floor(diffSecs / 60);
+    if (diffMins < 60) return `${diffMins}m ago`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    const diffDays = Math.floor(diffHours / 24);
+    return `${diffDays}d ago`;
+  } catch { return null; }
+}
 
 // ─── Score ring component ─────────────────────────────────────────────────────
 function ScoreRing({ score }: { score: number }) {
@@ -123,11 +139,18 @@ export default function DashboardPage() {
   const [category, setCategory] = useState<string>("all");
   const [expanded, setExpanded] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshMsg, setRefreshMsg] = useState<{ type: "success" | "error" | "info"; text: string } | null>(null);
+  const [lastRefreshed, setLastRefreshed] = useState<string | null>(null);
 
   useEffect(() => {
     if (!session?.access_token) return;
     Promise.all([getUserMatches(session.access_token), listDocuments(session.access_token)])
-      .then(([m, d]) => { setMatches(m); setDocs(d); })
+      .then(([m, d]) => {
+        setMatches(m);
+        setDocs(d);
+        if (m[0]?.matched_at) setLastRefreshed(m[0].matched_at);
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [session?.access_token]);
@@ -137,6 +160,28 @@ export default function DashboardPage() {
   const toggleExpanded = useCallback((id: string) => {
     setExpanded((prev) => (prev === id ? null : id));
   }, []);
+
+  const handleRefresh = async () => {
+    if (!session?.access_token || refreshing) return;
+    setRefreshing(true);
+    setRefreshMsg(null);
+    try {
+      const res = await refreshUserMatches(session.access_token);
+      if (res.status === "error") {
+        setRefreshMsg({ type: res.retry_after_seconds ? "info" : "error", text: res.message || "Failed to refresh matches." });
+        if (res.last_refreshed) setLastRefreshed(res.last_refreshed);
+      } else {
+        const m = await getUserMatches(session.access_token);
+        setMatches(m);
+        if (res.last_refreshed || m[0]?.matched_at) setLastRefreshed(res.last_refreshed || m[0]?.matched_at || null);
+        setRefreshMsg({ type: "success", text: res.message || `Found ${m.length} eligible schemes!` });
+      }
+    } catch {
+      setRefreshMsg({ type: "error", text: "Network error while refreshing matches." });
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -187,7 +232,14 @@ export default function DashboardPage() {
 
           <div className="relative z-10 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-sm font-medium text-orange-300 mb-1">Welcome back 👋</p>
+              <div className="flex items-center gap-3 mb-1">
+                <p className="text-sm font-medium text-orange-300">Welcome back 👋</p>
+                {lastRefreshed && (
+                  <span className="text-[11px] font-semibold text-slate-300/80 bg-white/10 px-2.5 py-0.5 rounded-full border border-white/10">
+                    Updated {formatTimeAgo(lastRefreshed)}
+                  </span>
+                )}
+              </div>
               <h1 className="font-display text-2xl font-bold tracking-tight sm:text-3xl">
                 Hi, {firstName}!
               </h1>
@@ -197,7 +249,16 @@ export default function DashboardPage() {
                   : "Complete your profile to discover schemes you qualify for."}
               </p>
             </div>
-            <div className="flex gap-3 shrink-0">
+            <div className="flex flex-wrap gap-3 shrink-0">
+              <button
+                onClick={handleRefresh}
+                disabled={refreshing}
+                title="Re-run matching agent on your latest profile"
+                className="inline-flex items-center gap-2 rounded-xl bg-white/10 border border-white/20 px-4 py-2.5 text-sm font-semibold text-white backdrop-blur hover:bg-white/20 disabled:opacity-60 transition-all"
+              >
+                <svg className={cn("h-4 w-4", refreshing && "animate-spin")} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+                {refreshing ? "Refreshing…" : "Refresh"}
+              </button>
               <Link
                 href="/profile"
                 className="inline-flex items-center gap-2 rounded-xl bg-white/10 border border-white/20 px-4 py-2.5 text-sm font-semibold text-white backdrop-blur hover:bg-white/20 transition-all"
@@ -214,6 +275,18 @@ export default function DashboardPage() {
               </Link>
             </div>
           </div>
+
+          {refreshMsg && (
+            <div className={cn(
+              "relative z-10 mt-5 rounded-xl px-4 py-3 text-xs font-semibold flex items-center justify-between backdrop-blur border transition-all",
+              refreshMsg.type === "success" && "bg-teal-500/20 text-teal-200 border-teal-400/30",
+              refreshMsg.type === "info" && "bg-amber-500/20 text-amber-200 border-amber-400/30",
+              refreshMsg.type === "error" && "bg-rose-500/20 text-rose-200 border-rose-400/30"
+            )}>
+              <span>{refreshMsg.text}</span>
+              <button onClick={() => setRefreshMsg(null)} className="opacity-70 hover:opacity-100 ml-3">✕</button>
+            </div>
+          )}
         </div>
 
         {/* ── Stats Row ───────────────────────────────────────────────────── */}

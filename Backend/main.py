@@ -243,10 +243,176 @@ def _register_routes(app: FastAPI) -> None:
                     "id": row.get("id", ""),
                     "matched_at": row.get("matched_at", "")
                 })
-            return {"ranked_schemes": matches, "eligible_schemes": matches, "total_eligible_count": len(matches)}
+            return {"ranked_schemes": matches, "eligible_schemes": matches, "total_eligible_count": len(matches), "last_refreshed": matches[0].get("matched_at") if matches else None}
         except Exception as exc:
             logger.error("get_matches_failed", error=str(exc))
-            return {"ranked_schemes": [], "eligible_schemes": [], "total_eligible_count": 0}
+            return {"ranked_schemes": [], "eligible_schemes": [], "total_eligible_count": 0, "last_refreshed": None}
+
+    @app.post("/api/matches/refresh")
+    async def refresh_matches(
+        request: Request,
+        auth: AuthenticatedUser = Depends(get_current_user_client)
+    ):
+        """Re-run the full eligibility pipeline for the current user.
+        Rate-limited: minimum 1 hour between refreshes."""
+        user_id = auth.user_id
+        supabase = auth.supabase
+        COOLDOWN_SECONDS = 3600  # 1 hour
+
+        try:
+            # ── 1. Cooldown check ─────────────────────────────────────────────
+            latest = (
+                supabase.table("eligibility_matches")
+                .select("matched_at")
+                .eq("user_id", user_id)
+                .order("matched_at", desc=True)
+                .limit(1)
+                .execute()
+            )
+            if latest.data:
+                from datetime import datetime, timezone
+                raw_ts = latest.data[0].get("matched_at")
+                if raw_ts:
+                    try:
+                        last_ts = datetime.fromisoformat(raw_ts.replace("Z", "+00:00"))
+                        now = datetime.now(timezone.utc)
+                        elapsed = (now - last_ts).total_seconds()
+                        if elapsed < COOLDOWN_SECONDS:
+                            remaining = int(COOLDOWN_SECONDS - elapsed)
+                            return JSONResponse(
+                                status_code=429,
+                                content={
+                                    "error": "rate_limited",
+                                    "message": f"Please wait {remaining // 60}m {remaining % 60}s before refreshing again.",
+                                    "retry_after_seconds": remaining,
+                                    "last_refreshed": raw_ts,
+                                }
+                            )
+                    except Exception:
+                        pass  # If parse fails, allow the refresh
+
+            # ── 2. Load current citizen profile from DB ───────────────────────
+            profile_res = (
+                supabase.table("citizen_profiles")
+                .select("*")
+                .eq("user_id", user_id)
+                .eq("is_current", True)
+                .execute()
+            )
+            if not profile_res.data:
+                return JSONResponse(
+                    status_code=404,
+                    content={"error": "no_profile", "message": "Complete your profile before refreshing matches."}
+                )
+            p = profile_res.data[0]
+
+            # ── 3. Load current documents from DB ────────────────────────────
+            docs_res = (
+                supabase.table("documents")
+                .select("doc_type")
+                .eq("user_id", user_id)
+                .neq("verification_status", "rejected")
+                .execute()
+            )
+            db_docs = {d["doc_type"] for d in docs_res.data}
+            from .models.enums import GOV_ID_KEYS
+            gov_ids = {k: k in db_docs for k in GOV_ID_KEYS}
+
+            # ── 4. Build CitizenProfile Pydantic model ────────────────────────
+            profile = CitizenProfile(
+                full_name=p["full_name"],
+                age=p["age"],
+                gender=Gender(p["gender"]),
+                state=p["state"],
+                district=p["district"],
+                annual_income=float(p["annual_income"]),
+                occupation=Occupation(p["occupation"]),
+                social_category=SocialCategory(p["social_category"]),
+                disability_status=DisabilityStatus(p["disability_status"]),
+                family_size=p["family_size"],
+                has_bpl_card=p["has_bpl_card"],
+                land_owned_acres=float(p["land_owned_acres"]),
+                education_level=EducationLevel(p["education_level"]),
+                gov_id_available=gov_ids
+            )
+
+            # ── 5. Fetch all active schemes ───────────────────────────────────
+            db_schemes = supabase.table("schemes").select("*").eq("is_active", True).execute()
+            schemes = []
+            slug_to_uuid = {}
+            for row in db_schemes.data:
+                try:
+                    schemes.append(Scheme(
+                        scheme_id=row["scheme_id"],
+                        scheme_name=row["scheme_name"],
+                        scheme_category=row["scheme_category"],
+                        issuing_authority=row["issuing_authority"],
+                        eligibility_rules=EligibilityRules(**row["eligibility_rules"]),
+                        benefit_summary=row["benefit_summary"],
+                        benefit_value_estimate=row["benefit_value_estimate"],
+                        required_documents=row["required_documents"],
+                        application_url=row["application_url"]
+                    ))
+                    slug_to_uuid[row["scheme_id"]] = row.get("id", row["scheme_id"])
+                except Exception:
+                    continue
+
+            if not schemes:
+                schemes = list(request.app.state.schemes)
+                slug_to_uuid = {s.scheme_id: s.scheme_id for s in schemes}
+
+            # ── 6. Run the full agent matching pipeline ───────────────────────
+            request_id = str(uuid.uuid4())
+            output = await run_intake_pipeline(
+                profile=profile,
+                request_id=request_id,
+                schemes=tuple(schemes),
+                llm=request.app.state.llm,
+                user_id=user_id
+            )
+
+            # ── 7. DELETE ALL existing matches, then INSERT fresh ones ────────
+            # Always delete all first for a clean slate
+            supabase.table("eligibility_matches").delete().eq("user_id", user_id).execute()
+
+            now_iso = None
+            inserted = 0
+            from datetime import datetime, timezone
+            now_iso = datetime.now(timezone.utc).isoformat()
+
+            for match in output.response.eligible_schemes:
+                scheme_uuid = slug_to_uuid.get(match.scheme_id)
+                if scheme_uuid:
+                    supabase.table("eligibility_matches").insert({
+                        "user_id": user_id,
+                        "scheme_id": scheme_uuid,
+                        "match_score": match.eligibility_match_score,
+                        "missing_documents": match.missing_documents,
+                        "priority_rank": match.priority_rank,
+                        "matched_at": now_iso,
+                    }).execute()
+                    inserted += 1
+
+            logger.info(
+                "matches_refreshed",
+                user_id=user_id,
+                eligible_count=inserted,
+            )
+
+            return {
+                "status": "success",
+                "eligible_count": inserted,
+                "last_refreshed": now_iso,
+                "message": f"Found {inserted} eligible schemes. Dashboard updated.",
+            }
+
+        except Exception as exc:
+            capture_exception(exc)
+            logger.error("refresh_matches_failed", error=str(exc))
+            return JSONResponse(
+                status_code=500,
+                content=_error_payload("Failed to refresh matches. Please try again later.", ErrorCode.INTERNAL_ERROR)
+            )
 
     @app.post("/api/intake", response_model=IntakeResponse)
     async def intake(
