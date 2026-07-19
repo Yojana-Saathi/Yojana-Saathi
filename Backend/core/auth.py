@@ -152,6 +152,6 @@ def verify_internal_secret(x_internal_secret: str | None = Header(default=None))
     settings = get_settings()
     if x_internal_secret != settings.internal_api_secret:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
+            status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or missing internal API secret"
         )

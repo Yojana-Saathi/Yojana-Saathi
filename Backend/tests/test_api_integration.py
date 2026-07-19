@@ -28,10 +28,12 @@ async def client():
     app.dependency_overrides[get_supabase_client] = lambda: mock_client
     app.dependency_overrides[get_service_role_client] = lambda: mock_client
     app.dependency_overrides[auth_mod1.get_current_user] = lambda: "mocked_user_uuid"
+    app.dependency_overrides[auth_mod1.get_current_user_client] = lambda: auth_mod1.AuthenticatedUser(user_id="mocked_user_uuid", supabase=mock_client)
     
     try:
         import core.auth as auth_mod2
         app.dependency_overrides[auth_mod2.get_current_user] = lambda: "mocked_user_uuid"
+        app.dependency_overrides[auth_mod2.get_current_user_client] = lambda: auth_mod2.AuthenticatedUser(user_id="mocked_user_uuid", supabase=mock_client)
     except ImportError:
         pass
     
@@ -87,8 +89,8 @@ async def test_intake_happy_path(client):
     # Every scheme has the frozen fields and drafted_application_text is null here.
     for s in body["eligible_schemes"]:
         assert set(s.keys()) == {
-            "scheme_id", "scheme_name", "scheme_category", "benefit_summary",
-            "benefit_value_estimate", "eligibility_match_score", "priority_rank",
+            "scheme_id", "scheme_name", "scheme_category", "issuing_authority", "benefit_summary",
+            "benefit_value_estimate", "eligibility_match_score", "match_score", "priority_rank",
             "missing_documents", "application_url", "drafted_application_text",
         }
         assert s["drafted_application_text"] is None
