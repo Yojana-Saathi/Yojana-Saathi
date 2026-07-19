@@ -2,13 +2,13 @@
 
 Called only via GET /api/draft/{scheme_id}, never upfront for all schemes. Builds
 a deterministic template from the citizen profile + scheme data, then optionally
-polishes the phrasing via Gemini. If the LLM call fails, the raw template is
+polishes the phrasing via Groq. If the LLM call fails, the raw template is
 returned rather than erroring out.
 """
 
 from __future__ import annotations
 
-from ..llm.gemini_client import GeminiClient
+from ..llm.groq_client import GroqClient
 from ..models.enums import GOV_ID_KEYS
 from ..models.request_models import CitizenProfile
 from ..models.scheme_models import Scheme
@@ -64,7 +64,7 @@ def _polish_prompt(template: str, scheme: Scheme) -> str:
 async def draft_application(
     profile: CitizenProfile,
     scheme: Scheme,
-    llm: GeminiClient | None = None,
+    llm: GroqClient | None = None,
 ) -> tuple[str, bool]:
     """Return (drafted_text, used_llm).
 

@@ -41,11 +41,11 @@ class Settings(BaseSettings):
     # If set, slowapi uses Redis as the storage backend; otherwise in-memory.
     redis_url: str | None = Field(default=None)
 
-    # --- LLM (Gemini) — optional; the system degrades gracefully without it ---
-    gemini_api_key: str | None = Field(default=None)
-    gemini_model: str = Field(default="gemini-2.0-flash")
-    gemini_fallback_model: str = Field(default="gemini-1.5-flash")
-    gemini_timeout_seconds: float = Field(default=8.0)
+    # --- LLM (Groq) — optional; the system degrades gracefully without it ---
+    groq_api_key: str | None = Field(default=None)
+    groq_model: str = Field(default="llama-3.3-70b-versatile")
+    groq_fallback_model: str = Field(default="llama-3.1-8b-instant")
+    groq_timeout_seconds: float = Field(default=10.0)
     llm_enabled: bool = Field(default=True)
 
     # --- Observability ---
@@ -88,7 +88,7 @@ class Settings(BaseSettings):
     @property
     def llm_active(self) -> bool:
         """LLM polish is used only when explicitly enabled AND a key is present."""
-        return bool(self.llm_enabled and self.gemini_api_key)
+        return bool(self.llm_enabled and self.groq_api_key)
 
 
 @lru_cache(maxsize=1)

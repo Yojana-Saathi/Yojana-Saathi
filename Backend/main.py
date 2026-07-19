@@ -38,7 +38,7 @@ from .core.scheme_loader import load_schemes
 from .core.security import build_limiter, configure_cors
 from .core.supabase_client import get_service_role_client
 from .core.auth import AuthenticatedUser, get_current_user, get_current_user_client, verify_internal_secret
-from .llm.gemini_client import GeminiClient
+from .llm.groq_client import GroqClient
 from .models.enums import ErrorCode, ProcessingStatus, GOV_ID_KEYS, Gender, Occupation, SocialCategory, DisabilityStatus, EducationLevel
 from .models.response_models import (
     DraftResponse,
@@ -97,7 +97,7 @@ async def lifespan(app: FastAPI):
     app.state.settings = settings
     app.state.schemes = schemes
     app.state.schemes_by_id = {s.scheme_id: s for s in schemes}
-    app.state.llm = GeminiClient(settings)
+    app.state.llm = GroqClient(settings)
     app.state.request_cache = RequestCache(
         ttl_seconds=settings.request_cache_ttl_seconds,
         max_size=settings.request_cache_max_size,
@@ -1093,7 +1093,7 @@ def _register_routes(app: FastAPI) -> None:
     async def chat(request: Request, body: ChatRequest) -> ChatResponse:
         try:
             schemes: tuple[Scheme, ...] = request.app.state.schemes
-            llm: GeminiClient = request.app.state.llm
+            llm: GroqClient = request.app.state.llm
 
             # Find schemes relevant to the question
             import re as _re

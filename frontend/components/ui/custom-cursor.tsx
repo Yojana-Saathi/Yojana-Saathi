@@ -27,9 +27,10 @@ export function CustomCursor() {
     let dx = mx, dy = my;
     let sx = mx, sy = my;
     let scale = 1, scaleTarget = 1;
-    let opacity = 1, opacityTarget = 1;
+    let opacity = 0, opacityTarget = 0;
+    let initialMoved = false;
     let color = "#F2641A", colorTarget = "#F2641A";
-    let hidden = false;
+    let hidden = true;
     let mag: Element | null = null;
 
     const resetMag = (el: Element) => {
@@ -51,12 +52,12 @@ export function CustomCursor() {
 
       if (dot) {
         dot.style.transform = `translate3d(${dx - 3.5}px, ${dy - 3.5}px, 0)`;
-        dot.style.opacity = String(hidden ? 0 : Math.min(1, opacity));
+        dot.style.opacity = String(!initialMoved || hidden ? 0 : Math.min(1, opacity));
       }
       if (ring) {
-        const s = hidden ? 0.01 : Math.max(0.01, scale);
+        const s = !initialMoved || hidden ? 0.01 : Math.max(0.01, scale);
         ring.style.transform = `translate3d(${sx - 15}px, ${sy - 15}px, 0) scale(${s})`;
-        ring.style.opacity = String(hidden ? 0 : Math.min(1, Math.max(0.08, opacity * 0.4)));
+        ring.style.opacity = String(!initialMoved || hidden ? 0 : Math.min(1, Math.max(0.08, opacity * 0.4)));
         ring.style.borderColor = color;
       }
 
@@ -65,6 +66,9 @@ export function CustomCursor() {
 
     const hover = (cx: number, cy: number) => {
       mx = cx; my = cy;
+      initialMoved = true;
+      hidden = false;
+      opacityTarget = 1;
 
       const el = document.elementFromPoint(cx, cy);
       if (!el) {
@@ -160,6 +164,7 @@ export function CustomCursor() {
           borderRadius: "50%",
           backgroundColor: "#F2641A",
           willChange: "transform",
+          opacity: 0,
         }}
       />
       <div
@@ -172,6 +177,7 @@ export function CustomCursor() {
           borderRadius: "50%",
           border: "1px solid #2C4870",
           willChange: "transform",
+          opacity: 0,
         }}
       />
     </>

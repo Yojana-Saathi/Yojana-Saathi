@@ -66,7 +66,7 @@ def valid_profile_dict() -> dict[str, Any]:
 
 # Load schemes.json at startup to populate the mock database table
 json_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data", "schemes.json"))
-with open(json_path, "r", encoding="utf-8") as f:
+with open(json_path, "r", encoding="utf-8-sig") as f:
     raw_schemes = json.load(f)
 
 SCHEMES_DB_DATA = []

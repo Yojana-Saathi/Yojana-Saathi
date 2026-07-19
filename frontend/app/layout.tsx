@@ -3,7 +3,6 @@ import { Fraunces, Inter, JetBrains_Mono } from "next/font/google";
 import { SplashProvider } from "@/components/ui/splash-provider";
 import { PageTransition } from "@/components/ui/page-transition";
 import { CustomCursor } from "@/components/ui/custom-cursor";
-import { ChatFloatingButton } from "@/components/ui/chat-floating-button";
 import { AuthProvider } from "@/contexts/AuthContext";
 import "./globals.css";
 
@@ -49,7 +48,6 @@ export default function RootLayout({
           <AuthProvider>
             <PageTransition>{children}</PageTransition>
             <CustomCursor />
-            <ChatFloatingButton />
           </AuthProvider>
         </SplashProvider>
       </body>

@@ -20,7 +20,7 @@ from __future__ import annotations
 import asyncio
 from dataclasses import dataclass
 
-from ..llm.gemini_client import GeminiClient
+from ..llm.groq_client import GroqClient
 from ..models.enums import ProcessingStatus
 from ..models.request_models import CitizenProfile
 from ..models.response_models import IntakeResponse, SchemeResult
@@ -50,7 +50,7 @@ async def run_intake_pipeline(
     profile: CitizenProfile,
     request_id: str,
     schemes: tuple[Scheme, ...],
-    llm: GeminiClient | None = None,
+    llm: GroqClient | None = None,
     user_id: str | None = None,
 ) -> PipelineOutput:
     """Run the full deterministic pipeline and assemble the IntakeResponse."""

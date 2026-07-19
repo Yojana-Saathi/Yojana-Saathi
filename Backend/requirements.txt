@@ -20,8 +20,8 @@ redis==8.0.1
 structlog==26.1.0
 sentry-sdk==2.64.0
 
-# --- LLM (Gemini) — language generation only ---
-google-genai==2.10.0
+# --- LLM (Groq) — language generation only ---
+groq==0.36.0
 
 # --- Config / HTTP client ---
 python-dotenv==1.2.2
