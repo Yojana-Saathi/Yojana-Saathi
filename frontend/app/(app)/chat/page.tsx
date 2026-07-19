@@ -188,14 +188,17 @@ export default function ChatPage() {
   const scrollContainerRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollTo({
-        top: scrollContainerRef.current.scrollHeight,
-        behavior: "smooth",
-      });
-    } else {
-      bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
-    }
+    const timer = setTimeout(() => {
+      if (scrollContainerRef.current) {
+        scrollContainerRef.current.scrollTo({
+          top: scrollContainerRef.current.scrollHeight,
+          behavior: "smooth",
+        });
+      } else {
+        bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }
+    }, 50);
+    return () => clearTimeout(timer);
   }, [messages, loading]);
 
   async function handleSend(customText?: string) {
@@ -278,7 +281,7 @@ export default function ChatPage() {
       {/* Main Conversation Container — Scrollable internally */}
       <main
         ref={scrollContainerRef}
-        className="mx-auto flex w-full max-w-4xl flex-1 min-h-0 flex-col overflow-y-auto px-4 sm:px-6 py-6 scroll-smooth"
+        className="mx-auto flex w-full max-w-4xl flex-1 min-h-0 flex-col overflow-y-auto px-4 sm:px-6 py-6"
       >
         {/* Starter Category Chips — Shown on new chat */}
         {messages.length === 1 && (
