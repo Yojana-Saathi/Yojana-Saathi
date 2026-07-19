@@ -94,6 +94,25 @@ const CAT_COLORS: Record<string, { bg: string; text: string }> = {
 };
 function catColor(cat: string) { return CAT_COLORS[cat] ?? { bg: "bg-slate-100", text: "text-slate-600" }; }
 
+const CAT_ICONS: Record<string, string> = {
+  Agriculture:     "🌾",
+  Housing:         "🏠",
+  Health:          "🏥",
+  Education:       "🎓",
+  Pension:         "👴",
+  "Women & Child": "👩‍👧",
+  Livelihood:      "💼",
+  Scholarship:     "📚",
+  Finance:         "💰",
+  Welfare:         "🤝",
+  Infrastructure:  "🏗️",
+  Energy:          "⚡",
+  Labour:          "⚒️",
+  Technology:      "💻",
+  Social:          "🫂",
+};
+
+
 // ─── Main page ────────────────────────────────────────────────────────────────
 export default function DashboardPage() {
   const { session, user } = useAuth();
@@ -101,6 +120,7 @@ export default function DashboardPage() {
   const [matches, setMatches] = useState<EligibilityMatch[]>([]);
   const [docs, setDocs] = useState<UserDocument[]>([]);
   const [filter, setFilter] = useState<"all" | "ready" | "pending">("all");
+  const [category, setCategory] = useState<string>("all");
   const [expanded, setExpanded] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -140,11 +160,20 @@ export default function DashboardPage() {
 
   const firstName = (user?.user_metadata?.full_name as string | undefined)?.split(" ")[0] ?? "there";
 
-  const filteredMatches = filter === "ready"
-    ? matches.filter((m) => m.missing_documents.length === 0)
-    : filter === "pending"
-    ? matches.filter((m) => m.missing_documents.length > 0)
-    : matches;
+  // Derive unique categories dynamically from actual matched schemes
+  const availableCategories: string[] = Array.from(
+    new Set(matches.map((m) => m.scheme_category).filter(Boolean))
+  ).sort();
+
+  // Combined filter: status × category
+  const filteredMatches = matches.filter((m) => {
+    const passStatus =
+      filter === "all" ||
+      (filter === "ready" && m.missing_documents.length === 0) ||
+      (filter === "pending" && m.missing_documents.length > 0);
+    const passCategory = category === "all" || m.scheme_category === category;
+    return passStatus && passCategory;
+  });
 
   return (
     <div ref={pageRef} className="min-h-screen bg-[#F8F9FB]">
@@ -258,13 +287,14 @@ export default function DashboardPage() {
 
           {/* ── Left: Scheme Cards (2/3 width) ─────────────────────────── */}
           <div className="lg:col-span-2 db-section space-y-4">
-            <div className="flex items-center justify-between">
+            {/* ── Header row with title + status pills ── */}
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <h2 className="font-display text-lg font-bold text-[#1B2B4B]">
                 Matched Schemes
                 <span className="ml-2 text-sm font-normal text-slate-400">({filteredMatches.length})</span>
               </h2>
-              {/* Filter pills */}
-              <div className="flex gap-1.5 rounded-xl bg-slate-100 p-1">
+              {/* Status filter pills */}
+              <div className="flex gap-1.5 rounded-xl bg-slate-100 p-1 self-start">
                 {(["all", "ready", "pending"] as const).map((f) => (
                   <button
                     key={f}
@@ -280,6 +310,54 @@ export default function DashboardPage() {
               </div>
             </div>
 
+            {/* ── Category filter pills (dynamic, from actual data) ── */}
+            {availableCategories.length > 1 && (
+              <div className="flex flex-wrap gap-2">
+                <button
+                  onClick={() => setCategory("all")}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold transition-all",
+                    category === "all"
+                      ? "border-[#1B2B4B] bg-[#1B2B4B] text-white shadow-sm"
+                      : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                  )}
+                >
+                  All Categories
+                </button>
+                {availableCategories.map((cat) => {
+                  const cc = catColor(cat);
+                  const count = matches.filter(
+                    (m) =>
+                      m.scheme_category === cat &&
+                      (filter === "all" ||
+                        (filter === "ready" && m.missing_documents.length === 0) ||
+                        (filter === "pending" && m.missing_documents.length > 0))
+                  ).length;
+                  return (
+                    <button
+                      key={cat}
+                      onClick={() => setCategory(cat)}
+                      className={cn(
+                        "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold transition-all",
+                        category === cat
+                          ? `${cc.bg} ${cc.text} border-transparent shadow-sm ring-1 ring-current/20`
+                          : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50"
+                      )}
+                    >
+                      {CAT_ICONS[cat] && <span>{CAT_ICONS[cat]}</span>}
+                      {cat}
+                      <span className={cn(
+                        "rounded-full px-1.5 py-0.5 text-[10px] font-bold",
+                        category === cat ? "bg-black/10" : "bg-slate-100 text-slate-500"
+                      )}>
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
             {filteredMatches.length === 0 ? (
               <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-white p-10 text-center">
                 <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
@@ -287,12 +365,19 @@ export default function DashboardPage() {
                 </div>
                 <p className="font-semibold text-slate-700">{totalMatches === 0 ? "No matches yet" : "No schemes in this filter"}</p>
                 <p className="mt-1 text-sm text-slate-400">
-                  {totalMatches === 0 ? "Complete your profile to see matched schemes." : "Try switching to 'All' above."}
+                  {totalMatches === 0 ? "Complete your profile to see matched schemes." : "Try changing the status or category filter above."}
                 </p>
-                {totalMatches === 0 && (
+                {totalMatches === 0 ? (
                   <Link href="/profile" className="mt-4 inline-flex items-center gap-2 rounded-xl bg-orange-500 px-4 py-2.5 text-sm font-bold text-white hover:bg-orange-600 transition-all">
                     Complete Profile
                   </Link>
+                ) : (
+                  <button
+                    onClick={() => { setFilter("all"); setCategory("all"); }}
+                    className="mt-4 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition-all"
+                  >
+                    Clear all filters
+                  </button>
                 )}
               </div>
             ) : (
