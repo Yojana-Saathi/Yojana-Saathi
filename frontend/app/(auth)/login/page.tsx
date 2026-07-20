@@ -7,7 +7,7 @@ import { useAuth } from "@/hooks/useAuth";
 import Link from "next/link";
 
 export default function LoginPage() {
-  const { signIn, demoSignIn } = useAuth();
+  const { signIn } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -29,22 +29,11 @@ export default function LoginPage() {
         result.error.toLowerCase().includes("invalid_grant") ||
         result.error.toLowerCase().includes("email not confirmed")
       ) {
-        setError(
-          "Invalid credentials or email not verified. Click 'Quick Demo Sign In' below to enter the sandbox instantly."
-        );
+        setError("Invalid credentials or email not verified.");
       } else {
         setError(result.error);
       }
     }
-  }
-
-  async function handleDemoLogin() {
-    setError("");
-    setBusy(true);
-    if (demoSignIn) {
-      await demoSignIn();
-    }
-    setBusy(false);
   }
 
   return (
@@ -112,26 +101,6 @@ export default function LoginPage() {
                   {busy ? "Signing in…" : "Sign in"}
                 </Button>
               </form>
-
-              <div className="mt-4">
-                <div className="relative my-4">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-gray-200" />
-                  </div>
-                  <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-warm-paper px-2 text-gray-400 font-semibold">Or</span>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleDemoLogin}
-                  disabled={busy}
-                  className="w-full py-2.5 px-4 rounded-full border border-orange-200 bg-orange-50/60 hover:bg-orange-100 text-orange-600 font-bold text-xs transition-all active:scale-95 flex items-center justify-center gap-2"
-                >
-                  <span>⚡ Quick Demo Sign In (1-Click)</span>
-                </button>
-              </div>
 
               <p className="mt-8 text-center text-sm text-slate-blue">
                 Don&apos;t have an account?{" "}
