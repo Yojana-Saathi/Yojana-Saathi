@@ -91,17 +91,7 @@ export function Navbar() {
                 <Link href="/chat" className={getNavLinkClass("/chat")}>
                   AI Assistant
                 </Link>
-                <Link
-                  href="/test-agents"
-                  className={cn(
-                    "flex items-center gap-1.5 px-3 py-1 rounded-full font-bold transition-all text-xs border shadow-2xs",
-                    pathname.startsWith("/test-agents")
-                      ? "bg-indigo-600 text-white border-indigo-600"
-                      : "bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border-indigo-100"
-                  )}
-                >
-                  <span>🧪 Agent Lab</span>
-                </Link>
+
               </>
             ) : (
               <>
@@ -114,17 +104,7 @@ export function Navbar() {
                 <Link href="/chat" className={getNavLinkClass("/chat")}>
                   AI Assistant
                 </Link>
-                <Link
-                  href="/test-agents"
-                  className={cn(
-                    "flex items-center gap-1.5 px-3 py-1 rounded-full font-bold transition-all text-xs border shadow-2xs",
-                    pathname.startsWith("/test-agents")
-                      ? "bg-indigo-600 text-white border-indigo-600"
-                      : "bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border-indigo-100"
-                  )}
-                >
-                  <span>🧪 Agent Lab</span>
-                </Link>
+
               </>
             )}
           </nav>
@@ -175,13 +155,7 @@ export function Navbar() {
                     >
                       Document Vault
                     </Link>
-                    <Link
-                      href="/test-agents"
-                      onClick={() => setMenuOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm font-semibold text-indigo-600 bg-indigo-50/50 hover:bg-indigo-50 transition-colors"
-                    >
-                      🧪 Agent Lab
-                    </Link>
+
                     <Link
                       href="/settings"
                       onClick={() => setMenuOpen(false)}
@@ -265,13 +239,7 @@ export function Navbar() {
                       >
                         AI Assistant
                       </Link>
-                      <Link
-                        href="/test-agents"
-                        onClick={() => setMobileMenuOpen(false)}
-                        className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-indigo-600 bg-indigo-50/50 hover:bg-indigo-50 transition-colors"
-                      >
-                        🧪 Agent Lab
-                      </Link>
+
                     </>
                   ) : (
                     <>
@@ -296,13 +264,7 @@ export function Navbar() {
                       >
                         AI Assistant
                       </Link>
-                      <Link
-                        href="/test-agents"
-                        onClick={() => setMobileMenuOpen(false)}
-                        className="flex items-center gap-3 px-4 py-2.5 text-sm font-bold text-indigo-600 bg-indigo-50/50 hover:bg-indigo-50 transition-colors"
-                      >
-                        🧪 Agent Lab
-                      </Link>
+
                       <div className="border-t border-gray-100 my-1 pt-1">
                         <Link
                           href="/login"
