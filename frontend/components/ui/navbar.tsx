@@ -91,7 +91,9 @@ export function Navbar() {
                 <Link href="/chat" className={getNavLinkClass("/chat")}>
                   AI Assistant
                 </Link>
-
+                <Link href="/about" className={getNavLinkClass("/about")}>
+                  About
+                </Link>
               </>
             ) : (
               <>
@@ -104,7 +106,9 @@ export function Navbar() {
                 <Link href="/chat" className={getNavLinkClass("/chat")}>
                   AI Assistant
                 </Link>
-
+                <Link href="/about" className={getNavLinkClass("/about")}>
+                  About
+                </Link>
               </>
             )}
           </nav>
@@ -239,7 +243,13 @@ export function Navbar() {
                       >
                         AI Assistant
                       </Link>
-
+                      <Link
+                        href="/about"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        About
+                      </Link>
                     </>
                   ) : (
                     <>
@@ -263,6 +273,13 @@ export function Navbar() {
                         className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                       >
                         AI Assistant
+                      </Link>
+                      <Link
+                        href="/about"
+                        onClick={() => setMobileMenuOpen(false)}
+                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        About
                       </Link>
 
                       <div className="border-t border-gray-100 my-1 pt-1">
