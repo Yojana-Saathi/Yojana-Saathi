@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
 
 const tabs = ["Notifications", "Appearance", "Privacy", "Account"];
 
@@ -42,6 +43,46 @@ export default function SettingsPage() {
   const [compactView, setCompactView] = useState(false);
   const [shareData, setShareData] = useState(true);
   const [analytics, setAnalytics] = useState(false);
+
+  const { user } = useAuth();
+  const [currentDevice, setCurrentDevice] = useState("Chrome on Windows");
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const ua = navigator.userAgent;
+      let os = "Windows";
+      let browser = "Chrome";
+
+      if (ua.includes("Macintosh") || ua.includes("Mac OS X")) os = "macOS";
+      else if (ua.includes("iPhone")) os = "iOS (iPhone)";
+      else if (ua.includes("iPad")) os = "iOS (iPad)";
+      else if (ua.includes("Android")) os = "Android";
+      else if (ua.includes("Linux")) os = "Linux";
+
+      if (ua.includes("Firefox")) browser = "Firefox";
+      else if (ua.includes("Edge") || ua.includes("Edg")) browser = "Edge";
+      else if (ua.includes("Safari") && !ua.includes("Chrome")) browser = "Safari";
+      else if (ua.includes("Chrome")) browser = "Chrome";
+
+      setCurrentDevice(`${browser} on ${os}`);
+    }
+  }, []);
+
+  const formatDateTime = (isoString?: string) => {
+    if (!isoString) return "Current session";
+    try {
+      const d = new Date(isoString);
+      return `Active since ${d.toLocaleString("en-US", {
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      })}`;
+    } catch {
+      return "Current session";
+    }
+  };
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -176,8 +217,7 @@ export default function SettingsPage() {
                   <p className="mt-1 text-sm text-slate-blue">Active login sessions across devices.</p>
                   <div className="mt-4 space-y-3">
                     {[
-                      { device: "Chrome on Windows", active: true, time: "Current session" },
-                      { device: "Safari on iPhone", active: false, time: "2 days ago" },
+                      { device: currentDevice, active: true, time: formatDateTime(user?.last_sign_in_at) },
                     ].map((s) => (
                       <div key={s.device} className="flex items-center justify-between rounded-lg bg-warm-paper/50 px-4 py-3">
                         <div className="flex items-center gap-3">
