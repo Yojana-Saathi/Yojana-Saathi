@@ -30,7 +30,11 @@ export const metadata: Metadata = {
   description:
     "Tell us about yourself once. We'll match you to every central and state welfare scheme you're eligible for — no bureaucracy, no missed deadlines.",
   icons: {
-    icon: "/icon.svg",
+    icon: [
+      { url: "/logo.png", type: "image/png" },
+      { url: "/icon.svg", type: "image/svg+xml" },
+    ],
+    apple: "/logo.png",
   },
 };
 
