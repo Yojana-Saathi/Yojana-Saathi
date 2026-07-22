@@ -63,31 +63,94 @@ class OCRSpaceProvider(OCRProvider):
             extracted = {"raw_text": raw_text}
             confidence = 0.8  # Default confidence for successful text extraction
             
+            # Normalize raw text for matching
+            text_upper = raw_text.upper()
+            text_lower = raw_text.lower()
+            
             if doc_type == "income_certificate":
-                # Look for numbers representing income: e.g. Rs. 1,50,000 or Rs. 150000 or Income: 80000
-                income_match = re.search(r'(?:rs|inr|income|rupees)\.?\s*([0-9,]+)', raw_text, re.IGNORECASE)
-                if income_match:
-                    clean_val = income_match.group(1).replace(",", "")
-                    try:
-                        extracted["annual_income"] = float(clean_val)
-                        confidence = 0.9
-                    except ValueError:
-                        pass
+                # Matches patterns like: Income: Rs. 150,000, Rs 120000, 95000 Rupees
+                # We extract multiple matches and pick the one most likely to be annual income (ignoring years and pincodes)
+                candidates = []
+                # Pattern A: Label + Currency + Number
+                for m in re.finditer(r'(?:income|salary|salery|earnings)\b.*?([0-9,]{5,8})', text_lower):
+                    val = float(m.group(1).replace(",", ""))
+                    if 10000 <= val <= 5000000:
+                        candidates.append((val, 0.95))
+                # Pattern B: Currency + Number
+                for m in re.finditer(r'(?:rs|inr|rupees|rupee)\.?\s*([0-9,]{5,8})', text_lower):
+                    val = float(m.group(1).replace(",", ""))
+                    if 10000 <= val <= 5000000:
+                        candidates.append((val, 0.90))
+                # Pattern C: Generic 5-6 digit numbers (ignoring common years like 2023, 2024, 2026 and pincodes beginning with 1-9)
+                for m in re.finditer(r'\b([0-9,]{5,7})\b', text_lower):
+                    val = float(m.group(1).replace(",", ""))
+                    if 10000 <= val <= 5000000:
+                        is_pincode = (100000 <= val <= 999999) and (val % 1000 != 0)
+                        if not is_pincode:
+                            candidates.append((val, 0.85))
+
+                if candidates:
+                    candidates.sort(key=lambda x: x[1], reverse=True)
+                    extracted["annual_income"] = candidates[0][0]
+                    confidence = candidates[0][1]
                         
             elif doc_type == "aadhaar":
-                # Aadhaar number is 12 digits: e.g. 1234 5678 9012
+                # Aadhaar number is 12 digits: e.g. 1234 5678 9012 or 123456789012
                 aadhaar_match = re.search(r'\b\d{4}\s\d{4}\s\d{4}\b', raw_text)
                 if aadhaar_match:
                     extracted["aadhaar_number"] = aadhaar_match.group(0).replace(" ", "")
                     confidence = 0.95
+                else:
+                    aadhaar_match_raw = re.search(r'\b\d{12}\b', raw_text)
+                    if aadhaar_match_raw:
+                        extracted["aadhaar_number"] = aadhaar_match_raw.group(0)
+                        confidence = 0.90
+                
+                # Extract Gender from Aadhaar
+                gender_match = re.search(r'\b(male|female)\b', text_lower)
+                if gender_match:
+                    extracted["gender"] = gender_match.group(1)
                     
             elif doc_type == "caste_certificate":
                 # Look for category keywords
-                for cat in ("SC", "ST", "OBC", "General"):
-                    if re.search(rf'\b{cat}\b', raw_text, re.IGNORECASE):
+                for cat in ("SC", "ST", "OBC", "General", "EWS"):
+                    if re.search(rf'\b{cat}\b', text_upper):
                         extracted["social_category"] = cat.lower()
-                        confidence = 0.90
+                        confidence = 0.95
                         break
+
+            elif doc_type == "disability_certificate":
+                # Look for disability keywords
+                disability_type = "other"
+                if any(x in text_lower for x in ("locomotor", "orthopedic", "handicap", "limb", "amputation", "paralysis")):
+                    disability_type = "locomotor"
+                elif any(x in text_lower for x in ("visual", "blind", "vision", "low vision")):
+                    disability_type = "visual"
+                elif any(x in text_lower for x in ("hearing", "deaf", "mute", "ear")):
+                    disability_type = "hearing"
+                elif any(x in text_lower for x in ("mental", "intellectual", "autism", "retardation", "brain")):
+                    disability_type = "mental"
+                
+                extracted["disability_status"] = disability_type
+                confidence = 0.90
+
+            elif doc_type == "domicile_certificate":
+                # Look for Indian state names in raw text
+                states = ["Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh","Goa","Gujarat","Haryana","Himachal Pradesh","Jharkhand","Karnataka","Kerala","Madhya Pradesh","Maharashtra","Manipur","Meghalaya","Mizoram","Nagaland","Odisha","Punjab","Rajasthan","Sikkim","Tamil Nadu","Telangana","Tripura","Uttar Pradesh","Uttarakhand","West Bengal","Delhi","Jammu & Kashmir","Ladakh"]
+                for s in states:
+                    if re.search(r'\b' + re.escape(s) + r'\b', raw_text, re.IGNORECASE):
+                        extracted["state"] = s
+                        confidence = 0.95
+                        break
+
+            elif doc_type == "ration_card":
+                # Look for BPL / APL / Antyodaya identifiers
+                if any(x in text_upper for x in ("BPL", "BELOW POVERTY LINE", "ANTYODAYA", "AAY")):
+                    extracted["has_bpl_card"] = True
+                    confidence = 0.90
+                elif any(x in text_upper for x in ("APL", "ABOVE POVERTY LINE")):
+                    extracted["has_bpl_card"] = False
+                    confidence = 0.90
                         
             return extracted, confidence
             
