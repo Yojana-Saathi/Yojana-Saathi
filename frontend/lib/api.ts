@@ -409,8 +409,8 @@ export async function refreshUserMatches(token: string): Promise<RefreshMatchesR
     if (!res.ok) {
       return {
         status: "error",
-        error: data.error || "failed",
-        message: data.message || "Failed to refresh matches",
+        error: data.error || data.error_code || "failed",
+        message: data.message || data.error_message || "Failed to refresh matches",
         retry_after_seconds: data.retry_after_seconds,
         last_refreshed: data.last_refreshed,
       };
