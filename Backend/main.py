@@ -1174,30 +1174,65 @@ def _register_routes(app: FastAPI) -> None:
             schemes: tuple[Scheme, ...] = request.app.state.schemes
             llm: GroqClient = request.app.state.llm
 
-            # Find schemes relevant to the question
+            # ── Enhanced scheme matching with synonym expansion ──────────
             import re as _re
             q = clean_msg.lower()
             q_clean = _re.sub(r"[^a-z0-9\s-]", "", q)
+            words = [w for w in q_clean.split() if len(w) > 2]
+
+            # Synonym/intent expansion map for common welfare terms
+            SYNONYMS: dict[str, list[str]] = {
+                "farmer": ["agriculture", "kisan", "farming", "crop", "land"],
+                "agriculture": ["farmer", "kisan", "farming", "crop"],
+                "health": ["medical", "hospital", "doctor", "treatment", "insurance", "ayushman"],
+                "education": ["school", "college", "scholarship", "student", "study"],
+                "scholarship": ["education", "student", "merit", "fee"],
+                "women": ["woman", "female", "mother", "maternity", "girl", "lady"],
+                "child": ["children", "kid", "infant", "baby", "minor"],
+                "pension": ["old", "senior", "elderly", "retirement", "aged"],
+                "housing": ["house", "home", "shelter", "awas", "dwelling"],
+                "disability": ["disabled", "handicap", "divyang", "pwds"],
+                "income": ["salary", "earning", "wage", "poverty", "bpl"],
+                "loan": ["credit", "finance", "mudra", "bank", "lending"],
+                "skill": ["training", "employment", "job", "vocational"],
+                "food": ["ration", "nutrition", "meal", "hunger"],
+                "insurance": ["coverage", "premium", "claim", "policy"],
+                "marriage": ["wedding", "shaadi", "bride", "dowry"],
+            }
+
+            expanded_words = set(words)
+            for w in words:
+                if w in SYNONYMS:
+                    expanded_words.update(SYNONYMS[w])
+                for key, syns in SYNONYMS.items():
+                    if w in syns:
+                        expanded_words.add(key)
+                        expanded_words.update(syns)
 
             def _score_scheme(s: Scheme) -> int:
                 name = s.scheme_name.lower()
                 cat = s.scheme_category.lower()
                 summary = s.benefit_summary.lower()
+                combined = f"{name} {cat} {summary}"
                 score = 0
-                # Exact phrase match in name
                 if q_clean in name:
                     score += 100
-                # All words match in name
-                words = [w for w in q_clean.split() if len(w) > 2]
-                name_matches = sum(1 for w in words if w in name)
-                summary_matches = sum(1 for w in words if w in summary)
-                cat_matches = sum(1 for w in words if w in cat)
-                score += name_matches * 20 + summary_matches * 5 + cat_matches * 10
+                for w in expanded_words:
+                    if w in name:
+                        score += 20
+                    if w in cat:
+                        score += 10
+                    if w in summary:
+                        score += 5
                 return score
 
-            scored = [(s, _score_scheme(s)) for s in schemes if _score_scheme(s) > 0]
+            scored = []
+            for s in schemes:
+                sc = _score_scheme(s)
+                if sc > 0:
+                    scored.append((s, sc))
             scored.sort(key=lambda x: -x[1])
-            matched = [s for s, _ in scored[:5]]
+            matched = [s for s, _ in scored[:8]]
 
             # Build context from matched schemes
             context = ""
@@ -1205,29 +1240,76 @@ def _register_routes(app: FastAPI) -> None:
             if matched:
                 lines = []
                 for s in matched:
-                    lines.append(f"- {s.scheme_name} ({s.scheme_category}): {s.benefit_summary}")
+                    parts = [f"- **{s.scheme_name}** (Category: {s.scheme_category})"]
+                    parts.append(f"  Benefit: {s.benefit_summary}")
+                    if s.benefit_value_estimate:
+                        parts.append(f"  Estimated value: {s.benefit_value_estimate}")
+                    if s.required_documents:
+                        parts.append(f"  Required documents: {', '.join(s.required_documents)}")
+                    if s.application_url:
+                        parts.append(f"  Apply at: {s.application_url}")
+                    if hasattr(s, 'eligibility_rules') and s.eligibility_rules:
+                        rules = s.eligibility_rules
+                        rule_parts = []
+                        if rules.min_age is not None:
+                            rule_parts.append(f"Min age: {rules.min_age}")
+                        if rules.max_age is not None:
+                            rule_parts.append(f"Max age: {rules.max_age}")
+                        if rules.max_income is not None:
+                            rule_parts.append(f"Max income: ₹{rules.max_income:,.0f}")
+                        if rules.gender_restriction and str(rules.gender_restriction) != "any":
+                            rule_parts.append(f"Gender: {rules.gender_restriction}")
+                        if rule_parts:
+                            parts.append(f"  Eligibility: {'; '.join(rule_parts)}")
+                    lines.append("\n".join(parts))
                     sources.append(s.scheme_name)
-                context = "\n".join(lines)
+                context = "\n\n".join(lines)
 
-            prompt = f"""You are YojanaSaathi, a helpful assistant for Indian government welfare schemes.
-Answer the user's question using ONLY the scheme information below. If the information
-isn't in the provided schemes, say you don't have that information yet.
+            # Build conversation history for LLM context
+            history_text = ""
+            if clean_history:
+                h_lines = []
+                for h in clean_history[-6:]:
+                    role = h.get("role", "user")
+                    content = h.get("content", "")
+                    if content:
+                        h_lines.append(f"{'User' if role == 'user' else 'Assistant'}: {content}")
+                if h_lines:
+                    history_text = "\n".join(h_lines)
 
-Available schemes:
-{context or "No specific schemes matched — answer generally if possible."}
+            # ── Build proper system + user messages for the LLM ──────────
+            system_prompt = """You are YojanaSaathi AI — India's most knowledgeable welfare scheme assistant. You are confident, direct, and never hesitate.
 
-User question: {clean_msg}
+RULES:
+1. Answer IMMEDIATELY and DIRECTLY. Never say "I think" or "I believe" — state facts.
+2. Use the provided scheme data as your primary source. If data is available, cite specific scheme names, amounts, eligibility, and application steps.
+3. If no scheme data matches, give the best general guidance about Indian welfare schemes. Never say "I don't have information" — instead redirect helpfully.
+4. Format responses with **bold** scheme names, bullet points for requirements, and clear step-by-step instructions.
+5. Keep answers concise but complete. No filler phrases. Every sentence must add value.
+6. If the user asks about eligibility, check the scheme rules and give a clear YES/NO verdict.
+7. Always end with a clear next step the user can take.
+8. Use ₹ for currency amounts. Use Indian number formatting (lakhs/crores).
+9. If the user greets you or asks a general question, respond warmly but keep it brief and steer toward helping them find schemes."""
 
-Give a concise, helpful answer. If relevant schemes were found, mention them by name
-and explain their benefits, eligibility, or how to apply based on the data above."""
+            user_prompt_parts = []
+            if history_text:
+                user_prompt_parts.append(f"Previous conversation:\n{history_text}\n")
+            if context:
+                user_prompt_parts.append(f"Relevant scheme data:\n{context}\n")
+            else:
+                user_prompt_parts.append("No specific schemes matched this query. Answer from general knowledge about Indian welfare schemes.\n")
+            user_prompt_parts.append(f"User's question: {clean_msg}")
 
-            reply, _used_llm = await llm.polish(prompt, fallback="")
-            
+            full_user_prompt = "\n".join(user_prompt_parts)
+
+            # Use enhanced LLM call with system message
+            reply, _used_llm = await llm.generate_chat(system_prompt, full_user_prompt, fallback="")
+
             if not reply:
                 # Deterministic fallback: build from real scheme data
                 if matched:
-                    lines = [f"I found some relevant schemes for you:"]
-                    for s in matched:
+                    lines = ["Here are the most relevant schemes for your query:"]
+                    for s in matched[:5]:
                         cat = s.scheme_category.replace("SchemeCategory.", "").replace("_", " ").title() if s.scheme_category else ""
                         lines.append(f"\n**{s.scheme_name}** ({cat})")
                         lines.append(f"  {s.benefit_summary}")

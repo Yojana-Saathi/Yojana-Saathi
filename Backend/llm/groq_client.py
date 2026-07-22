@@ -89,3 +89,62 @@ class GroqClient:
                 return text, True
 
         return fallback, False
+
+    async def _generate_with_messages(self, model: str, messages: list[dict[str, str]], temperature: float = 0.2) -> str | None:
+        """Generation attempt using structured messages (e.g. system + user), bounded by timeout."""
+        if not self.available or not self._api_key:
+            return None
+
+        try:
+            try:
+                from groq import AsyncGroq
+                client = AsyncGroq(api_key=self._api_key, timeout=self._settings.groq_timeout_seconds)
+                response = await client.chat.completions.create(
+                    model=model,
+                    messages=messages,
+                    temperature=temperature,
+                    max_tokens=800,
+                )
+                return (response.choices[0].message.content or "").strip() or None
+            except ImportError:
+                async with httpx.AsyncClient(timeout=self._settings.groq_timeout_seconds) as client:
+                    response = await client.post(
+                        "https://api.groq.com/openai/v1/chat/completions",
+                        headers={
+                            "Authorization": f"Bearer {self._api_key}",
+                            "Content-Type": "application/json",
+                        },
+                        json={
+                            "model": model,
+                            "messages": messages,
+                            "temperature": temperature,
+                            "max_tokens": 800,
+                        },
+                    )
+                    response.raise_for_status()
+                    data = response.json()
+                    content = data.get("choices", [{}])[0].get("message", {}).get("content", "")
+                    return content.strip() or None
+        except asyncio.TimeoutError:
+            logger.warning("groq_timeout", model=model)
+            return None
+        except Exception as exc:
+            logger.warning("groq_error", model=model, error=str(exc))
+            return None
+
+    async def generate_chat(self, system_prompt: str, user_prompt: str, fallback: str = "") -> tuple[str, bool]:
+        """Generate AI response with system persona and low-latency temperature."""
+        if not self.available:
+            return fallback, False
+
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ]
+
+        for model in (self._settings.groq_model, self._settings.groq_fallback_model):
+            text = await self._generate_with_messages(model, messages, temperature=0.2)
+            if text:
+                return text, True
+
+        return fallback, False
