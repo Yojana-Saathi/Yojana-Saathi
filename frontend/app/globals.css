@@ -169,3 +169,12 @@
   25%      { transform: rotate(-4deg); }
   75%      { transform: rotate(4deg); }
 }
+
+/* Hide scrollbar utility for horizontal filter strips */
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

@@ -1,6 +1,17 @@
 const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 export const API_URL = rawApiUrl.replace(/\/api\/?$/, "").replace(/\/$/, "");
 
+export function sanitizeCurrency(str: string | undefined | null): string {
+  if (!str) return "";
+  return str
+    .replace(/Γé╣/g, "₹")
+    .replace(/â‚¹/g, "₹")
+    .replace(/\u00e2\u0082\u00b9/g, "₹")
+    .replace(/ΓÇ╣/g, "₹")
+    .replace(/ΓÇé/g, "₹")
+    .replace(/â¹/g, "₹");
+}
+
 async function fetchApi<T>(
   path: string,
   options?: RequestInit & { token?: string }
@@ -140,11 +151,11 @@ function rawSchemeToScheme(s: Record<string, unknown>): Scheme {
   return {
     id: (s.scheme_id as string) || (s.id as string) || "",
     scheme_id: (s.scheme_id as string) || (s.id as string) || "",
-    scheme_name: (s.scheme_name as string) || "",
+    scheme_name: sanitizeCurrency((s.scheme_name as string) || ""),
     scheme_category: (s.scheme_category as string) || "",
-    issuing_authority: (s.issuing_authority as string) || "",
-    benefit_summary: (s.benefit_summary as string) || "",
-    benefit_value_estimate: (s.benefit_value_estimate as string) || "",
+    issuing_authority: sanitizeCurrency((s.issuing_authority as string) || ""),
+    benefit_summary: sanitizeCurrency((s.benefit_summary as string) || ""),
+    benefit_value_estimate: sanitizeCurrency((s.benefit_value_estimate as string) || ""),
     application_url: (s.application_url as string) || "",
     required_documents: (s.required_documents as string[]) || [],
     is_active: (s.is_active as boolean) ?? true,
@@ -339,52 +350,61 @@ export type EligibilityMatch = {
 };
 
 export async function getUserMatches(token: string): Promise<EligibilityMatch[]> {
-  // Try the backend API first
+  let matches: EligibilityMatch[] = [];
   try {
     const res = await fetch(`${API_URL}/api/matches`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (res.ok) {
       const data = await res.json();
-      if (data.ranked_schemes) return data.ranked_schemes;
-      if (data.eligible_schemes) return data.eligible_schemes;
-      if (Array.isArray(data)) return data;
+      if (data.ranked_schemes) matches = data.ranked_schemes;
+      else if (data.eligible_schemes) matches = data.eligible_schemes;
+      else if (Array.isArray(data)) matches = data;
     }
-  } catch { /* fall through to Supabase query */ }
+  } catch { /* fall through */ }
 
-  // Fallback: query Supabase eligibility_matches table without inner-join restriction
-  try {
-    const { supabase: sb } = await import("@/lib/supabase");
-    if (!sb) throw new Error("Supabase not configured");
-    const { data, error } = await sb
-      .from("eligibility_matches")
-      .select("*, schemes(*), applications(*)")
-      .order("priority_rank", { ascending: true });
+  if (matches.length === 0) {
+    try {
+      const { supabase: sb } = await import("@/lib/supabase");
+      if (!sb) throw new Error("Supabase not configured");
+      const { data, error } = await sb
+        .from("eligibility_matches")
+        .select("*, schemes(*), applications(*)")
+        .order("priority_rank", { ascending: true });
 
-    if (error) throw error;
+      if (error) throw error;
 
-    return (data || []).map((row: Record<string, unknown>) => {
-      const scheme = row.schemes as Record<string, unknown> || {};
-      const app = (row.applications as Record<string, unknown>[])?.[0];
-      return {
-        id: row.id as string,
-        scheme_id: (scheme.scheme_id as string) || (row.scheme_id as string) || "",
-        scheme_name: (scheme.scheme_name as string) || "",
-        scheme_category: (scheme.scheme_category as string) || "",
-        issuing_authority: (scheme.issuing_authority as string) || "",
-        match_score: (row.match_score as number) || 0.0,
-        benefit_summary: (scheme.benefit_summary as string) || "",
-        benefit_value_estimate: (scheme.benefit_value_estimate as string) || "",
-        missing_documents: (row.missing_documents as string[]) || [],
-        priority_rank: (row.priority_rank as number) || 1,
-        application_url: (scheme.application_url as string) || "",
-        matched_at: (row.matched_at as string) || "",
-        application_status: (app?.status as EligibilityMatch["application_status"]) || "matched",
-      };
-    });
-  } catch {
-    return [];
+      matches = (data || []).map((row: Record<string, unknown>) => {
+        const scheme = row.schemes as Record<string, unknown> || {};
+        const app = (row.applications as Record<string, unknown>[])?.[0];
+        return {
+          id: row.id as string,
+          scheme_id: (scheme.scheme_id as string) || (row.scheme_id as string) || "",
+          scheme_name: (scheme.scheme_name as string) || "",
+          scheme_category: (scheme.scheme_category as string) || "",
+          issuing_authority: (scheme.issuing_authority as string) || "",
+          match_score: (row.match_score as number) || 0.0,
+          benefit_summary: (scheme.benefit_summary as string) || "",
+          benefit_value_estimate: (scheme.benefit_value_estimate as string) || "",
+          missing_documents: (row.missing_documents as string[]) || [],
+          priority_rank: (row.priority_rank as number) || 1,
+          application_url: (scheme.application_url as string) || "",
+          matched_at: (row.matched_at as string) || "",
+          application_status: (app?.status as EligibilityMatch["application_status"]) || "matched",
+        };
+      });
+    } catch {
+      matches = [];
+    }
   }
+
+  return matches.map((m) => ({
+    ...m,
+    scheme_name: sanitizeCurrency(m.scheme_name),
+    issuing_authority: sanitizeCurrency(m.issuing_authority),
+    benefit_summary: sanitizeCurrency(m.benefit_summary),
+    benefit_value_estimate: sanitizeCurrency(m.benefit_value_estimate),
+  }));
 }
 
 export type RefreshMatchesResult = {

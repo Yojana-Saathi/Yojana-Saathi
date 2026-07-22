@@ -170,6 +170,7 @@ export default function DashboardPage() {
   const totalMatches = matches.length;
   const readyCount = matches.filter((m) => m.missing_documents.length === 0).length;
   const pendingCount = matches.filter((m) => m.missing_documents.length > 0).length;
+  const appliedCount = matches.filter((m) => m.application_status === "applied" || m.application_status === "approved").length;
   const verifiedDocs = docs.filter((d) => d.verification_status === "verified").length;
   const allMissingDocs = Array.from(new Set(matches.flatMap((m) => m.missing_documents)));
   const docsVerifiedPct = docs.length > 0 ? Math.round((verifiedDocs / docs.length) * 100) : 0;
@@ -264,8 +265,8 @@ export default function DashboardPage() {
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 mb-8">
           {[
             {
-              label: "Schemes Matched",
-              value: totalMatches,
+              label: "Applied Schemes",
+              value: appliedCount,
               icon: (
                 <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.8}><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
               ),
