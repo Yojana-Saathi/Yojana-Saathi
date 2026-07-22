@@ -32,6 +32,53 @@ export default function SchemesPage() {
   const [category, setCategory] = useState("all");
   const [page, setPage] = useState(1);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Drag-to-scroll horizontally on desktop devices
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    let isDown = false;
+    let startX = 0;
+    let scrollLeftVal = 0;
+
+    const onMouseDown = (e: MouseEvent) => {
+      isDown = true;
+      startX = e.pageX - el.offsetLeft;
+      scrollLeftVal = el.scrollLeft;
+      el.style.cursor = "grabbing";
+    };
+
+    const onMouseLeave = () => {
+      isDown = false;
+      el.style.cursor = "grab";
+    };
+
+    const onMouseUp = () => {
+      isDown = false;
+      el.style.cursor = "grab";
+    };
+
+    const onMouseMove = (e: MouseEvent) => {
+      if (!isDown) return;
+      e.preventDefault();
+      const x = e.pageX - el.offsetLeft;
+      const walk = (x - startX) * 1.5;
+      el.scrollLeft = scrollLeftVal - walk;
+    };
+
+    el.addEventListener("mousedown", onMouseDown);
+    el.addEventListener("mouseleave", onMouseLeave);
+    el.addEventListener("mouseup", onMouseUp);
+    el.addEventListener("mousemove", onMouseMove);
+
+    return () => {
+      el.removeEventListener("mousedown", onMouseDown);
+      el.removeEventListener("mouseleave", onMouseLeave);
+      el.removeEventListener("mouseup", onMouseUp);
+      el.removeEventListener("mousemove", onMouseMove);
+    };
+  }, []);
 
   // Load ALL schemes once on mount (paginated behind the scenes)
   useEffect(() => {
@@ -170,7 +217,7 @@ export default function SchemesPage() {
       {/* ── Category filter strip ──────────────────────────────────────── */}
       <div className="sticky top-[64px] z-30 border-b border-slate-200 bg-white/95 backdrop-blur-md shadow-sm">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-2 overflow-x-auto py-3 scrollbar-none">
+          <div ref={scrollRef} className="flex items-center gap-2 overflow-x-auto pt-3 pb-4 scrollbar-premium cursor-grab select-none">
             {CATEGORY_LIST.map((cat) => {
               const count = cat.key === "all" ? filtered.length : (catCounts[cat.key] ?? 0);
               const isActive = category === cat.key;

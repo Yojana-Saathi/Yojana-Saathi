@@ -178,3 +178,22 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* Premium horizontal scrollbar utility */
+.scrollbar-premium::-webkit-scrollbar {
+  height: 5px;
+}
+.scrollbar-premium::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-premium::-webkit-scrollbar-thumb {
+  background: rgba(11, 30, 61, 0.15);
+  border-radius: 9999px;
+}
+.scrollbar-premium::-webkit-scrollbar-thumb:hover {
+  background: rgba(11, 30, 61, 0.35);
+}
+.scrollbar-premium {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(11, 30, 61, 0.15) transparent;
+}
