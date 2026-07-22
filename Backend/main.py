@@ -671,15 +671,42 @@ def _register_routes(app: FastAPI) -> None:
             except Exception:
                 extracted_data, confidence = None, 0.0
                 
-            # Insert into database
-            db_res = supabase.table("documents").insert({
-                "user_id": user_id,
-                "doc_type": doc_type,
-                "storage_path": storage_path,
-                "verification_status": "pending",
-                "extracted_data": extracted_data,
-                "extraction_confidence": confidence
-            }).execute()
+            # Check if there is an existing document of this type to overwrite/clean up
+            existing_doc = None
+            try:
+                existing_res = supabase.table("documents").select("id, storage_path").eq("user_id", user_id).eq("doc_type", doc_type).execute()
+                if existing_res.data:
+                    existing_doc = existing_res.data[0]
+            except Exception as check_err:
+                logger.warning("existing_document_check_failed", error=str(check_err))
+
+            if existing_doc:
+                # 1. Clean up old file in storage
+                old_path = existing_doc.get("storage_path")
+                if old_path:
+                    try:
+                        supabase.storage.from_("citizen-documents").remove([old_path])
+                    except Exception as clean_err:
+                        logger.warning("old_file_cleanup_failed", error=str(clean_err))
+                
+                # 2. Update existing database record
+                db_res = supabase.table("documents").update({
+                    "storage_path": storage_path,
+                    "verification_status": "pending",
+                    "extracted_data": extracted_data,
+                    "extraction_confidence": confidence,
+                    "uploaded_at": "now()"
+                }).eq("id", existing_doc["id"]).execute()
+            else:
+                # 3. Insert new database record
+                db_res = supabase.table("documents").insert({
+                    "user_id": user_id,
+                    "doc_type": doc_type,
+                    "storage_path": storage_path,
+                    "verification_status": "pending",
+                    "extracted_data": extracted_data,
+                    "extraction_confidence": confidence
+                }).execute()
             
             doc_id = db_res.data[0]["id"]
             
