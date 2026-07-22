@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
@@ -8,6 +8,48 @@ import { useAuth } from "@/hooks/useAuth";
 import { API_URL } from "@/lib/api";
 
 const tabs = ["Notifications", "Appearance", "Privacy", "Account"];
+
+const SETTINGS_KEY = "yojana_saathi_settings";
+
+type Settings = {
+  emailNotifs: boolean;
+  smsNotifs: boolean;
+  pushNotifs: boolean;
+  quietStart: number;
+  quietEnd: number;
+  darkMode: boolean;
+  compactView: boolean;
+  language: string;
+  shareData: boolean;
+  analytics: boolean;
+};
+
+const DEFAULT_SETTINGS: Settings = {
+  emailNotifs: true,
+  smsNotifs: false,
+  pushNotifs: true,
+  quietStart: 22,
+  quietEnd: 8,
+  darkMode: false,
+  compactView: false,
+  language: "en",
+  shareData: true,
+  analytics: false,
+};
+
+function loadSettings(): Settings {
+  if (typeof window === "undefined") return DEFAULT_SETTINGS;
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    if (raw) return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+  } catch { /* ignore */ }
+  return DEFAULT_SETTINGS;
+}
+
+function saveSettings(s: Settings) {
+  if (typeof window === "undefined") return;
+  localStorage.setItem(SETTINGS_KEY, JSON.stringify(s));
+}
 
 function Toggle({ enabled, onChange, label, desc }: { enabled: boolean; onChange: (v: boolean) => void; label: string; desc: string }) {
   return (
@@ -37,20 +79,18 @@ function Toggle({ enabled, onChange, label, desc }: { enabled: boolean; onChange
 
 export default function SettingsPage() {
   const [tab, setTab] = useState(0);
-  const [emailNotifs, setEmailNotifs] = useState(true);
-  const [smsNotifs, setSmsNotifs] = useState(false);
-  const [pushNotifs, setPushNotifs] = useState(true);
-  const [darkMode, setDarkMode] = useState(false);
-  const [compactView, setCompactView] = useState(false);
-  const [shareData, setShareData] = useState(true);
-  const [analytics, setAnalytics] = useState(false);
+  const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
+  const [settingsLoaded, setSettingsLoaded] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   const { session, user, signOut } = useAuth();
   const [currentDevice, setCurrentDevice] = useState("Chrome on Windows");
 
+  // ── Modal states ────────────────────────────────────────────────────
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [showEmailModal, setShowEmailModal] = useState(false);
 
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -58,70 +98,42 @@ export default function SettingsPage() {
   const [passwordSuccess, setPasswordSuccess] = useState(false);
   const [passwordBusy, setPasswordBusy] = useState(false);
 
+  const [newEmail, setNewEmail] = useState("");
+  const [emailError, setEmailError] = useState("");
+  const [emailSuccess, setEmailSuccess] = useState(false);
+  const [emailBusy, setEmailBusy] = useState(false);
+
   const [deleteBusy, setDeleteBusy] = useState(false);
   const [deleteError, setDeleteError] = useState("");
 
-  const handleLogoutConfirm = async () => {
-    setShowLogoutModal(false);
-    await signOut("/login");
-  };
+  // ── Load persisted settings ─────────────────────────────────────────
+  useEffect(() => {
+    setSettings(loadSettings());
+    setSettingsLoaded(true);
+  }, []);
 
-  const handleDeleteConfirm = async () => {
-    setDeleteBusy(true);
-    setDeleteError("");
-    try {
-      const token = session?.access_token || "";
-      const res = await fetch(`${API_URL}/api/user`, {
-        method: "DELETE",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.message || "Failed to delete account");
-      }
-      setShowDeleteModal(false);
-      await signOut("/login");
-    } catch (err: any) {
-      setDeleteError(err.message || "Failed to delete account");
-    } finally {
-      setDeleteBusy(false);
-    }
-  };
+  // ── Persist + apply side effects on change ──────────────────────────
+  const updateSetting = useCallback(<K extends keyof Settings>(key: K, val: Settings[K]) => {
+    setSettings((prev) => {
+      const next = { ...prev, [key]: val };
+      saveSettings(next);
+      return next;
+    });
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
+  }, []);
 
-  const handlePasswordChange = async () => {
-    setPasswordError("");
-    setPasswordSuccess(false);
-    if (newPassword.length < 6) {
-      setPasswordError("Password must be at least 6 characters.");
-      return;
+  // Apply dark mode to <html>
+  useEffect(() => {
+    if (!settingsLoaded) return;
+    if (settings.darkMode) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
     }
-    if (newPassword !== confirmPassword) {
-      setPasswordError("Passwords do not match.");
-      return;
-    }
-    setPasswordBusy(true);
-    try {
-      const { supabase } = await import("@/lib/supabase");
-      if (!supabase) throw new Error("Supabase is not configured.");
-      const { error } = await supabase.auth.updateUser({ password: newPassword });
-      if (error) {
-        setPasswordError(error.message);
-      } else {
-        setPasswordSuccess(true);
-        setNewPassword("");
-        setConfirmPassword("");
-        setTimeout(() => setShowPasswordModal(false), 2000);
-      }
-    } catch (err: any) {
-      setPasswordError(err.message || "Failed to update password");
-    } finally {
-      setPasswordBusy(false);
-    }
-  };
+  }, [settings.darkMode, settingsLoaded]);
 
+  // ── Browser/OS detection ────────────────────────────────────────────
   useEffect(() => {
     if (typeof window !== "undefined") {
       const ua = navigator.userAgent;
@@ -159,6 +171,98 @@ export default function SettingsPage() {
     }
   };
 
+  // ── Handlers ────────────────────────────────────────────────────────
+  const handleLogoutConfirm = async () => {
+    setShowLogoutModal(false);
+    await signOut("/login");
+  };
+
+  const handleDeleteConfirm = async () => {
+    setDeleteBusy(true);
+    setDeleteError("");
+    try {
+      const token = session?.access_token || "";
+      const res = await fetch(`${API_URL}/api/user`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Failed to delete account");
+      setShowDeleteModal(false);
+      await signOut("/login");
+    } catch (err: any) {
+      setDeleteError(err.message || "Failed to delete account");
+    } finally {
+      setDeleteBusy(false);
+    }
+  };
+
+  const handlePasswordChange = async () => {
+    setPasswordError("");
+    setPasswordSuccess(false);
+    if (newPassword.length < 6) {
+      setPasswordError("Password must be at least 6 characters.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError("Passwords do not match.");
+      return;
+    }
+    setPasswordBusy(true);
+    try {
+      const { supabase } = await import("@/lib/supabase");
+      if (!supabase) throw new Error("Supabase is not configured.");
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) {
+        setPasswordError(error.message);
+      } else {
+        setPasswordSuccess(true);
+        setNewPassword("");
+        setConfirmPassword("");
+        setTimeout(() => {
+          setShowPasswordModal(false);
+          setPasswordSuccess(false);
+        }, 2000);
+      }
+    } catch (err: any) {
+      setPasswordError(err.message || "Failed to update password");
+    } finally {
+      setPasswordBusy(false);
+    }
+  };
+
+  const handleEmailUpdate = async () => {
+    setEmailError("");
+    setEmailSuccess(false);
+    if (!newEmail || !/\S+@\S+\.\S+/.test(newEmail)) {
+      setEmailError("Please enter a valid email address.");
+      return;
+    }
+    setEmailBusy(true);
+    try {
+      const { supabase } = await import("@/lib/supabase");
+      if (!supabase) throw new Error("Supabase is not configured.");
+      const { error } = await supabase.auth.updateUser({ email: newEmail });
+      if (error) {
+        setEmailError(error.message);
+      } else {
+        setEmailSuccess(true);
+        setNewEmail("");
+        setTimeout(() => {
+          setShowEmailModal(false);
+          setEmailSuccess(false);
+        }, 3000);
+      }
+    } catch (err: any) {
+      setEmailError(err.message || "Failed to update email");
+    } finally {
+      setEmailBusy(false);
+    }
+  };
+
   return (
     <div className="flex min-h-screen flex-col">
       <main className="flex-1 bg-gradient-to-b from-white to-warm-paper">
@@ -192,28 +296,44 @@ export default function SettingsPage() {
             ))}
           </div>
 
+          {/* Saved toast */}
+          {saved && (
+            <div className="mt-4 flex items-center gap-2 rounded-xl bg-teal-50 border border-teal-100 px-4 py-2.5 text-xs font-semibold text-teal-700 animate-in fade-in slide-in-from-top-2 duration-300">
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}><path d="M5 13l4 4L19 7"/></svg>
+              Settings saved
+            </div>
+          )}
+
           <div className="mt-6 space-y-5">
-            {/* Notifications tab */}
+            {/* ── Notifications tab ─────────────────────────────────────── */}
             {tab === 0 && (
               <div className="rounded-2xl border border-ink-navy/10 bg-white p-6 shadow-sm">
                 <h2 className="font-display text-lg font-semibold text-ink-navy">Notification preferences</h2>
                 <p className="mt-1 text-sm text-slate-blue">Choose how and when we notify you about scheme updates.</p>
                 <div className="mt-5 space-y-3">
-                  <Toggle enabled={emailNotifs} onChange={setEmailNotifs} label="Email notifications" desc="New matches, deadline reminders, application updates" />
-                  <Toggle enabled={smsNotifs} onChange={setSmsNotifs} label="SMS alerts" desc="Critical deadline reminders and approval updates" />
-                  <Toggle enabled={pushNotifs} onChange={setPushNotifs} label="Push notifications" desc="Browser notifications for real-time updates" />
+                  <Toggle enabled={settings.emailNotifs} onChange={(v) => updateSetting("emailNotifs", v)} label="Email notifications" desc="New matches, deadline reminders, application updates" />
+                  <Toggle enabled={settings.smsNotifs} onChange={(v) => updateSetting("smsNotifs", v)} label="SMS alerts" desc="Critical deadline reminders and approval updates" />
+                  <Toggle enabled={settings.pushNotifs} onChange={(v) => updateSetting("pushNotifs", v)} label="Push notifications" desc="Browser notifications for real-time updates" />
                 </div>
                 <div className="mt-5 border-t border-ink-navy/10 pt-5">
                   <p className="text-sm font-medium text-ink-navy">Notification quiet hours</p>
                   <p className="mt-1 text-xs text-slate-blue-400">No notifications will be sent during this period.</p>
                   <div className="mt-3 flex gap-3">
-                    <select defaultValue="22" className="rounded-lg border-2 border-ink-navy/15 bg-white px-3 py-2 text-sm text-ink-navy focus:border-signal-orange focus:outline-none">
+                    <select
+                      value={settings.quietStart}
+                      onChange={(e) => updateSetting("quietStart", parseInt(e.target.value))}
+                      className="rounded-lg border-2 border-ink-navy/15 bg-white px-3 py-2 text-sm text-ink-navy focus:border-signal-orange focus:outline-none"
+                    >
                       {Array.from({ length: 24 }, (_, i) => (
                         <option key={i} value={i}>{String(i).padStart(2, "0")}:00</option>
                       ))}
                     </select>
                     <span className="flex items-center text-sm text-slate-blue-400">to</span>
-                    <select defaultValue="8" className="rounded-lg border-2 border-ink-navy/15 bg-white px-3 py-2 text-sm text-ink-navy focus:border-signal-orange focus:outline-none">
+                    <select
+                      value={settings.quietEnd}
+                      onChange={(e) => updateSetting("quietEnd", parseInt(e.target.value))}
+                      className="rounded-lg border-2 border-ink-navy/15 bg-white px-3 py-2 text-sm text-ink-navy focus:border-signal-orange focus:outline-none"
+                    >
                       {Array.from({ length: 24 }, (_, i) => (
                         <option key={i} value={i}>{String(i).padStart(2, "0")}:00</option>
                       ))}
@@ -223,19 +343,23 @@ export default function SettingsPage() {
               </div>
             )}
 
-            {/* Appearance tab */}
+            {/* ── Appearance tab ────────────────────────────────────────── */}
             {tab === 1 && (
               <div className="rounded-2xl border border-ink-navy/10 bg-white p-6 shadow-sm">
                 <h2 className="font-display text-lg font-semibold text-ink-navy">Appearance</h2>
                 <p className="mt-1 text-sm text-slate-blue">Customize how the dashboard looks.</p>
                 <div className="mt-5 space-y-3">
-                  <Toggle enabled={darkMode} onChange={setDarkMode} label="Dark mode" desc="Switch between light and dark theme" />
-                  <Toggle enabled={compactView} onChange={setCompactView} label="Compact view" desc="Show more content with reduced spacing" />
+                  <Toggle enabled={settings.darkMode} onChange={(v) => updateSetting("darkMode", v)} label="Dark mode" desc="Switch between light and dark theme" />
+                  <Toggle enabled={settings.compactView} onChange={(v) => updateSetting("compactView", v)} label="Compact view" desc="Show more content with reduced spacing" />
                 </div>
                 <div className="mt-5 border-t border-ink-navy/10 pt-5">
                   <p className="text-sm font-medium text-ink-navy">Language</p>
                   <p className="mt-1 text-xs text-slate-blue-400">Choose your preferred language for scheme information.</p>
-                  <select defaultValue="en" className="mt-3 block w-full rounded-lg border-2 border-ink-navy/15 bg-white px-3.5 py-2.5 text-sm text-ink-navy focus:border-signal-orange focus:outline-none">
+                  <select
+                    value={settings.language}
+                    onChange={(e) => updateSetting("language", e.target.value)}
+                    className="mt-3 block w-full rounded-lg border-2 border-ink-navy/15 bg-white px-3.5 py-2.5 text-sm text-ink-navy focus:border-signal-orange focus:outline-none"
+                  >
                     <option value="en">English</option>
                     <option value="hi">Hindi</option>
                     <option value="or">Odia</option>
@@ -249,14 +373,14 @@ export default function SettingsPage() {
               </div>
             )}
 
-            {/* Privacy tab */}
+            {/* ── Privacy tab ───────────────────────────────────────────── */}
             {tab === 2 && (
               <div className="rounded-2xl border border-ink-navy/10 bg-white p-6 shadow-sm">
                 <h2 className="font-display text-lg font-semibold text-ink-navy">Privacy & data</h2>
                 <p className="mt-1 text-sm text-slate-blue">Control how your data is used and shared.</p>
                 <div className="mt-5 space-y-3">
-                  <Toggle enabled={shareData} onChange={setShareData} label="Scheme improvement data" desc="Share anonymized eligibility data to improve scheme matching for everyone" />
-                  <Toggle enabled={analytics} onChange={setAnalytics} label="Usage analytics" desc="Help us improve by sharing anonymous usage data" />
+                  <Toggle enabled={settings.shareData} onChange={(v) => updateSetting("shareData", v)} label="Scheme improvement data" desc="Share anonymized eligibility data to improve scheme matching for everyone" />
+                  <Toggle enabled={settings.analytics} onChange={(v) => updateSetting("analytics", v)} label="Usage analytics" desc="Help us improve by sharing anonymous usage data" />
                 </div>
                 <div className="mt-5 rounded-xl bg-verified-teal/5 px-4 py-3">
                   <div className="flex items-start gap-3">
@@ -272,7 +396,7 @@ export default function SettingsPage() {
               </div>
             )}
 
-            {/* Account tab */}
+            {/* ── Account tab ───────────────────────────────────────────── */}
             {tab === 3 && (
               <div className="space-y-5">
                 <div className="rounded-2xl border border-ink-navy/10 bg-white p-6 shadow-sm">
@@ -281,8 +405,8 @@ export default function SettingsPage() {
                   <div className="mt-5 space-y-4">
                     <Input label="Email address" type="email" defaultValue={user?.email || ""} disabled />
                     <div className="flex gap-3">
-                      <Button size="sm">Update email</Button>
-                      <Button variant="outline" size="sm" onClick={() => setShowPasswordModal(true)}>Change password</Button>
+                      <Button size="sm" onClick={() => { setNewEmail(""); setEmailError(""); setEmailSuccess(false); setShowEmailModal(true); }}>Update email</Button>
+                      <Button variant="outline" size="sm" onClick={() => { setNewPassword(""); setConfirmPassword(""); setPasswordError(""); setPasswordSuccess(false); setShowPasswordModal(true); }}>Change password</Button>
                     </div>
                   </div>
                 </div>
@@ -345,7 +469,7 @@ export default function SettingsPage() {
       </main>
 
       {/* ── Custom Modals ──────────────────────────────────────────────── */}
-      
+
       {/* Logout Modal */}
       {showLogoutModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-navy/60 backdrop-blur-sm p-4">
@@ -393,7 +517,7 @@ export default function SettingsPage() {
               </button>
               <button
                 onClick={handleDeleteConfirm}
-                className="rounded-xl bg-caution-amber px-4 py-2 text-xs font-bold text-white hover:bg-caution-amber-600 transition-all shadow-sm"
+                className="rounded-xl bg-caution-amber px-4 py-2 text-xs font-bold text-white hover:bg-amber-600 transition-all shadow-sm"
                 disabled={deleteBusy}
               >
                 {deleteBusy ? "Deleting…" : "Delete Account"}
@@ -409,7 +533,7 @@ export default function SettingsPage() {
           <div className="w-full max-w-sm rounded-2xl bg-white border border-slate-100 p-6 shadow-xl animate-in fade-in zoom-in duration-200">
             <h3 className="font-display text-lg font-bold text-ink-navy">Change Password</h3>
             <p className="mt-1 text-xs text-slate-blue-400 mb-4">Enter and confirm your new password below.</p>
-            
+
             <div className="space-y-3">
               <Input
                 label="New Password"
@@ -446,10 +570,53 @@ export default function SettingsPage() {
               </button>
               <button
                 onClick={handlePasswordChange}
-                className="rounded-xl bg-signal-orange px-4 py-2 text-xs font-bold text-white hover:bg-signal-orange-600 transition-all shadow-sm"
+                className="rounded-xl bg-signal-orange px-4 py-2 text-xs font-bold text-white hover:bg-orange-600 transition-all shadow-sm"
                 disabled={passwordBusy}
               >
                 {passwordBusy ? "Updating…" : "Change Password"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Update Email Modal */}
+      {showEmailModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-navy/60 backdrop-blur-sm p-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white border border-slate-100 p-6 shadow-xl animate-in fade-in zoom-in duration-200">
+            <h3 className="font-display text-lg font-bold text-ink-navy">Update Email</h3>
+            <p className="mt-1 text-xs text-slate-blue-400 mb-4">A confirmation link will be sent to your new email address.</p>
+
+            <Input
+              label="New Email Address"
+              type="email"
+              placeholder="you@example.com"
+              value={newEmail}
+              onChange={(e) => setNewEmail(e.target.value)}
+              disabled={emailBusy}
+            />
+
+            {emailError && (
+              <p className="mt-3 text-xs text-rose-500 bg-rose-50 p-2 rounded-lg border border-rose-100">{emailError}</p>
+            )}
+            {emailSuccess && (
+              <p className="mt-3 text-xs text-teal-600 bg-teal-50 p-2 rounded-lg border border-teal-100">✓ Confirmation email sent! Check your inbox.</p>
+            )}
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={() => setShowEmailModal(false)}
+                className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-all"
+                disabled={emailBusy}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleEmailUpdate}
+                className="rounded-xl bg-signal-orange px-4 py-2 text-xs font-bold text-white hover:bg-orange-600 transition-all shadow-sm"
+                disabled={emailBusy}
+              >
+                {emailBusy ? "Sending…" : "Update Email"}
               </button>
             </div>
           </div>
