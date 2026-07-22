@@ -1,7 +1,5 @@
 <div align="center">
 
-<img src="assets/logo.png" alt="YojanaSaathi Logo" width="120" />
-
 <img src="assets/header-banner.svg" alt="YojanaSaathi — AI-Powered Welfare Discovery Platform" width="100%" />
 
 <br/>
