@@ -8,19 +8,21 @@
 
 An intelligent, multi-agent welfare eligibility platform that turns a single citizen profile into an auditable, ranked catalog of eligible central and state government schemes — complete with document gap detection, automated OCR extraction, and instant application drafting.
 
-[![Live Demo](https://img.shields.io/badge/Production-Live-00E599?style=for-the-badge&logo=vercel&logoColor=black)](https://yojana-saathi-seven.vercel.app)
-[![API Status](https://img.shields.io/badge/API-Online-46E3B7?style=for-the-badge&logo=render&logoColor=black)](https://yojanasaathi-backend.onrender.com/api/health)
+[![Open Source](https://img.shields.io/badge/Open%20Source-100%25-FF5733?style=for-the-badge&logo=github&logoColor=white)](https://github.com/Yojana-Saathi/Yojana-Saathi)
+[![PRs Welcome](https://img.shields.io/badge/PRs-Welcome-22C55E?style=for-the-badge&logo=github&logoColor=white)](CONTRIBUTING.md)
+[![Production Live](https://img.shields.io/badge/Production-Live-00E599?style=for-the-badge&logo=vercel&logoColor=black)](https://yojana-saathi-seven.vercel.app)
+[![API Status](https://img.shields.io/badge/API-Online-009688?style=for-the-badge&logo=render&logoColor=white)](https://yojanasaathi-backend.onrender.com/api/health)
 [![Backend CI](https://img.shields.io/github/actions/workflow/status/Yojana-Saathi/Yojana-Saathi/backend-ci.yml?branch=main&style=for-the-badge&logo=github&label=CI)](https://github.com/Yojana-Saathi/Yojana-Saathi/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-F59E0B?style=for-the-badge)](LICENSE)
 
 <br/>
 
-[![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB?logo=python&logoColor=white)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
-[![Next.js 16](https://img.shields.io/badge/Next.js-16.2-000000?logo=next.js&logoColor=white)](https://nextjs.org/)
-[![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com/)
-[![Groq Llama-3.3](https://img.shields.io/badge/Groq-Llama--3.3--70B-F05138?logo=groq&logoColor=white)](https://groq.com/)
-[![Pytest 100%](https://img.shields.io/badge/Tests-121%20Passed-22C55E?logo=pytest&logoColor=white)](Backend/tests)
+[![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![Next.js 16](https://img.shields.io/badge/Next.js-16.2-000000?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org/)
+[![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)](https://supabase.com/)
+[![Groq Llama-3.3](https://img.shields.io/badge/Groq-Llama--3.3--70B-F05138?style=for-the-badge&logo=groq&logoColor=white)](https://groq.com/)
+[![Pytest 100%](https://img.shields.io/badge/Tests-121%20Passed-22C55E?style=for-the-badge&logo=pytest&logoColor=white)](Backend/tests)
 
 <br/>
 
