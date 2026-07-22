@@ -570,6 +570,22 @@ export default function DocumentsPage() {
                       ℹ️ Yolanda-Saathi has verified that the uploaded document's name and metadata match your profile details.
                     </div>
                   )}
+
+                  {/* Display extracted OCR text */}
+                  <div className="space-y-1.5">
+                    <label className="block text-xs font-semibold text-gray-700">
+                      Extracted Text (OCR Result)
+                    </label>
+                    {reviewingDoc.extracted_data?.raw_text ? (
+                      <div className="max-h-40 overflow-y-auto rounded-lg border border-ink-navy/10 bg-warm-paper/30 p-3 text-xs font-mono text-slate-blue whitespace-pre-wrap leading-relaxed">
+                        {reviewingDoc.extracted_data.raw_text}
+                      </div>
+                    ) : (
+                      <div className="rounded-lg bg-caution-amber/10 p-3 text-xs text-caution-amber border border-caution-amber/20">
+                        ⚠️ No text could be automatically extracted from this document. Please ensure the document is clear and readable.
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="mt-6 flex justify-end gap-3">

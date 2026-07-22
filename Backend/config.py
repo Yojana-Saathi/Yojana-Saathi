@@ -61,7 +61,7 @@ class Settings(BaseSettings):
     supabase_url: str = "https://kllduyiimpumgmylngoj.supabase.co"
     supabase_service_role_key: str = "placeholder_service_role_key"
     supabase_jwt_secret: str = "placeholder_jwt_secret"
-    ocr_space_api_key: str = "placeholder_ocr_space_api_key"
+    ocr_space_api_key: str = "helloworld"
     internal_api_secret: str = "placeholder_internal_api_secret"
 
 
