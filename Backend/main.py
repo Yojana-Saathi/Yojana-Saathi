@@ -334,8 +334,12 @@ def _register_routes(app: FastAPI) -> None:
                 .execute()
             )
             db_docs = {d["doc_type"] for d in docs_res.data}
-            from .models.enums import GOV_ID_KEYS
-            gov_ids = {k: k in db_docs for k in GOV_ID_KEYS}
+            gov_ids = {
+                "aadhaar": "aadhaar" in db_docs,
+                "income_certificate": "income_certificate" in db_docs,
+                "caste_certificate": "caste_certificate" in db_docs,
+                "ration_card": "ration_card" in db_docs
+            }
 
             # ── 4. Build CitizenProfile Pydantic model safely ─────────────────
             profile = CitizenProfile(
