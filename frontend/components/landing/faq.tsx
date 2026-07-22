@@ -201,7 +201,7 @@ function AccordionItem({
 }
 
 export function FAQ() {
-  const [open, setOpen] = useState(0);
+  const [open, setOpen] = useState<number | null>(null);
   const womanRef = useRef<HTMLImageElement>(null);
   const labourRef = useRef<HTMLImageElement>(null);
 
@@ -279,7 +279,7 @@ export function FAQ() {
               faq={faq}
               icon={icons[faq.icon as keyof typeof icons]}
               isOpen={open === i}
-              onClick={() => setOpen(open === i ? -1 : i)}
+              onClick={() => setOpen(open === i ? null : i)}
             />
           ))}
         </div>
