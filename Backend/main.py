@@ -1251,12 +1251,12 @@ def _register_routes(app: FastAPI) -> None:
                     if hasattr(s, 'eligibility_rules') and s.eligibility_rules:
                         rules = s.eligibility_rules
                         rule_parts = []
-                        if rules.min_age is not None:
+                        if rules.min_age is not None and rules.min_age > 0:
                             rule_parts.append(f"Min age: {rules.min_age}")
-                        if rules.max_age is not None:
+                        if rules.max_age is not None and rules.max_age < 120:
                             rule_parts.append(f"Max age: {rules.max_age}")
-                        if rules.max_income is not None:
-                            rule_parts.append(f"Max income: ₹{rules.max_income:,.0f}")
+                        if rules.max_income is not None and 0 < rules.max_income < 100000000:
+                            rule_parts.append(f"Max income: ₹{int(rules.max_income):,}")
                         if rules.gender_restriction and str(rules.gender_restriction) != "any":
                             rule_parts.append(f"Gender: {rules.gender_restriction}")
                         if rule_parts:
