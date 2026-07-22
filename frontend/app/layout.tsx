@@ -31,10 +31,12 @@ export const metadata: Metadata = {
     "Tell us about yourself once. We'll match you to every central and state welfare scheme you're eligible for — no bureaucracy, no missed deadlines.",
   icons: {
     icon: [
-      { url: "/logo.png", type: "image/png" },
+      { url: "/favicon.ico", sizes: "any" },
+      { url: "/icon.png", type: "image/png" },
       { url: "/icon.svg", type: "image/svg+xml" },
     ],
-    apple: "/logo.png",
+    shortcut: "/favicon.ico",
+    apple: "/icon.png",
   },
 };
 
