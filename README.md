@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="assets/logo.png" alt="YojanaSaathi Logo" width="120" />
+
 <img src="assets/header-banner.svg" alt="YojanaSaathi — AI-Powered Welfare Discovery Platform" width="100%" />
 
 <br/>
@@ -267,7 +269,7 @@ YojanaSaathi is engineered around strict data security and compliance principles
         <img src="https://github.com/PREMRAJESH.png" width="100px;" alt="Prem Rajesh Sargara"/><br />
         <sub><b>Prem Rajesh Sargara</b></sub>
       </a><br />
-      <sub>Co-Founder & Backend Lead</sub><br />
+      <sub>Founder, Backend & Project Lead</sub><br />
       <small>Backend Architecture, FastAPI, Multi-Agent Engine, Security & CI/CD</small>
     </td>
     <td align="center" width="50%">
