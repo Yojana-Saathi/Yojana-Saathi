@@ -44,8 +44,17 @@ export default function SettingsPage() {
   const [shareData, setShareData] = useState(true);
   const [analytics, setAnalytics] = useState(false);
 
-  const { user } = useAuth();
+  const { user, signOut } = useAuth();
   const [currentDevice, setCurrentDevice] = useState("Chrome on Windows");
+
+  const handleLogout = async () => {
+    if (typeof window !== "undefined") {
+      const confirmed = window.confirm("Are you sure you want to log out of this session?");
+      if (confirmed) {
+        await signOut("/login");
+      }
+    }
+  };
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -204,7 +213,7 @@ export default function SettingsPage() {
                   <h2 className="font-display text-lg font-semibold text-ink-navy">Account details</h2>
                   <p className="mt-1 text-sm text-slate-blue">Update your login information.</p>
                   <div className="mt-5 space-y-4">
-                    <Input label="Email address" type="email" defaultValue="ravi@example.com" />
+                    <Input label="Email address" type="email" defaultValue={user?.email || ""} disabled />
                     <div className="flex gap-3">
                       <Button size="sm">Update email</Button>
                       <Button variant="outline" size="sm">Change password</Button>
@@ -227,7 +236,14 @@ export default function SettingsPage() {
                             <p className="text-xs text-slate-blue-400">{s.time}</p>
                           </div>
                         </div>
-                        {!s.active && (
+                        {s.active ? (
+                          <button
+                            onClick={handleLogout}
+                            className="text-xs font-semibold text-rose-500 hover:text-rose-600 transition-colors"
+                          >
+                            Logout
+                          </button>
+                        ) : (
                           <button className="text-xs font-medium text-slate-blue-400 hover:text-caution-amber">Revoke</button>
                         )}
                       </div>
