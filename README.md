@@ -1,8 +1,8 @@
 <div align="center">
 
-# 🪔 YojanaSaathi
+<img src="assets/header-banner.svg" alt="YojanaSaathi — AI-Powered Welfare Discovery Platform" width="100%" />
 
-### *Autonomous AI-Powered Welfare Discovery & Application Infrastructure for India*
+<br/>
 
 An intelligent, multi-agent welfare eligibility platform that turns a single citizen profile into an auditable, ranked catalog of eligible central and state government schemes — complete with document gap detection, automated OCR extraction, and instant application drafting.
 
@@ -26,7 +26,7 @@ An intelligent, multi-agent welfare eligibility platform that turns a single cit
 
 </div>
 
----
+<img src="assets/divider.svg" alt="" width="100%" />
 
 ## 🎯 Executive Summary & Mission
 
@@ -40,7 +40,7 @@ By uniting a **100% deterministic Python eligibility rule engine** with a **zero
 - **Automated Document OCR Vault**: Instant parameter extraction from Aadhaar, Income Certificates, and Ration Cards.
 - **Auto-Generated Application Letters**: One-click custom application letter generation tailored for issuing authorities.
 
----
+<img src="assets/divider.svg" alt="" width="100%" />
 
 ## ✨ Key Platform Features
 
@@ -53,7 +53,7 @@ By uniting a **100% deterministic Python eligibility rule engine** with a **zero
 | ⚡ **Real-Time Event Sync** | Automated profile and scheme change triggers that re-evaluate matches instantly across all active users. | Supabase Deno Edge Functions broadcasting webhooks to FastAPI match endpoints. |
 | 🛡️ **Enterprise Security** | Bank-grade security controls including strict CORS allowlists, per-IP rate limiting, and zero-PII logging. | Sanitized inputs, anti-prompt injection guardrails, and JWT role verification. |
 
----
+<img src="assets/divider.svg" alt="" width="100%" />
 
 ## 🏛️ System Architecture
 
@@ -84,7 +84,7 @@ By uniting a **100% deterministic Python eligibility rule engine** with a **zero
                                    └───────────────────────┘
 ```
 
----
+<img src="assets/divider.svg" alt="" width="100%" />
 
 ## 🤖 Autonomous Agent Pipeline
 
@@ -121,7 +121,7 @@ Every profile update triggers our multi-agent orchestration pipeline. All financ
                     └──────────────────────┘
 ```
 
----
+<img src="assets/divider.svg" alt="" width="100%" />
 
 ## 🧱 Production Tech Stack
 
@@ -144,7 +144,7 @@ Every profile update triggers our multi-agent orchestration pipeline. All financ
 * **Edge Execution**: Deno-based Supabase Edge Functions (`on-profile-change`, `on-scheme-change`)
 * **CI/CD & Hosting**: GitHub Actions CI, Vercel (Frontend), Render (Backend API)
 
----
+<img src="assets/divider.svg" alt="" width="100%" />
 
 ## ⚡ Quickstart & Local Setup
 
@@ -207,7 +207,7 @@ Frontend will be live at `http://localhost:3000`.
 py -m pytest -o asyncio_mode=auto
 ```
 
----
+<img src="assets/divider.svg" alt="" width="100%" />
 
 ## 📡 API Reference Overview
 
@@ -244,7 +244,7 @@ Base URL: `https://yojanasaathi-backend.onrender.com/api`
 | `/api/schemes/search` | `GET` | Public | Full-text search across all 1,000+ active welfare schemes. |
 | `/api/health` | `GET` | Public | Liveness probe returning operational status and active agent listing. |
 
----
+<img src="assets/divider.svg" alt="" width="100%" />
 
 ## 🔒 Security & Privacy-First Engineering
 
@@ -256,7 +256,7 @@ YojanaSaathi is engineered around strict data security and compliance principles
 4. **Short-Lived Storage Access**: Uploaded credentials in Supabase Storage buckets are private; signed access URLs expire automatically after 300 seconds.
 5. **CORS Allowlist Enforcement**: Production API rejects wildcard `*` origins at startup.
 
----
+<img src="assets/divider.svg" alt="" width="100%" />
 
 ## 👥 Core Team & Maintainers
 
@@ -281,7 +281,7 @@ YojanaSaathi is engineered around strict data security and compliance principles
   </tr>
 </table>
 
----
+<img src="assets/divider.svg" alt="" width="100%" />
 
 ## 📄 License & Legal Notice
 
@@ -291,6 +291,6 @@ Distributed under the **MIT License**. See [`LICENSE`](LICENSE) for details.
 
 <div align="center">
 
-**YojanaSaathi — Connecting Citizens to Government Entitlements.**
+<img src="assets/footer-banner.svg" alt="YojanaSaathi Footer" width="100%" />
 
 </div>
