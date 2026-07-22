@@ -344,13 +344,13 @@ def _register_routes(app: FastAPI) -> None:
                 gender=Gender(p.get("gender")) if p.get("gender") else Gender.OTHER,
                 state=p.get("state") or "",
                 district=p.get("district") or "",
-                annual_income=float(p.get("annual_income")) if p.get("annual_income") is not None else 0.0,
+                annual_income=float(p.get("annual_income")) if p.get("annual_income") not in (None, "") else 0.0,
                 occupation=Occupation(p.get("occupation")) if p.get("occupation") else Occupation.OTHER,
                 social_category=SocialCategory(p.get("social_category")) if p.get("social_category") else SocialCategory.GENERAL,
                 disability_status=DisabilityStatus(p.get("disability_status")) if p.get("disability_status") else DisabilityStatus.NONE,
                 family_size=p.get("family_size") if p.get("family_size") is not None else 1,
                 has_bpl_card=bool(p.get("has_bpl_card")) if p.get("has_bpl_card") is not None else False,
-                land_owned_acres=float(p.get("land_owned_acres")) if p.get("land_owned_acres") is not None else 0.0,
+                land_owned_acres=float(p.get("land_owned_acres")) if p.get("land_owned_acres") not in (None, "") else 0.0,
                 education_level=EducationLevel(p.get("education_level")) if p.get("education_level") else EducationLevel.NONE,
                 gov_id_available=gov_ids
             )
@@ -849,21 +849,21 @@ def _register_routes(app: FastAPI) -> None:
                 "ration_card": "ration_card" in db_docs
             }
             
-            # Build Pydantic profile representation
+            # Build Pydantic profile representation safely
             profile = CitizenProfile(
-                full_name=p["full_name"],
-                age=p["age"],
-                gender=Gender(p["gender"]),
-                state=p["state"],
-                district=p["district"],
-                annual_income=float(p["annual_income"]),
-                occupation=Occupation(p["occupation"]),
-                social_category=SocialCategory(p["social_category"]),
-                disability_status=DisabilityStatus(p["disability_status"]),
-                family_size=p["family_size"],
-                has_bpl_card=p["has_bpl_card"],
-                land_owned_acres=float(p["land_owned_acres"]),
-                education_level=EducationLevel(p["education_level"]),
+                full_name=p.get("full_name") or "Citizen",
+                age=p.get("age") if p.get("age") is not None else 0,
+                gender=Gender(p.get("gender")) if p.get("gender") else Gender.OTHER,
+                state=p.get("state") or "",
+                district=p.get("district") or "",
+                annual_income=float(p.get("annual_income")) if p.get("annual_income") not in (None, "") else 0.0,
+                occupation=Occupation(p.get("occupation")) if p.get("occupation") else Occupation.OTHER,
+                social_category=SocialCategory(p.get("social_category")) if p.get("social_category") else SocialCategory.GENERAL,
+                disability_status=DisabilityStatus(p.get("disability_status")) if p.get("disability_status") else DisabilityStatus.NONE,
+                family_size=p.get("family_size") if p.get("family_size") is not None else 1,
+                has_bpl_card=bool(p.get("has_bpl_card")) if p.get("has_bpl_card") is not None else False,
+                land_owned_acres=float(p.get("land_owned_acres")) if p.get("land_owned_acres") not in (None, "") else 0.0,
+                education_level=EducationLevel(p.get("education_level")) if p.get("education_level") else EducationLevel.NONE,
                 gov_id_available=gov_ids
             )
             
@@ -974,19 +974,19 @@ def _register_routes(app: FastAPI) -> None:
                 }
                 
                 profile = CitizenProfile(
-                    full_name=p["full_name"],
-                    age=p["age"],
-                    gender=Gender(p["gender"]),
-                    state=p["state"],
-                    district=p["district"],
-                    annual_income=float(p["annual_income"]),
-                    occupation=Occupation(p["occupation"]),
-                    social_category=SocialCategory(p["social_category"]),
-                    disability_status=DisabilityStatus(p["disability_status"]),
-                    family_size=p["family_size"],
-                    has_bpl_card=p["has_bpl_card"],
-                    land_owned_acres=float(p["land_owned_acres"]),
-                    education_level=EducationLevel(p["education_level"]),
+                    full_name=p.get("full_name") or "Citizen",
+                    age=p.get("age") if p.get("age") is not None else 0,
+                    gender=Gender(p.get("gender")) if p.get("gender") else Gender.OTHER,
+                    state=p.get("state") or "",
+                    district=p.get("district") or "",
+                    annual_income=float(p.get("annual_income")) if p.get("annual_income") not in (None, "") else 0.0,
+                    occupation=Occupation(p.get("occupation")) if p.get("occupation") else Occupation.OTHER,
+                    social_category=SocialCategory(p.get("social_category")) if p.get("social_category") else SocialCategory.GENERAL,
+                    disability_status=DisabilityStatus(p.get("disability_status")) if p.get("disability_status") else DisabilityStatus.NONE,
+                    family_size=p.get("family_size") if p.get("family_size") is not None else 1,
+                    has_bpl_card=bool(p.get("has_bpl_card")) if p.get("has_bpl_card") is not None else False,
+                    land_owned_acres=float(p.get("land_owned_acres")) if p.get("land_owned_acres") not in (None, "") else 0.0,
+                    education_level=EducationLevel(p.get("education_level")) if p.get("education_level") else EducationLevel.NONE,
                     gov_id_available=gov_ids
                 )
                 
