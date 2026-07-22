@@ -108,11 +108,16 @@ export default function DashboardPage() {
   const [docs, setDocs] = useState<UserDocument[]>([]);
   const [filter, setFilter] = useState<"all" | "ready" | "pending">("all");
   const [category, setCategory] = useState<string>("all");
+  const [currentPage, setCurrentPage] = useState(1);
   const [expanded, setExpanded] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [refreshMsg, setRefreshMsg] = useState<{ type: "success" | "error" | "info"; text: string } | null>(null);
   const [lastRefreshed, setLastRefreshed] = useState<string | null>(null);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [filter, category]);
 
   useEffect(() => {
     if (!session?.access_token) return;
@@ -191,6 +196,10 @@ export default function DashboardPage() {
     const passCategory = category === "all" || normalizeCategoryKey(m.scheme_category) === category;
     return passStatus && passCategory;
   });
+
+  const ITEMS_PER_PAGE = 15;
+  const totalPages = Math.ceil(filteredMatches.length / ITEMS_PER_PAGE);
+  const paginatedMatches = filteredMatches.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
 
   return (
     <div ref={pageRef} className="min-h-screen bg-[#F8F9FB]">
@@ -426,7 +435,7 @@ export default function DashboardPage() {
                 )}
               </div>
             ) : (
-              filteredMatches.map((m) => {
+              paginatedMatches.map((m) => {
                 const isOpen = expanded === m.scheme_id;
                 const isReady = m.missing_documents.length === 0;
                 const info = getCategoryInfo(m.scheme_category);
@@ -527,6 +536,35 @@ export default function DashboardPage() {
                   </div>
                 );
               })
+            )}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between border-t border-slate-100 pt-4 mt-6">
+                <button
+                  onClick={() => {
+                    setCurrentPage((p) => Math.max(1, p - 1));
+                    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  disabled={currentPage === 1}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-white transition-all shadow-sm"
+                  aria-label="Previous page"
+                >
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}><path d="M15 19l-7-7 7-7"/></svg>
+                </button>
+                <span className="text-xs font-semibold text-slate-500">
+                  Page {currentPage} of {totalPages}
+                </span>
+                <button
+                  onClick={() => {
+                    setCurrentPage((p) => Math.min(totalPages, p + 1));
+                    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+                  }}
+                  disabled={currentPage === totalPages}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 hover:bg-slate-50 disabled:opacity-50 disabled:hover:bg-white transition-all shadow-sm"
+                  aria-label="Next page"
+                >
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}><path d="M9 5l7 7-7 7"/></svg>
+                </button>
+              </div>
             )}
           </div>
 
