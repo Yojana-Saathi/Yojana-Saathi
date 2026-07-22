@@ -215,28 +215,6 @@ export default function ChatPage() {
                         </span>
                       </div>
                     </div>
-
-                    <button
-                      onClick={() => handleCopy(msg.content, i)}
-                      className="inline-flex items-center gap-1 rounded-lg bg-slate-100 hover:bg-slate-200/80 px-2.5 py-1 text-[11px] font-semibold text-slate-600 transition-colors"
-                      title="Copy response to clipboard"
-                    >
-                      {copiedIndex === i ? (
-                        <>
-                          <svg className="h-3.5 w-3.5 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}>
-                            <path d="M20 6L9 17l-5-5" />
-                          </svg>
-                          <span className="text-emerald-600 font-bold">Copied</span>
-                        </>
-                      ) : (
-                        <>
-                          <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
-                            <path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                          </svg>
-                          <span>Copy</span>
-                        </>
-                      )}
-                    </button>
                   </div>
                 )}
 

@@ -1310,7 +1310,7 @@ RULES:
                 if matched:
                     lines = ["Here are the most relevant schemes for your query:"]
                     for s in matched[:5]:
-                        cat = s.scheme_category.replace("SchemeCategory.", "").replace("_", " ").title() if s.scheme_category else ""
+                        cat = str(s.scheme_category).replace("SchemeCategory.", "").replace("_", " ").title() if s.scheme_category else ""
                         lines.append(f"\n**{s.scheme_name}** ({cat})")
                         lines.append(f"  {s.benefit_summary}")
                         lines.append(f"  Benefit estimate: {s.benefit_value_estimate}")
