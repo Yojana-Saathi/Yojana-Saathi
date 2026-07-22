@@ -437,6 +437,32 @@ def _register_routes(app: FastAPI) -> None:
                 content=_error_payload("Failed to refresh matches. Please try again later.", ErrorCode.INTERNAL_ERROR)
             )
 
+    @app.delete("/api/user")
+    async def delete_user(auth: AuthenticatedUser = Depends(get_current_user_client)):
+        """Delete the current user's profile, documents, matches, applications, and auth account."""
+        user_id = auth.user_id
+        supabase = auth.supabase
+        try:
+            # 1. Delete associated data
+            supabase.table("eligibility_matches").delete().eq("user_id", user_id).execute()
+            supabase.table("citizen_profiles").delete().eq("user_id", user_id).execute()
+            supabase.table("documents").delete().eq("user_id", user_id).execute()
+            supabase.table("applications").delete().eq("user_id", user_id).execute()
+            
+            # 2. Delete user from Supabase Auth
+            from .core.supabase_client import get_service_role_client
+            admin_client = get_service_role_client()
+            admin_client.auth.admin.delete_user(user_id)
+            
+            return {"status": "success", "message": "Account successfully deleted."}
+        except Exception as e:
+            capture_exception(e)
+            logger.error("delete_user_failed", user_id=user_id, error=str(e))
+            return JSONResponse(
+                status_code=500,
+                content=_error_payload("Failed to delete account. Please try again later.", ErrorCode.INTERNAL_ERROR)
+            )
+
     @app.post("/api/intake", response_model=IntakeResponse)
     @limiter.limit("10/minute")
     async def intake(

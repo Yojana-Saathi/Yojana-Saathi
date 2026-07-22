@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
+import { API_URL } from "@/lib/api";
 
 const tabs = ["Notifications", "Appearance", "Privacy", "Account"];
 
@@ -44,15 +45,80 @@ export default function SettingsPage() {
   const [shareData, setShareData] = useState(true);
   const [analytics, setAnalytics] = useState(false);
 
-  const { user, signOut } = useAuth();
+  const { session, user, signOut } = useAuth();
   const [currentDevice, setCurrentDevice] = useState("Chrome on Windows");
 
-  const handleLogout = async () => {
-    if (typeof window !== "undefined") {
-      const confirmed = window.confirm("Are you sure you want to log out of this session?");
-      if (confirmed) {
-        await signOut("/login");
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
+  const [passwordBusy, setPasswordBusy] = useState(false);
+
+  const [deleteBusy, setDeleteBusy] = useState(false);
+  const [deleteError, setDeleteError] = useState("");
+
+  const handleLogoutConfirm = async () => {
+    setShowLogoutModal(false);
+    await signOut("/login");
+  };
+
+  const handleDeleteConfirm = async () => {
+    setDeleteBusy(true);
+    setDeleteError("");
+    try {
+      const token = session?.access_token || "";
+      const res = await fetch(`${API_URL}/api/user`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || "Failed to delete account");
       }
+      setShowDeleteModal(false);
+      await signOut("/login");
+    } catch (err: any) {
+      setDeleteError(err.message || "Failed to delete account");
+    } finally {
+      setDeleteBusy(false);
+    }
+  };
+
+  const handlePasswordChange = async () => {
+    setPasswordError("");
+    setPasswordSuccess(false);
+    if (newPassword.length < 6) {
+      setPasswordError("Password must be at least 6 characters.");
+      return;
+    }
+    if (newPassword !== confirmPassword) {
+      setPasswordError("Passwords do not match.");
+      return;
+    }
+    setPasswordBusy(true);
+    try {
+      const { supabase } = await import("@/lib/supabase");
+      if (!supabase) throw new Error("Supabase is not configured.");
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) {
+        setPasswordError(error.message);
+      } else {
+        setPasswordSuccess(true);
+        setNewPassword("");
+        setConfirmPassword("");
+        setTimeout(() => setShowPasswordModal(false), 2000);
+      }
+    } catch (err: any) {
+      setPasswordError(err.message || "Failed to update password");
+    } finally {
+      setPasswordBusy(false);
     }
   };
 
@@ -216,7 +282,7 @@ export default function SettingsPage() {
                     <Input label="Email address" type="email" defaultValue={user?.email || ""} disabled />
                     <div className="flex gap-3">
                       <Button size="sm">Update email</Button>
-                      <Button variant="outline" size="sm">Change password</Button>
+                      <Button variant="outline" size="sm" onClick={() => setShowPasswordModal(true)}>Change password</Button>
                     </div>
                   </div>
                 </div>
@@ -238,7 +304,7 @@ export default function SettingsPage() {
                         </div>
                         {s.active ? (
                           <button
-                            onClick={handleLogout}
+                            onClick={() => setShowLogoutModal(true)}
                             className="text-xs font-semibold text-rose-500 hover:text-rose-600 transition-colors"
                           >
                             Logout
@@ -261,7 +327,12 @@ export default function SettingsPage() {
                     <div>
                       <h2 className="font-display text-base font-semibold text-ink-navy">Danger zone</h2>
                       <p className="mt-1 text-sm text-slate-blue">Permanently delete your account and all associated data.</p>
-                      <Button variant="outline" size="sm" className="mt-3 border-caution-amber/30 text-caution-amber hover:bg-caution-amber/5">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowDeleteModal(true)}
+                        className="mt-3 border-caution-amber/30 text-caution-amber hover:bg-caution-amber/5"
+                      >
                         Delete account
                       </Button>
                     </div>
@@ -272,6 +343,118 @@ export default function SettingsPage() {
           </div>
         </div>
       </main>
+
+      {/* ── Custom Modals ──────────────────────────────────────────────── */}
+      
+      {/* Logout Modal */}
+      {showLogoutModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-navy/60 backdrop-blur-sm p-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white border border-slate-100 p-6 shadow-xl animate-in fade-in zoom-in duration-200">
+            <h3 className="font-display text-lg font-bold text-ink-navy">Confirm Logout</h3>
+            <p className="mt-2 text-sm text-slate-blue leading-relaxed">
+              Are you sure you want to log out of this session?
+            </p>
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={() => setShowLogoutModal(false)}
+                className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleLogoutConfirm}
+                className="rounded-xl bg-rose-500 px-4 py-2 text-xs font-bold text-white hover:bg-rose-600 transition-all shadow-sm"
+              >
+                Logout
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Account Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-navy/60 backdrop-blur-sm p-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white border border-slate-100 p-6 shadow-xl animate-in fade-in zoom-in duration-200">
+            <h3 className="font-display text-lg font-bold text-caution-amber">Delete Account</h3>
+            <p className="mt-2 text-sm text-slate-blue leading-relaxed">
+              This action is permanent and cannot be undone. All your documents, matches, and account records will be permanently erased.
+            </p>
+            {deleteError && (
+              <p className="mt-3 text-xs text-rose-500 bg-rose-50 p-2 rounded-lg border border-rose-100">{deleteError}</p>
+            )}
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={() => setShowDeleteModal(false)}
+                className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-all"
+                disabled={deleteBusy}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                className="rounded-xl bg-caution-amber px-4 py-2 text-xs font-bold text-white hover:bg-caution-amber-600 transition-all shadow-sm"
+                disabled={deleteBusy}
+              >
+                {deleteBusy ? "Deleting…" : "Delete Account"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Change Password Modal */}
+      {showPasswordModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-navy/60 backdrop-blur-sm p-4">
+          <div className="w-full max-w-sm rounded-2xl bg-white border border-slate-100 p-6 shadow-xl animate-in fade-in zoom-in duration-200">
+            <h3 className="font-display text-lg font-bold text-ink-navy">Change Password</h3>
+            <p className="mt-1 text-xs text-slate-blue-400 mb-4">Enter and confirm your new password below.</p>
+            
+            <div className="space-y-3">
+              <Input
+                label="New Password"
+                type="password"
+                placeholder="At least 6 characters"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                disabled={passwordBusy}
+              />
+              <Input
+                label="Confirm Password"
+                type="password"
+                placeholder="Re-enter password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                disabled={passwordBusy}
+              />
+            </div>
+
+            {passwordError && (
+              <p className="mt-3 text-xs text-rose-500 bg-rose-50 p-2 rounded-lg border border-rose-100">{passwordError}</p>
+            )}
+            {passwordSuccess && (
+              <p className="mt-3 text-xs text-teal-600 bg-teal-50 p-2 rounded-lg border border-teal-100">✓ Password successfully updated!</p>
+            )}
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                onClick={() => setShowPasswordModal(false)}
+                className="rounded-xl border border-slate-200 px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-all"
+                disabled={passwordBusy}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handlePasswordChange}
+                className="rounded-xl bg-signal-orange px-4 py-2 text-xs font-bold text-white hover:bg-signal-orange-600 transition-all shadow-sm"
+                disabled={passwordBusy}
+              >
+                {passwordBusy ? "Updating…" : "Change Password"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
