@@ -20,7 +20,11 @@ export function CustomCursor() {
     if (!fine.matches || rm.matches) return;
 
     const style = document.createElement("style");
-    style.textContent = "body, body * { cursor: none !important; }";
+    style.textContent = `
+      body, body * { cursor: none !important; }
+      input, textarea { cursor: text !important; }
+      button, a, [role="button"], select, option { cursor: pointer !important; }
+    `;
     document.head.appendChild(style);
 
     let mx = window.innerWidth / 2, my = window.innerHeight / 2;
@@ -188,7 +192,7 @@ export function CustomCursor() {
         className="pointer-events-none fixed"
         style={{
           top: 0, left: 0,
-          zIndex: 9999,
+          zIndex: 999999,
           width: "7px", height: "7px",
           borderRadius: "50%",
           backgroundColor: "#F2641A",
@@ -201,7 +205,7 @@ export function CustomCursor() {
         className="pointer-events-none fixed"
         style={{
           top: 0, left: 0,
-          zIndex: 9998,
+          zIndex: 999998,
           width: "30px", height: "30px",
           borderRadius: "50%",
           border: "1px solid #2C4870",

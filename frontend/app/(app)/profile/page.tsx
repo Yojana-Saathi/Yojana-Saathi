@@ -92,17 +92,17 @@ export default function ProfilePage() {
           setForm((prev) => ({
             ...prev,
             full_name: data.full_name ?? "",
-            age: data.age?.toString() ?? "",
+            age: (data.age !== undefined && data.age !== null && Number(data.age) !== 0) ? data.age.toString() : "",
             gender: data.gender ?? "",
             state: data.state ?? "",
             district: data.district ?? "",
-            annual_income: data.annual_income?.toString() ?? "",
+            annual_income: (data.annual_income !== undefined && data.annual_income !== null && Number(data.annual_income) !== 0) ? data.annual_income.toString() : "",
             occupation: data.occupation ?? "",
             social_category: data.social_category ?? "",
             disability_status: data.disability_status ?? "none",
-            family_size: data.family_size?.toString() ?? "",
+            family_size: (data.family_size !== undefined && data.family_size !== null && Number(data.family_size) !== 0) ? data.family_size.toString() : "",
             has_bpl_card: data.has_bpl_card ?? false,
-            land_owned_acres: data.land_owned_acres?.toString() ?? "",
+            land_owned_acres: (data.land_owned_acres !== undefined && data.land_owned_acres !== null && Number(data.land_owned_acres) !== 0) ? data.land_owned_acres.toString() : "",
             education_level: data.education_level ?? "",
             has_disability: data.disability_status !== "none" && data.disability_status !== "",
           }));
@@ -260,7 +260,7 @@ export default function ProfilePage() {
                     <select value={form.state} onChange={(e) => set("state", e.target.value)} className="block w-full rounded-lg border-2 border-ink-navy/15 bg-white px-3.5 py-2.5 text-sm text-ink-navy focus:border-signal-orange focus:outline-none">
                       <option value="">Select state</option>
                       {["Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh","Goa","Gujarat","Haryana","Himachal Pradesh","Jharkhand","Karnataka","Kerala","Madhya Pradesh","Maharashtra","Manipur","Meghalaya","Mizoram","Nagaland","Odisha","Punjab","Rajasthan","Sikkim","Tamil Nadu","Telangana","Tripura","Uttar Pradesh","Uttarakhand","West Bengal","Delhi","Jammu & Kashmir","Ladakh"].map(s => (
-                        <option key={s} value={s.toLowerCase().replace(/ /g, "_")}>{s}</option>
+                        <option key={s} value={s}>{s}</option>
                       ))}
                     </select>
                   </div>
@@ -281,15 +281,11 @@ export default function ProfilePage() {
                     <select value={form.occupation} onChange={(e) => set("occupation", e.target.value)} className="block w-full rounded-lg border-2 border-ink-navy/15 bg-white px-3.5 py-2.5 text-sm text-ink-navy focus:border-signal-orange focus:outline-none">
                       <option value="">Select occupation</option>
                       <option value="farmer">Farmer</option>
-                      <option value="labourer">Agricultural labourer</option>
                       <option value="daily_wage">Daily wage worker</option>
-                      <option value="govt">Government employee</option>
-                      <option value="private">Private sector</option>
                       <option value="self_employed">Self-employed</option>
+                      <option value="salaried">Salaried</option>
                       <option value="student">Student</option>
-                      <option value="homemaker">Homemaker</option>
                       <option value="unemployed">Unemployed</option>
-                      <option value="retired">Retired</option>
                       <option value="other">Other</option>
                     </select>
                   </div>

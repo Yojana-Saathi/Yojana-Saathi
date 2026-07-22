@@ -125,6 +125,17 @@ async def lifespan(app: FastAPI):
             for i in range(0, len(payload), 500):
                 service_client.table("schemes").upsert(payload[i : i + 500], on_conflict="scheme_id").execute()
             logger.info("schemes_seeded_to_db", count=len(payload))
+
+            # Ensure citizen-documents storage bucket exists dynamically
+            try:
+                if hasattr(service_client.storage, "list_buckets"):
+                    buckets = service_client.storage.list_buckets()
+                    bucket_names = [getattr(b, "name", getattr(b, "id", str(b))) for b in buckets]
+                    if "citizen-documents" not in bucket_names:
+                        service_client.storage.create_bucket("citizen-documents", options={"public": False})
+                        logger.info("storage_bucket_created", name="citizen-documents")
+            except Exception as bucket_err:
+                logger.warning("storage_bucket_check_failed", error=str(bucket_err))
     except Exception as exc:
         logger.warning("schemes_seed_failed", error=str(exc))
 
@@ -640,14 +651,11 @@ def _register_routes(app: FastAPI) -> None:
                     status_code=413,
                     content=_error_payload("File size exceeds 10MB limit.", ErrorCode.INVALID_INPUT)
                 )
-            await file.seek(0)
             # Proceed with OCR/upload logic as before...
             
             # Enforce owner-prefixed unique path structure {user_id}/{doc_type}/{unique_filename}
             unique_filename = f"{uuid.uuid4()}_{file.filename}"
             storage_path = f"{user_id}/{doc_type}/{unique_filename}"
-            
-            file_bytes = await file.read()
             
             # Upload to private citizen-documents bucket
             supabase.storage.from_("citizen-documents").upload(
@@ -735,26 +743,7 @@ def _register_routes(app: FastAPI) -> None:
                     updated_fields["disability_status"] = confirmed_data["disability_status"]
                     
                 if updated_fields:
-                    supabase.table("citizen_profiles").update({"is_current": False}).eq("user_id", user_id).eq("is_current", True).execute()
-                    
-                    new_profile = {
-                        "user_id": user_id,
-                        "full_name": p["full_name"],
-                        "age": p["age"],
-                        "gender": p["gender"],
-                        "state": p["state"],
-                        "district": p["district"],
-                        "annual_income": updated_fields.get("annual_income", float(p["annual_income"])),
-                        "occupation": p["occupation"],
-                        "social_category": updated_fields.get("social_category", p["social_category"]),
-                        "disability_status": updated_fields.get("disability_status", p["disability_status"]),
-                        "family_size": p["family_size"],
-                        "has_bpl_card": p["has_bpl_card"],
-                        "land_owned_acres": float(p["land_owned_acres"]),
-                        "education_level": p["education_level"],
-                        "is_current": True
-                    }
-                    supabase.table("citizen_profiles").insert(new_profile).execute()
+                    supabase.table("citizen_profiles").update(updated_fields).eq("user_id", user_id).eq("is_current", True).execute()
                     
             return {"status": "success", "message": "Document confirmed and profile updated."}
         except HTTPException:

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/lib/supabase";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { CitizenProfile } from "@/lib/api";
@@ -13,7 +14,7 @@ import type { CitizenProfile } from "@/lib/api";
 const steps = ["Account", "Demographics", "Economic", "Review"];
 
 export default function RegisterPage() {
-  const { signUp } = useAuth();
+  const { signUp, signOut } = useAuth();
   const router = useRouter();
   const [step, setStep] = useState(0);
   const [error, setError] = useState("");
@@ -23,13 +24,13 @@ export default function RegisterPage() {
 
   const [form, setForm] = useState({
     email: "", password: "", full_name: "",
-    age: "", gender: "male" as CitizenProfile["gender"],
-    state: "Odisha", district: "",
-    annual_income: "", occupation: "" as CitizenProfile["occupation"] | "",
-    social_category: "general" as CitizenProfile["social_category"],
-    disability_status: "none" as CitizenProfile["disability_status"],
-    family_size: "1", has_bpl_card: false,
-    land_owned_acres: "0", education_level: "" as CitizenProfile["education_level"] | "",
+    age: "", gender: "" as any,
+    state: "", district: "",
+    annual_income: "", occupation: "" as any,
+    social_category: "" as any,
+    disability_status: "none" as any,
+    family_size: "", has_bpl_card: false,
+    land_owned_acres: "", education_level: "" as any,
   });
 
   useEffect(() => {
@@ -48,17 +49,64 @@ export default function RegisterPage() {
     setError("");
     setBusy(true);
 
-    const { error: signUpError } = await signUp(form.email, form.password, form.full_name);
+    const calculateAge = (dobString: string): number => {
+      if (!dobString) return 0;
+      const birthDate = new Date(dobString);
+      if (isNaN(birthDate.getTime())) return 0;
+      const today = new Date();
+      let age = today.getFullYear() - birthDate.getFullYear();
+      const m = today.getMonth() - birthDate.getMonth();
+      if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+      }
+      return age;
+    };
+
+    const calculatedAge = calculateAge(form.age);
+
+    const profileData = {
+      full_name: form.full_name,
+      age: calculatedAge,
+      gender: form.gender || "other",
+      state: form.state || "",
+      district: form.district || "",
+      annual_income: parseFloat(form.annual_income) || 0,
+      occupation: form.occupation || "other",
+      social_category: form.social_category || "general",
+      disability_status: form.disability_status || "none",
+      family_size: parseInt(form.family_size) || 1,
+      has_bpl_card: form.has_bpl_card,
+      land_owned_acres: parseFloat(form.land_owned_acres) || 0,
+      education_level: form.education_level || "other",
+    };
+
+    const { error: signUpError, data } = await signUp(form.email, form.password, form.full_name, profileData);
     if (signUpError) {
       setError(signUpError);
       setBusy(false);
       return;
     }
 
+    if (data?.user && supabase) {
+      const payload = {
+        user_id: data.user.id,
+        ...profileData,
+        is_current: true,
+      };
+      try {
+        await supabase.from("citizen_profiles").upsert(payload, { onConflict: "user_id" });
+      } catch (err) {
+        console.error("Direct profile upsert failed, relying on trigger/self-heal fallback:", err);
+      }
+    }
+
     setSubmitted(true);
     setBusy(false);
 
-    setTimeout(() => router.push("/login"), 2000);
+    // Completely flush any auto-login session from registration and redirect to login
+    setTimeout(async () => {
+      await signOut("/login");
+    }, 2000);
   }
 
   function update<T extends keyof typeof form>(key: T, value: (typeof form)[T]) {
@@ -67,8 +115,8 @@ export default function RegisterPage() {
 
   const canProceed = () => {
     if (step === 0) return form.email && form.password.length >= 6 && form.full_name;
-    if (step === 1) return form.age && form.district;
-    if (step === 2) return form.annual_income && form.education_level;
+    if (step === 1) return form.age && form.district && form.gender && form.social_category && form.state;
+    if (step === 2) return form.annual_income && form.education_level && form.occupation && form.family_size;
     return true;
   };
 
@@ -120,9 +168,9 @@ export default function RegisterPage() {
                 <div className="space-y-4">
                   <h2 className="font-display text-xl font-semibold text-ink-navy">Create your account</h2>
                   <p className="text-sm text-slate-blue">You&apos;ll use this to access your dashboard.</p>
-                  <Input label="Full name" placeholder="As on Aadhaar" value={form.full_name} onChange={(e) => update("full_name", e.target.value)} />
-                  <Input label="Email" type="email" placeholder="you@example.com" value={form.email} onChange={(e) => update("email", e.target.value)} />
-                  <Input label="Password" type="password" placeholder="At least 6 characters" value={form.password} onChange={(e) => update("password", e.target.value)} />
+                  <Input label="Full name" placeholder="As on Aadhaar" autoComplete="off" value={form.full_name} onChange={(e) => update("full_name", e.target.value)} />
+                  <Input label="Email" type="email" placeholder="you@example.com" autoComplete="new-email" value={form.email} onChange={(e) => update("email", e.target.value)} />
+                  <Input label="Password" type="password" placeholder="At least 6 characters" autoComplete="new-password" value={form.password} onChange={(e) => update("password", e.target.value)} />
                 </div>
               )}
 
@@ -134,6 +182,7 @@ export default function RegisterPage() {
                   <div className="space-y-1.5">
                     <label className="block text-sm font-medium text-ink-navy">Gender</label>
                     <select className="block w-full rounded-lg border-2 border-ink-navy/15 bg-white px-3.5 py-2.5 text-sm text-ink-navy focus:border-signal-orange focus:outline-none" value={form.gender} onChange={(e) => update("gender", e.target.value as CitizenProfile["gender"])}>
+                      <option value="">Select gender</option>
                       <option value="male">Male</option>
                       <option value="female">Female</option>
                       <option value="other">Other</option>
@@ -142,12 +191,14 @@ export default function RegisterPage() {
                   <div className="space-y-1.5">
                     <label className="block text-sm font-medium text-ink-navy">Social category</label>
                     <select className="block w-full rounded-lg border-2 border-ink-navy/15 bg-white px-3.5 py-2.5 text-sm text-ink-navy focus:border-signal-orange focus:outline-none" value={form.social_category} onChange={(e) => update("social_category", e.target.value as CitizenProfile["social_category"])}>
+                      <option value="">Select category</option>
                       <option value="general">General</option><option value="obc">OBC</option><option value="sc">SC</option><option value="st">ST</option><option value="ews">EWS</option>
                     </select>
                   </div>
                   <div className="space-y-1.5">
                     <label className="block text-sm font-medium text-ink-navy">State of residence</label>
                     <select className="block w-full rounded-lg border-2 border-ink-navy/15 bg-white px-3.5 py-2.5 text-sm text-ink-navy focus:border-signal-orange focus:outline-none" value={form.state} onChange={(e) => update("state", e.target.value)}>
+                      <option value="">Select state</option>
                       <option>Andhra Pradesh</option><option>Arunachal Pradesh</option><option>Assam</option><option>Bihar</option>
                       <option>Chhattisgarh</option><option>Goa</option><option>Gujarat</option><option>Haryana</option>
                       <option>Himachal Pradesh</option><option>Jharkhand</option><option>Karnataka</option><option>Kerala</option>
@@ -173,7 +224,7 @@ export default function RegisterPage() {
                   <div className="space-y-1.5">
                     <label className="block text-sm font-medium text-ink-navy">Occupation</label>
                     <select className="block w-full rounded-lg border-2 border-ink-navy/15 bg-white px-3.5 py-2.5 text-sm text-ink-navy focus:border-signal-orange focus:outline-none" value={form.occupation} onChange={(e) => update("occupation", e.target.value as CitizenProfile["occupation"] | "")}>
-                      <option value="">Select</option>
+                      <option value="">Select occupation</option>
                       <option value="farmer">Farmer</option>
                       <option value="daily_wage">Daily wage worker</option>
                       <option value="self_employed">Self-employed</option>
@@ -186,7 +237,7 @@ export default function RegisterPage() {
                   <div className="space-y-1.5">
                     <label className="block text-sm font-medium text-ink-navy">Education level</label>
                     <select className="block w-full rounded-lg border-2 border-ink-navy/15 bg-white px-3.5 py-2.5 text-sm text-ink-navy focus:border-signal-orange focus:outline-none" value={form.education_level} onChange={(e) => update("education_level", e.target.value as CitizenProfile["education_level"] | "")}>
-                      <option value="">Select</option>
+                      <option value="">Select education level</option>
                       <option value="none">No formal education</option>
                       <option value="primary">Primary</option>
                       <option value="secondary">Secondary</option>

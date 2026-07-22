@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
-import { listDocuments, uploadDocument, type UserDocument } from "@/lib/api";
+import { listDocuments, uploadDocument, confirmDocument, type UserDocument } from "@/lib/api";
 
 // ─── All document types matching Backend/models/enums.py GOV_ID_KEYS ──────────
 const DOCUMENT_TYPES = [
@@ -186,6 +186,34 @@ export default function DocumentsPage() {
   const [loadingDocs, setLoadingDocs] = useState(true);
   const pageRef = useRef<HTMLDivElement>(null);
 
+  const [reviewingDoc, setReviewingDoc] = useState<UserDocument | null>(null);
+  const [confirmingValue, setConfirmingValue] = useState<string>("");
+  const [busyConfirming, setBusyConfirming] = useState<boolean>(false);
+
+  async function handleConfirm() {
+    if (!reviewingDoc) return;
+    const token = session?.access_token || "";
+    if (!token) return;
+    setBusyConfirming(true);
+    try {
+      let payload: any = {};
+      if (reviewingDoc.doc_type === "income_certificate") {
+        payload = { annual_income: parseFloat(confirmingValue) || 0 };
+      } else if (reviewingDoc.doc_type === "caste_certificate") {
+        payload = { social_category: confirmingValue.toLowerCase() };
+      } else if (reviewingDoc.doc_type === "disability_certificate") {
+        payload = { disability_status: confirmingValue.toLowerCase() };
+      }
+      await confirmDocument(token, reviewingDoc.id, payload);
+      setReviewingDoc(null);
+      await refreshDocs();
+    } catch (err) {
+      console.error("Confirmation failed:", err);
+    } finally {
+      setBusyConfirming(false);
+    }
+  }
+
   // ── Fetch uploaded docs from backend on load ────────────────────────────────
   const refreshDocs = useCallback(async () => {
     const token = session?.access_token || "";
@@ -346,20 +374,40 @@ export default function DocumentsPage() {
                               ? `Uploaded ${new Date(existing.uploaded_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}`
                               : "Uploaded"}
                           </span>
-                          {/* Re-upload option */}
-                          <label className="cursor-pointer text-xs font-medium text-signal-orange hover:underline">
-                            Re-upload
-                            <input
-                              type="file"
-                              className="hidden"
-                              accept="image/*,.pdf"
-                              onChange={(e) => {
-                                const f = e.target.files?.[0];
-                                if (f) handleUpload(dt.id, f);
-                                e.target.value = "";
-                              }}
-                            />
-                          </label>
+                          <div className="flex items-center gap-3">
+                            {existing.verification_status === "pending" && (
+                              <button
+                                onClick={() => {
+                                  setReviewingDoc(existing);
+                                  if (existing.doc_type === "income_certificate") {
+                                    setConfirmingValue(existing.extracted_data?.annual_income?.toString() || "");
+                                  } else if (existing.doc_type === "caste_certificate") {
+                                    setConfirmingValue(existing.extracted_data?.social_category || "general");
+                                  } else if (existing.doc_type === "disability_certificate") {
+                                    setConfirmingValue(existing.extracted_data?.disability_status || "none");
+                                  } else {
+                                    setConfirmingValue("");
+                                  }
+                                }}
+                                className="text-xs font-semibold text-verified-teal hover:underline"
+                              >
+                                Verify Details
+                              </button>
+                            )}
+                            <label className="cursor-pointer text-xs font-medium text-signal-orange hover:underline">
+                              Re-upload
+                              <input
+                                type="file"
+                                className="hidden"
+                                accept="image/*,.pdf"
+                                onChange={(e) => {
+                                  const f = e.target.files?.[0];
+                                  if (f) handleUpload(dt.id, f);
+                                  e.target.value = "";
+                                }}
+                              />
+                            </label>
+                          </div>
                         </div>
                       ) : (
                         <label
@@ -428,6 +476,128 @@ export default function DocumentsPage() {
                     </div>
                   );
                 })}
+              </div>
+            </div>
+          )}
+
+          {/* ── Review & Confirm Modal ── */}
+          {reviewingDoc && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink-navy/40 backdrop-blur-sm p-4">
+              <div className="w-full max-w-md rounded-2xl border border-ink-navy/10 bg-white p-6 shadow-xl animate-in fade-in zoom-in-95 duration-200">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-display text-lg font-semibold text-ink-navy">
+                    Confirm Document Details
+                  </h3>
+                  <button
+                    onClick={() => setReviewingDoc(null)}
+                    className="rounded-lg p-1.5 text-slate-blue-400 hover:bg-ink-navy/5 hover:text-ink-navy transition-colors"
+                  >
+                    <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+
+                <div className="mt-4 space-y-4">
+                  <p className="text-sm text-slate-blue">
+                    Please verify the details extracted from your{" "}
+                    <span className="font-semibold text-ink-navy">
+                      {DOCUMENT_TYPES.find((d) => d.id === reviewingDoc.doc_type)?.label || reviewingDoc.doc_type}
+                    </span>
+                    .
+                  </p>
+
+                  {/* If income certificate */}
+                  {reviewingDoc.doc_type === "income_certificate" && (
+                    <div className="space-y-1.5">
+                      <label className="block text-xs font-semibold text-gray-700">
+                        Annual household income (₹)
+                      </label>
+                      <input
+                        type="number"
+                        className="block w-full rounded-lg border-2 border-ink-navy/15 bg-white px-3.5 py-2.5 text-sm text-ink-navy focus:border-signal-orange focus:outline-none"
+                        value={confirmingValue}
+                        onChange={(e) => setConfirmingValue(e.target.value)}
+                        placeholder="e.g. 150000"
+                      />
+                    </div>
+                  )}
+
+                  {/* If caste certificate */}
+                  {reviewingDoc.doc_type === "caste_certificate" && (
+                    <div className="space-y-1.5">
+                      <label className="block text-xs font-semibold text-gray-700">
+                        Social category
+                      </label>
+                      <select
+                        className="block w-full rounded-lg border-2 border-ink-navy/15 bg-white px-3.5 py-2.5 text-sm text-ink-navy focus:border-signal-orange focus:outline-none"
+                        value={confirmingValue}
+                        onChange={(e) => setConfirmingValue(e.target.value)}
+                      >
+                        <option value="general">General</option>
+                        <option value="obc">OBC</option>
+                        <option value="sc">SC</option>
+                        <option value="st">ST</option>
+                        <option value="ews">EWS</option>
+                      </select>
+                    </div>
+                  )}
+
+                  {/* If disability certificate */}
+                  {reviewingDoc.doc_type === "disability_certificate" && (
+                    <div className="space-y-1.5">
+                      <label className="block text-xs font-semibold text-gray-700">
+                        Disability type
+                      </label>
+                      <select
+                        className="block w-full rounded-lg border-2 border-ink-navy/15 bg-white px-3.5 py-2.5 text-sm text-ink-navy focus:border-signal-orange focus:outline-none"
+                        value={confirmingValue}
+                        onChange={(e) => setConfirmingValue(e.target.value)}
+                      >
+                        <option value="none">None</option>
+                        <option value="locomotor">Locomotor disability</option>
+                        <option value="visual">Visual impairment</option>
+                        <option value="hearing">Hearing impairment</option>
+                        <option value="mental">Intellectual/mental disability</option>
+                        <option value="other">Other disability</option>
+                      </select>
+                    </div>
+                  )}
+
+                  {/* For general ID cards like Aadhaar */}
+                  {!["income_certificate", "caste_certificate", "disability_certificate"].includes(reviewingDoc.doc_type) && (
+                    <div className="rounded-lg bg-warm-paper/50 p-3 text-xs text-slate-blue border border-ink-navy/5">
+                      ℹ️ Yolanda-Saathi has verified that the uploaded document's name and metadata match your profile details.
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-6 flex justify-end gap-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => setReviewingDoc(null)}
+                    disabled={busyConfirming}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleConfirm}
+                    disabled={busyConfirming}
+                    className="bg-signal-orange text-white hover:bg-signal-orange/90"
+                  >
+                    {busyConfirming ? (
+                      <>
+                        <svg className="mr-1.5 h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}>
+                          <circle cx="12" cy="12" r="10" strokeOpacity={0.3} />
+                          <path d="M12 2a10 10 0 0110 10" />
+                        </svg>
+                        Verifying...
+                      </>
+                    ) : (
+                      "Confirm & Verify"
+                    )}
+                  </Button>
+                </div>
               </div>
             </div>
           )}

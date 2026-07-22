@@ -270,10 +270,11 @@ export async function listDocuments(token: string): Promise<UserDocument[]> {
   }
 }
 
-export async function confirmDocument(token: string, docId: string) {
+export async function confirmDocument(token: string, docId: string, confirmedData: any = {}) {
   return fetchApi<{ status: string }>(`/api/documents/${docId}/confirm`, {
     method: "POST",
     token,
+    body: JSON.stringify(confirmedData),
   });
 }
 

@@ -259,8 +259,8 @@ export default function AboutPage() {
             {/* Contributor profiles */}
             <div className="flex flex-col gap-3 sm:flex-row">
               {[
-                { name: "Dvij Joshi",  handle: "Dvij-Joshi",  href: "https://github.com/Dvij-Joshi"  },
                 { name: "Prem Rajesh", handle: "PREMRAJESH",  href: "https://github.com/PREMRAJESH"  },
+                { name: "Dvij Joshi",  handle: "Dvij-Joshi",  href: "https://github.com/Dvij-Joshi"  },
               ].map((person) => (
                 <a
                   key={person.handle}

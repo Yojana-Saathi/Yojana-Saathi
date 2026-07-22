@@ -101,14 +101,29 @@ export async function middleware(request: NextRequest) {
     redirectUrl.pathname = "/login";
     redirectUrl.search = "";
     redirectUrl.searchParams.set("redirect", `${pathname}${search}`);
-    return NextResponse.redirect(redirectUrl);
+    const redirectResponse = NextResponse.redirect(redirectUrl);
+    redirectResponse.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
+    redirectResponse.headers.set("Pragma", "no-cache");
+    return redirectResponse;
   }
 
   if (authRouteCheck && user) {
     const redirectUrl = request.nextUrl.clone();
     redirectUrl.pathname = "/dashboard";
     redirectUrl.search = "";
-    return NextResponse.redirect(redirectUrl);
+    const redirectResponse = NextResponse.redirect(redirectUrl);
+    redirectResponse.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
+    redirectResponse.headers.set("Pragma", "no-cache");
+    return redirectResponse;
+  }
+
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("X-Frame-Options", "DENY");
+  response.headers.set("X-XSS-Protection", "1; mode=block");
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  if (isProtectedRoute) {
+    response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, private");
+    response.headers.set("Pragma", "no-cache");
   }
 
   return response;
