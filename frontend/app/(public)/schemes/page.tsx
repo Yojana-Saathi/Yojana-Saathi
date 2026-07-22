@@ -34,52 +34,6 @@ export default function SchemesPage() {
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Drag-to-scroll horizontally on desktop devices
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    let isDown = false;
-    let startX = 0;
-    let scrollLeftVal = 0;
-
-    const onMouseDown = (e: MouseEvent) => {
-      isDown = true;
-      startX = e.pageX - el.offsetLeft;
-      scrollLeftVal = el.scrollLeft;
-      el.style.cursor = "grabbing";
-    };
-
-    const onMouseLeave = () => {
-      isDown = false;
-      el.style.cursor = "grab";
-    };
-
-    const onMouseUp = () => {
-      isDown = false;
-      el.style.cursor = "grab";
-    };
-
-    const onMouseMove = (e: MouseEvent) => {
-      if (!isDown) return;
-      e.preventDefault();
-      const x = e.pageX - el.offsetLeft;
-      const walk = (x - startX) * 1.5;
-      el.scrollLeft = scrollLeftVal - walk;
-    };
-
-    el.addEventListener("mousedown", onMouseDown);
-    el.addEventListener("mouseleave", onMouseLeave);
-    el.addEventListener("mouseup", onMouseUp);
-    el.addEventListener("mousemove", onMouseMove);
-
-    return () => {
-      el.removeEventListener("mousedown", onMouseDown);
-      el.removeEventListener("mouseleave", onMouseLeave);
-      el.removeEventListener("mouseup", onMouseUp);
-      el.removeEventListener("mousemove", onMouseMove);
-    };
-  }, []);
-
   // Load ALL schemes once on mount (paginated behind the scenes)
   useEffect(() => {
     setLoading(true);
@@ -144,6 +98,40 @@ export default function SchemesPage() {
   }, [allSchemes, debouncedSearch]);
 
   const displayTotal = total || allSchemes.length;
+
+  const [showLeft, setShowLeft] = useState(false);
+  const [showRight, setShowRight] = useState(true);
+
+  const checkScrollLimits = useCallback(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    setShowLeft(el.scrollLeft > 5);
+    setShowRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 5);
+  }, []);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    checkScrollLimits();
+
+    el.addEventListener("scroll", checkScrollLimits);
+    window.addEventListener("resize", checkScrollLimits);
+
+    const timer = setTimeout(checkScrollLimits, 300);
+
+    return () => {
+      el.removeEventListener("scroll", checkScrollLimits);
+      window.removeEventListener("resize", checkScrollLimits);
+      clearTimeout(timer);
+    };
+  }, [allSchemes, filtered, checkScrollLimits]);
+
+  const scrollByAmount = (amount: number) => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollBy({ left: amount, behavior: "smooth" });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#F8F9FB]">
@@ -216,8 +204,23 @@ export default function SchemesPage() {
 
       {/* ── Category filter strip ──────────────────────────────────────── */}
       <div className="sticky top-[64px] z-30 border-b border-slate-200 bg-white/95 backdrop-blur-md shadow-sm">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-          <div ref={scrollRef} className="flex items-center gap-2 overflow-x-auto pt-3 pb-4 scrollbar-premium cursor-grab select-none">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 relative">
+          
+          {/* Left scroll arrow */}
+          {showLeft && (
+            <button
+              onClick={() => scrollByAmount(-240)}
+              className="absolute left-2 top-1/2 -translate-y-1/2 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white/90 shadow-md backdrop-blur hover:bg-white transition-all text-[#1B2B4B] hover:scale-105 active:scale-95"
+              aria-label="Scroll left"
+            >
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}><path d="M15 19l-7-7 7-7"/></svg>
+            </button>
+          )}
+
+          <div
+            ref={scrollRef}
+            className="flex items-center gap-2 overflow-x-auto py-3.5 scrollbar-none select-none scroll-smooth"
+          >
             {CATEGORY_LIST.map((cat) => {
               const count = cat.key === "all" ? filtered.length : (catCounts[cat.key] ?? 0);
               const isActive = category === cat.key;
@@ -248,6 +251,18 @@ export default function SchemesPage() {
               );
             })}
           </div>
+
+          {/* Right scroll arrow */}
+          {showRight && (
+            <button
+              onClick={() => scrollByAmount(240)}
+              className="absolute right-2 top-1/2 -translate-y-1/2 z-10 flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white/90 shadow-md backdrop-blur hover:bg-white transition-all text-[#1B2B4B] hover:scale-105 active:scale-95"
+              aria-label="Scroll right"
+            >
+              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5}><path d="M9 5l7 7-7 7"/></svg>
+            </button>
+          )}
+
         </div>
       </div>
 
