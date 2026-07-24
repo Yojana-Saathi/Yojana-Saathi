@@ -24,7 +24,7 @@ An intelligent, multi-agent welfare eligibility platform that turns a single cit
 
 <br/>
 
-[**Live Demo**](https://yojana-saathi-seven.vercel.app) · [**Explore Architecture**](#-system-architecture) · [**Quickstart**](#-quickstart) · [**API Reference**](#-api-reference) · [**Security**](#-security--privacy-first-engineering) · [**Team**](#-core-team--maintainers)
+[**Live Demo**](https://yojana-saathi-seven.vercel.app) · [**Explore Architecture**](#-system-architecture) · [**Quickstart**](#-quickstart) · [**API Reference**](#-api-reference) · [**Security**](#-security--privacy-first-engineering)
 
 </div>
 
@@ -59,32 +59,7 @@ By uniting a **100% deterministic Python eligibility rule engine** with a **zero
 
 ## 🏛️ System Architecture
 
-```
-                                  ┌──────────────────────────────────────────┐
-                                  │           Next.js 16 Frontend            │
-                                  │  (Dashboard, Chat, Vault, Settings UI)   │
-                                  └────────────────────┬─────────────────────┘
-                                                       │
-                                            HTTPS / REST (JWT Auth)
-                                                       │
-                                                       ▼
-                                  ┌──────────────────────────────────────────┐
-                                  │           FastAPI Engine API             │
-                                  │    (Pydantic v2, Rate Limiter, CORS)     │
-                                  └────┬───────────────┬─────────────────┬───┘
-                                       │               │                 │
-            ┌──────────────────────────┘               │                 └──────────────────────────┐
-            ▼                                          ▼                                            ▼
-┌───────────────────────┐          ┌───────────────────────┐                    ┌───────────────────────┐
-│ Multi-Agent Pipeline  │          │   Groq AI Inference   │                    │ Supabase Platform     │
-│  - Intake Agent       │          │ (Llama-3.3-70B Engine)│                    │  - Postgres DB & RLS  │
-│  - Eligibility Agent  │          └───────────────────────┘                    │  - Auth (GoTrue)      │
-│  - Ranking Agent      │                                                       │  - Storage Buckets    │
-│  - DocGap Agent       │          ┌───────────────────────┐                    │  - Edge Functions     │
-│  - Drafter Agent      │─────────▶│    OCRSpace Engine    │                    └───────────────────────┘
-└───────────────────────┘          │ (Document OCR Parser) │
-                                   └───────────────────────┘
-```
+<img src="assets/system-architecture.svg" alt="System Architecture" width="100%" />
 
 <img src="assets/divider.svg" alt="" width="100%" />
 
@@ -92,36 +67,7 @@ By uniting a **100% deterministic Python eligibility rule engine** with a **zero
 
 Every profile update triggers our multi-agent orchestration pipeline. All financial and eligibility decisions remain **100% deterministic, transparent, and reproducible**:
 
-```
-                       ┌────────────────┐
-                       │  Citizen Input │
-                       └───────┬────────┘
-                               │
-                               ▼
-                    ┌──────────────────────┐
-                    │     Intake Agent     │ ── Validates schema & sanitizes HTML/scripts
-                    └──────────┬───────────┘
-                               │
-                               ▼
-                    ┌──────────────────────┐
-                    │  Eligibility Agent   │ ── Pure rule evaluation against 1,000+ schemes
-                    └──────────┬───────────┘
-                               │
-                               ▼
-                    ┌──────────────────────┐
-                    │    Ranking Agent     │ ── Sorts by estimated benefit value × confidence
-                    └──────────┬───────────┘
-                               │
-                               ▼
-                    ┌──────────────────────┐
-                    │    DocGap Agent      │ ── Computes missing required credentials
-                    └──────────┬───────────┘
-                               │
-                               ▼
-                    ┌──────────────────────┐
-                    │    Drafter Agent     │ ── Generates formal application letters
-                    └──────────────────────┘
-```
+<img src="assets/agent-pipeline.svg" alt="Agent Pipeline" width="100%" />
 
 <img src="assets/divider.svg" alt="" width="100%" />
 
@@ -257,32 +203,6 @@ YojanaSaathi is engineered around strict data security and compliance principles
 3. **Zero PII Logging**: Structured JSON logs (`structlog`) strip out names, phone numbers, addresses, and document contents.
 4. **Short-Lived Storage Access**: Uploaded credentials in Supabase Storage buckets are private; signed access URLs expire automatically after 300 seconds.
 5. **CORS Allowlist Enforcement**: Production API rejects wildcard `*` origins at startup.
-
-<img src="assets/divider.svg" alt="" width="100%" />
-
-## 👥 Core Team & Maintainers
-
-<table align="center">
-  <tr>
-    <td align="center" width="50%">
-      <a href="https://github.com/PREMRAJESH">
-        <img src="https://github.com/PREMRAJESH.png" width="100px;" alt="Prem Rajesh Sargara"/><br />
-        <sub><b>Prem Rajesh Sargara</b></sub>
-      </a><br />
-      <sub>Founder, Backend & Project Lead</sub><br />
-      <small>Backend Architecture, FastAPI, Multi-Agent Engine, Security & CI/CD</small>
-    </td>
-    <td align="center" width="50%">
-      <a href="https://github.com/Dvij-Joshi">
-        <img src="https://github.com/Dvij-Joshi.png" width="100px;" alt="Dvij Joshi"/><br />
-        <sub><b>Dvij Joshi</b></sub>
-      </a><br />
-      <sub>Co-Founder & Frontend Lead</sub><br />
-      <small>Next.js Frontend, UI/UX Systems, Auth Integration & Document Vault</small>
-    </td>
-  </tr>
-</table>
-
 <img src="assets/divider.svg" alt="" width="100%" />
 
 ## 📄 License & Legal Notice
