@@ -46,14 +46,7 @@ By uniting a **100% deterministic Python eligibility rule engine** with a **zero
 
 ## ✨ Key Platform Features
 
-| Feature | Description | Architecture Highlights |
-|---|---|---|
-| 🎯 **Auditable Eligibility Engine** | Pure deterministic rule matching engine evaluating demographics, income caps, land holdings, social categories, and state criteria. | **Zero AI Hallucination**: LLMs never make legal eligibility decisions. |
-| 🧠 **AI Saathi Assistant** | High-speed conversational AI assistant powered by Groq Llama-3.3-70B with domain-specific synonym expansion. | Low-latency inference (`temperature=0.2`), zero hesitation, and structured formatting. |
-| 📄 **OCR Document Vault** | Multi-document upload area powered by OCRSpace. Extract text, auto-fill profile indicators, and verify status. | Transient signed URLs (300s TTL) with PostgreSQL Row-Level Security (RLS). |
-| ✍️ **Instant Application Drafter** | Generates pre-filled, formal application letters for any eligible scheme on demand. | Template fallback mechanism ensures 100% uptime even if AI providers are unreachable. |
-| ⚡ **Real-Time Event Sync** | Automated profile and scheme change triggers that re-evaluate matches instantly across all active users. | Supabase Deno Edge Functions broadcasting webhooks to FastAPI match endpoints. |
-| 🛡️ **Enterprise Security** | Bank-grade security controls including strict CORS allowlists, per-IP rate limiting, and zero-PII logging. | Sanitized inputs, anti-prompt injection guardrails, and JWT role verification. |
+<img src="assets/features-table.svg" alt="Key Platform Features" width="100%" />
 
 <img src="assets/divider.svg" alt="" width="100%" />
 
