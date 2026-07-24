@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 420" width="100%">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 460" width="100%">
   <defs>
-    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="0%">
       <stop offset="0%" style="stop-color:#0B1121"/>
       <stop offset="100%" style="stop-color:#162244"/>
     </linearGradient>
@@ -13,94 +13,68 @@
     </pattern>
   </defs>
 
-  <rect width="1200" height="420" fill="url(#bgGrad)"/>
-  <rect width="1200" height="420" fill="url(#grid)"/>
+  <rect width="1200" height="460" fill="url(#bgGrad)"/>
+  <rect width="1200" height="460" fill="url(#grid)"/>
 
-  <!-- Title -->
-  <text x="600" y="38" text-anchor="middle" font-family="'Segoe UI', system-ui, sans-serif" font-weight="800" font-size="22" fill="#F1F5F9" letter-spacing="-0.3">✨ Key Platform Features</text>
+  <text x="600" y="36" text-anchor="middle" font-family="'Segoe UI', system-ui, sans-serif" font-weight="800" font-size="24" fill="#F1F5F9" letter-spacing="-0.3">✨ Key Platform Features</text>
 
-  <!-- Table -->
-  <g transform="translate(40, 60)">
-    <!-- Table header -->
-    <rect x="0" y="0" width="1120" height="36" rx="4" fill="url(#headerGrad)"/>
-    <line x1="280" y1="0" x2="280" y2="36" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
-    <line x1="600" y1="0" x2="600" y2="36" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+  <g transform="translate(30, 55)">
+    <!-- Header -->
+    <rect x="0" y="0" width="1140" height="38" rx="4" fill="url(#headerGrad)"/>
+    <line x1="260" y1="0" x2="260" y2="38" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+    <line x1="620" y1="0" x2="620" y2="38" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
 
-    <text x="140" y="24" text-anchor="middle" font-family="'Segoe UI', system-ui, sans-serif" font-weight="700" font-size="13" fill="#94A3B8" letter-spacing="1">FEATURE</text>
-    <text x="440" y="24" text-anchor="middle" font-family="'Segoe UI', system-ui, sans-serif" font-weight="700" font-size="13" fill="#94A3B8" letter-spacing="1">DESCRIPTION</text>
-    <text x="860" y="24" text-anchor="middle" font-family="'Segoe UI', system-ui, sans-serif" font-weight="700" font-size="13" fill="#94A3B8" letter-spacing="1">ARCHITECTURE HIGHLIGHTS</text>
+    <text x="130" y="25" text-anchor="middle" font-family="'Segoe UI', system-ui, sans-serif" font-weight="700" font-size="14" fill="#94A3B8" letter-spacing="1">FEATURE</text>
+    <text x="440" y="25" text-anchor="middle" font-family="'Segoe UI', system-ui, sans-serif" font-weight="700" font-size="14" fill="#94A3B8" letter-spacing="1">DESCRIPTION</text>
+    <text x="880" y="25" text-anchor="middle" font-family="'Segoe UI', system-ui, sans-serif" font-weight="700" font-size="14" fill="#94A3B8" letter-spacing="1">ARCHITECTURE HIGHLIGHTS</text>
 
-    <!-- Row separator -->
-    <line x1="0" y1="36" x2="1120" y2="36" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+    <line x1="0" y1="38" x2="1140" y2="38" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
 
-    <!-- Row 1: Auditable Eligibility Engine -->
-    <rect x="0" y="36" width="1120" height="64" fill="rgba(249,115,22,0.02)"/>
-    <rect x="0" y="36" width="4" height="64" fill="#F97316" opacity="0.4"/>
-    <text x="18" y="60" font-family="'Segoe UI', system-ui, sans-serif" font-weight="600" font-size="13" fill="#FB923C">🎯 Auditable</text>
-    <text x="18" y="78" font-family="'Segoe UI', system-ui, sans-serif" font-weight="600" font-size="13" fill="#FB923C">Eligibility Engine</text>
-    <text x="296" y="60" font-family="'Segoe UI', system-ui, sans-serif" font-weight="400" font-size="12" fill="#CBD5E1">Pure deterministic rule matching engine evaluating</text>
-    <text x="296" y="78" font-family="'Segoe UI', system-ui, sans-serif" font-weight="400" font-size="12" fill="#CBD5E1">demographics, income caps, land holdings, social categories</text>
-    <text x="616" y="60" font-family="'Segoe UI', system-ui, sans-serif" font-weight="400" font-size="12" fill="#CBD5E1">Zero AI Hallucination — LLMs never make</text>
-    <text x="616" y="78" font-family="'Segoe UI', system-ui, sans-serif" font-weight="400" font-size="12" fill="#CBD5E1">legal eligibility decisions</text>
+    <!-- Row 1 -->
+    <text x="24" y="66" font-family="'Segoe UI', system-ui, sans-serif" font-weight="600" font-size="16" fill="#FB923C">🎯 Auditable Eligibility Engine</text>
+    <text x="280" y="66" font-family="'Segoe UI', system-ui, sans-serif" font-weight="400" font-size="15" fill="#E2E8F0">Pure deterministic rule matching engine evaluating</text>
+    <text x="640" y="66" font-family="'Segoe UI', system-ui, sans-serif" font-weight="400" font-size="15" fill="#E2E8F0">Zero AI Hallucination — LLMs never make</text>
+    <text x="280" y="88" font-family="'Segoe UI', system-ui, sans-serif" font-weight="400" font-size="15" fill="#E2E8F0">demographics, income caps, land holdings, social categories</text>
+    <text x="640" y="88" font-family="'Segoe UI', system-ui, sans-serif" font-weight="400" font-size="15" fill="#E2E8F0">legal eligibility decisions</text>
+    <line x1="0" y1="102" x2="1140" y2="102" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
 
-    <line x1="0" y1="100" x2="1120" y2="100" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+    <!-- Row 2 -->
+    <text x="24" y="130" font-family="'Segoe UI', system-ui, sans-serif" font-weight="600" font-size="16" fill="#A5B4FC">🧠 AI Saathi Assistant</text>
+    <text x="280" y="130" font-family="'Segoe UI', system-ui, sans-serif" font-weight="400" font-size="15" fill="#E2E8F0">High-speed conversational AI assistant powered by</text>
+    <text x="640" y="130" font-family="'Segoe UI', system-ui, sans-serif" font-weight="400" font-size="15" fill="#E2E8F0">Low-latency inference (temperature=0.2),</text>
+    <text x="280" y="152" font-family="'Segoe UI', system-ui, sans-serif" font-weight="400" font-size="15" fill="#E2E8F0">Groq Llama-3.3-70B with domain-specific synonym expansion</text>
+    <text x="640" y="152" font-family="'Segoe UI', system-ui, sans-serif" font-weight="400" font-size="15" fill="#E2E8F0">zero hesitation, structured formatting</text>
+    <line x1="0" y1="166" x2="1140" y2="166" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
 
-    <!-- Row 2: AI Saathi Assistant -->
-    <rect x="0" y="100" width="1120" height="64"/>
-    <rect x="0" y="100" width="4" height="64" fill="#6366F1" opacity="0.4"/>
-    <text x="18" y="124" font-family="'Segoe UI', system-ui, sans-serif" font-weight="600" font-size="13" fill="#A5B4FC">🧠 AI Saathi</text>
-    <text x="18" y="142" font-family="'Segoe UI', system-ui, sans-serif" font-weight="600" font-size="13" fill="#A5B4FC">Assistant</text>
-    <text x="296" y="124" font-family="'Segoe UI', system-ui, sans-serif" font-weight="400" font-size="12" fill="#CBD5E1">High-speed conversational AI assistant powered by</text>
-    <text x="296" y="142" font-family="'Segoe UI', system-ui, sans-serif" font-weight="400" font-size="12" fill="#CBD5E1">Groq Llama-3.3-70B with domain-specific synonym expansion</text>
-    <text x="616" y="124" font-family="'Segoe UI', system-ui, sans-serif" font-weight="400" font-size="12" fill="#CBD5E1">Low-latency inference (temperature=0.2),</text>
-    <text x="616" y="142" font-family="'Segoe UI', system-ui, sans-serif" font-weight="400" font-size="12" fill="#CBD5E1">zero hesitation, structured formatting</text>
+    <!-- Row 3 -->
+    <text x="24" y="194" font-family="'Segoe UI', system-ui, sans-serif" font-weight="600" font-size="16" fill="#5EEAD4">📄 OCR Document Vault</text>
+    <text x="280" y="194" font-family="'Segoe UI', system-ui, sans-serif" font-weight="400" font-size="15" fill="#E2E8F0">Multi-document upload area powered by OCRSpace.</text>
+    <text x="640" y="194" font-family="'Segoe UI', system-ui, sans-serif" font-weight="400" font-size="15" fill="#E2E8F0">Transient signed URLs (300s TTL) with</text>
+    <text x="280" y="216" font-family="'Segoe UI', system-ui, sans-serif" font-weight="400" font-size="15" fill="#E2E8F0">Extract text, auto-fill profile indicators, verify status</text>
+    <text x="640" y="216" font-family="'Segoe UI', system-ui, sans-serif" font-weight="400" font-size="15" fill="#E2E8F0">PostgreSQL Row-Level Security (RLS)</text>
+    <line x1="0" y1="230" x2="1140" y2="230" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
 
-    <line x1="0" y1="164" x2="1120" y2="164" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+    <!-- Row 4 -->
+    <text x="24" y="258" font-family="'Segoe UI', system-ui, sans-serif" font-weight="600" font-size="16" fill="#F472B6">✍️ Instant Application Drafter</text>
+    <text x="280" y="258" font-family="'Segoe UI', system-ui, sans-serif" font-weight="400" font-size="15" fill="#E2E8F0">Generates pre-filled, formal application letters</text>
+    <text x="640" y="258" font-family="'Segoe UI', system-ui, sans-serif" font-weight="400" font-size="15" fill="#E2E8F0">Template fallback mechanism ensures</text>
+    <text x="280" y="280" font-family="'Segoe UI', system-ui, sans-serif" font-weight="400" font-size="15" fill="#E2E8F0">for any eligible scheme on demand</text>
+    <text x="640" y="280" font-family="'Segoe UI', system-ui, sans-serif" font-weight="400" font-size="15" fill="#E2E8F0">100% uptime even if AI providers are unreachable</text>
+    <line x1="0" y1="294" x2="1140" y2="294" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
 
-    <!-- Row 3: OCR Document Vault -->
-    <rect x="0" y="164" width="1120" height="64" fill="rgba(20,184,166,0.02)"/>
-    <rect x="0" y="164" width="4" height="64" fill="#14B8A6" opacity="0.4"/>
-    <text x="18" y="188" font-family="'Segoe UI', system-ui, sans-serif" font-weight="600" font-size="13" fill="#5EEAD4">📄 OCR Document</text>
-    <text x="18" y="206" font-family="'Segoe UI', system-ui, sans-serif" font-weight="600" font-size="13" fill="#5EEAD4">Vault</text>
-    <text x="296" y="188" font-family="'Segoe UI', system-ui, sans-serif" font-weight="400" font-size="12" fill="#CBD5E1">Multi-document upload area powered by OCRSpace.</text>
-    <text x="296" y="206" font-family="'Segoe UI', system-ui, sans-serif" font-weight="400" font-size="12" fill="#CBD5E1">Extract text, auto-fill profile indicators, verify status</text>
-    <text x="616" y="188" font-family="'Segoe UI', system-ui, sans-serif" font-weight="400" font-size="12" fill="#CBD5E1">Transient signed URLs (300s TTL) with</text>
-    <text x="616" y="206" font-family="'Segoe UI', system-ui, sans-serif" font-weight="400" font-size="12" fill="#CBD5E1">PostgreSQL Row-Level Security (RLS)</text>
+    <!-- Row 5 -->
+    <text x="24" y="322" font-family="'Segoe UI', system-ui, sans-serif" font-weight="600" font-size="16" fill="#FBBF24">⚡ Real-Time Event Sync</text>
+    <text x="280" y="322" font-family="'Segoe UI', system-ui, sans-serif" font-weight="400" font-size="15" fill="#E2E8F0">Automated profile and scheme change triggers that</text>
+    <text x="640" y="322" font-family="'Segoe UI', system-ui, sans-serif" font-weight="400" font-size="15" fill="#E2E8F0">Supabase Deno Edge Functions broadcasting</text>
+    <text x="280" y="344" font-family="'Segoe UI', system-ui, sans-serif" font-weight="400" font-size="15" fill="#E2E8F0">re-evaluate matches instantly across all active users</text>
+    <text x="640" y="344" font-family="'Segoe UI', system-ui, sans-serif" font-weight="400" font-size="15" fill="#E2E8F0">webhooks to FastAPI match endpoints</text>
+    <line x1="0" y1="358" x2="1140" y2="358" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
 
-    <line x1="0" y1="228" x2="1120" y2="228" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
-
-    <!-- Row 4: Instant Application Drafter -->
-    <rect x="0" y="228" width="1120" height="64"/>
-    <rect x="0" y="228" width="4" height="64" fill="#EC4899" opacity="0.4"/>
-    <text x="18" y="252" font-family="'Segoe UI', system-ui, sans-serif" font-weight="600" font-size="13" fill="#F472B6">✍️ Instant</text>
-    <text x="18" y="270" font-family="'Segoe UI', system-ui, sans-serif" font-weight="600" font-size="13" fill="#F472B6">Application Drafter</text>
-    <text x="296" y="252" font-family="'Segoe UI', system-ui, sans-serif" font-weight="400" font-size="12" fill="#CBD5E1">Generates pre-filled, formal application letters</text>
-    <text x="296" y="270" font-family="'Segoe UI', system-ui, sans-serif" font-weight="400" font-size="12" fill="#CBD5E1">for any eligible scheme on demand</text>
-    <text x="616" y="252" font-family="'Segoe UI', system-ui, sans-serif" font-weight="400" font-size="12" fill="#CBD5E1">Template fallback mechanism ensures</text>
-    <text x="616" y="270" font-family="'Segoe UI', system-ui, sans-serif" font-weight="400" font-size="12" fill="#CBD5E1">100% uptime even if AI providers are unreachable</text>
-
-    <line x1="0" y1="292" x2="1120" y2="292" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
-
-    <!-- Row 5: Real-Time Event Sync -->
-    <rect x="0" y="292" width="1120" height="64" fill="rgba(245,158,11,0.02)"/>
-    <rect x="0" y="292" width="4" height="64" fill="#F59E0B" opacity="0.4"/>
-    <text x="18" y="316" font-family="'Segoe UI', system-ui, sans-serif" font-weight="600" font-size="13" fill="#FBBF24">⚡ Real-Time</text>
-    <text x="18" y="334" font-family="'Segoe UI', system-ui, sans-serif" font-weight="600" font-size="13" fill="#FBBF24">Event Sync</text>
-    <text x="296" y="316" font-family="'Segoe UI', system-ui, sans-serif" font-weight="400" font-size="12" fill="#CBD5E1">Automated profile and scheme change triggers that</text>
-    <text x="296" y="334" font-family="'Segoe UI', system-ui, sans-serif" font-weight="400" font-size="12" fill="#CBD5E1">re-evaluate matches instantly across all active users</text>
-    <text x="616" y="316" font-family="'Segoe UI', system-ui, sans-serif" font-weight="400" font-size="12" fill="#CBD5E1">Supabase Deno Edge Functions broadcasting</text>
-    <text x="616" y="334" font-family="'Segoe UI', system-ui, sans-serif" font-weight="400" font-size="12" fill="#CBD5E1">webhooks to FastAPI match endpoints</text>
-
-    <line x1="0" y1="356" x2="1120" y2="356" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
-
-    <!-- Row 6: Enterprise Security -->
-    <rect x="0" y="356" width="1120" height="64" fill="rgba(16,185,129,0.02)"/>
-    <rect x="0" y="356" width="4" height="64" fill="#10B981" opacity="0.4"/>
-    <text x="18" y="380" font-family="'Segoe UI', system-ui, sans-serif" font-weight="600" font-size="13" fill="#34D399">🛡️ Enterprise</text>
-    <text x="18" y="398" font-family="'Segoe UI', system-ui, sans-serif" font-weight="600" font-size="13" fill="#34D399">Security</text>
-    <text x="296" y="380" font-family="'Segoe UI', system-ui, sans-serif" font-weight="400" font-size="12" fill="#CBD5E1">Bank-grade security controls including strict CORS allowlists,</text>
-    <text x="296" y="398" font-family="'Segoe UI', system-ui, sans-serif" font-weight="400" font-size="12" fill="#CBD5E1">per-IP rate limiting, and zero-PII logging</text>
-    <text x="616" y="380" font-family="'Segoe UI', system-ui, sans-serif" font-weight="400" font-size="12" fill="#CBD5E1">Sanitized inputs, anti-prompt injection</text>
-    <text x="616" y="398" font-family="'Segoe UI', system-ui, sans-serif" font-weight="400" font-size="12" fill="#CBD5E1">guardrails, and JWT role verification</text>
+    <!-- Row 6 -->
+    <text x="24" y="386" font-family="'Segoe UI', system-ui, sans-serif" font-weight="600" font-size="16" fill="#34D399">🛡️ Enterprise Security</text>
+    <text x="280" y="386" font-family="'Segoe UI', system-ui, sans-serif" font-weight="400" font-size="15" fill="#E2E8F0">Bank-grade security controls including strict CORS allowlists,</text>
+    <text x="640" y="386" font-family="'Segoe UI', system-ui, sans-serif" font-weight="400" font-size="15" fill="#E2E8F0">Sanitized inputs, anti-prompt injection</text>
+    <text x="280" y="408" font-family="'Segoe UI', system-ui, sans-serif" font-weight="400" font-size="15" fill="#E2E8F0">per-IP rate limiting, and zero-PII logging</text>
+    <text x="640" y="408" font-family="'Segoe UI', system-ui, sans-serif" font-weight="400" font-size="15" fill="#E2E8F0">guardrails, and JWT role verification</text>
   </g>
 </svg>
